@@ -76,6 +76,22 @@ sudo systemctl start feishu-kiro-bot
 pip3 install lark-oapi chromadb sentence-transformers
 ```
 
+## 图片与文件发送
+
+Bot 支持自动检测 Kiro 输出中的文件路径，上传并发送到飞书：
+
+- **图片**：`.png` `.jpg` `.jpeg` `.gif` `.bmp` `.webp` → 以图片消息回复
+- **文件**：`.pdf` `.doc` `.docx` `.xls` `.xlsx` `.ppt` `.pptx` `.csv` `.txt` `.zip` `.mp4` → 以文件消息回复
+
+**工作流程：**
+
+1. Kiro 处理用户请求，生成图表或文件（如 EC2 CPU 趋势图）
+2. Bot 先回复文本内容
+3. 自动扫描文本中的绝对路径（如 `/tmp/report/cpu.png`）
+4. 检测到存在的文件 → 上传到飞书 → 以图片/文件消息回复
+
+> **注意**：飞书应用需开通 `im:resource` 权限（上传图片/文件）。在飞书开放平台「权限管理」中添加。
+
 ## 记忆功能
 
 Bot 集成了基于 ChromaDB 的向量记忆层，使用 `paraphrase-multilingual-MiniLM-L12-v2` 多语言 Embedding 模型：
