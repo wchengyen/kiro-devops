@@ -6,6 +6,7 @@
 import os
 import json
 import time
+import shutil
 import logging
 import subprocess
 import threading
@@ -207,10 +208,12 @@ def strip_ansi(text: str) -> str:
 
 
 # ============ Kiro CLI 调用 ============
+kiro_bin = shutil.which("kiro-cli") or "/home/ubuntu/.local/bin/kiro-cli"
+
 def call_kiro(prompt: str) -> str:
     log.info(f"调用 kiro-cli: {prompt[:80]}...")
     try:
-        cmd = ["kiro-cli", "chat", "--no-interactive", "-a", "--wrap", "never"]
+        cmd = [kiro_bin, "chat", "--no-interactive", "-a", "--wrap", "never"]
         if KIRO_AGENT:
             cmd += ["--agent", KIRO_AGENT]
         cmd.append(prompt)
