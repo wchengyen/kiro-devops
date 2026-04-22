@@ -105,6 +105,7 @@ vim .env   # 填入 APP_ID、APP_SECRET
 | `KIRO_TIMEOUT` | Kiro CLI 同步超时时间（秒） | `120` |
 | `KIRO_ASYNC_TIMEOUT` | 异步任务最长等待时间（秒） | `1800` |
 | `KIRO_SYNC_TIMEOUT` | 同步阶段超时时间（秒） | `120` |
+| `KIRO_PROGRESS_INTERVAL` | 异步任务进度汇报间隔（秒） | `300` |
 | `KIRO_AGENT` | 指定 Kiro agent，留空使用默认 agent | 空 |
 | `ENABLE_MEMORY` | 启用记忆功能 | `false` |
 

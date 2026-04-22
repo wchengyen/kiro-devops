@@ -125,7 +125,7 @@ class KiroExecutor:
 
         def wait_async():
             remaining = ASYNC_TIMEOUT - SYNC_TIMEOUT
-            progress_interval = 120  # 每2分钟发一次进度
+            progress_interval = int(os.environ.get("KIRO_PROGRESS_INTERVAL", "300"))
             elapsed_async = 0
             while remaining > 0:
                 wait = min(progress_interval, remaining)
