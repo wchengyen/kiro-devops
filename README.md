@@ -1,206 +1,173 @@
-# 飞书 ↔ Kiro CLI 桥接服务（WebSocket 长连接版）
+# 飞书 ↔ Kiro Bot 桥接服务
 
-在飞书中 @机器人 发消息，自动调用 Kiro CLI 处理并回复结果。
+[![DeepWiki](https://img.shields.io/badge/DeepWiki-AI%20文档-blue)](https://deepwiki.com/wchengyen/feishu-kiro-bot)
+[![Python](https://img.shields.io/badge/Python-3.10%2B-blue)](https://www.python.org/)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+
+[English Version](README_EN.md) | 中文版
+
+在飞书（Lark）中 @机器人 发消息，自动调用 [Kiro CLI](https://kiro.dev) 处理并回复结果。
 
 **无需公网 IP、无需端口开放、无需 nginx 反向代理。**
 
-## 架构
+---
+
+## 📖 AI 生成的交互式文档
+
+👉 **[https://deepwiki.com/wchengyen/feishu-kiro-bot](https://deepwiki.com/wchengyen/feishu-kiro-bot)**
+
+由 [DeepWiki](https://deepwiki.com) 自动生成的交互式 Wiki，包含架构图、代码分析、数据流可视化和智能问答。
+
+---
+
+## ✨ 核心特性
+
+| 特性 | 说明 |
+|------|------|
+| 🔌 **WebSocket 长连接** | 出站连接，天然穿透 NAT/防火墙，零网络配置 |
+| 🧠 **双层记忆架构** | Semantic Memory（用户偏好）+ Episodic Memory（系统事件），基于 SQLite |
+| ⚡ **混合执行引擎** | 同步 120s → 超时自动转后台异步，带进度心跳 |
+| 🗂️ **会话路由** | 30min 自动 resume，支持 `/new` `/resume` `/sessions` |
+| 📎 **自动资源上传** | 检测 Kiro 输出中的图片/文件路径，自动上传飞书 |
+| ⏰ **定时任务** | 自然语言配置周期性任务，`/schedule` 命令管理 |
+| 📝 **事件录入** | `/event` 手动录入 + Webhook 外部系统推送 |
+
+---
+
+## 🏗️ 架构概览
 
 ```
-飞书用户 @Bot "分析一下成本"
+飞书用户 @Bot "test1 数据库怎么了？"
        ↓
-飞书云 ←—WebSocket 长连接—→ 本服务 (Python)
-                                ↓
-                           SessionRouter（会话路由）
-                           30min 内自动 resume / 显式命令
-                                ↓
-                           KiroExecutor（混合执行引擎）
-                           同步 120s → 超时转异步 600s
-                                ↓ subprocess
-                           kiro-cli chat [--resume] --no-interactive "分析一下成本"
-                                ↓
-                           飞书用户收到回复
-                           📎 会话 #1 分析一下成本 | /new 新对话
+飞书云 ←—WebSocket 出站长连接—→ 本服务 (Python)
+                                    ↓
+                              ┌─────────────┐
+                              │ Event Loop  │  lark-oapi 接收消息
+                              └─────────────┘
+                                    ↓
+                              ┌─────────────┐
+                              │ 启发式判断   │  has_episodic_hint()
+                              └─────────────┘
+                                    ↓
+            ┌───────────────────────┼───────────────────────┐
+            ↓                       ↓                       ↓
+    ┌───────────────┐      ┌───────────────┐      ┌───────────────┐
+    │ SemanticStore │      │ EventStore    │      │ SessionRouter │
+    │ SQLite FTS5   │      │ SQLite + FTS5 │      │ 会话超时管理   │
+    └───────────────┘      └───────────────┘      └───────────────┘
+            ↓                       ↓                       ↓
+            └───────────────────────┼───────────────────────┘
+                                    ↓
+                              ┌─────────────┐
+                              │PromptBuilder│  Semantic→前缀  Episodic→附录
+                              └─────────────┘
+                                    ↓
+                              ┌─────────────┐
+                              │KiroExecutor │  subprocess kiro-cli
+                              │同步/异步切换 │  --resume --no-interactive
+                              └─────────────┘
+                                    ↓
+                              飞书用户收到回复
+                              📎 本次分析关联了 2 条历史事件
 ```
 
-服务主动向飞书建立 WebSocket 出站连接，飞书通过该连接推送事件。连接方向是出站的，所以：
-- 不需要公网 IP
-- 不需要开放端口
-- 不需要处理飞书 IP 白名单
-- 天然穿透 NAT / 防火墙
+### 记忆架构详解
 
-## 部署步骤
+```
+┌─────────────────────────────────────────────────────────────┐
+│                        Memory Layer                          │
+├─────────────────────────────┬───────────────────────────────┤
+│     Semantic Memory         │      Episodic Memory          │
+│   (语义记忆 / 用户偏好)      │    (情景记忆 / 系统事件)       │
+├─────────────────────────────┼───────────────────────────────┤
+│ • 用户偏好中文交流           │ • 2026-04-20 test1 索引优化   │
+│ • 用户在北京工作             │ • 2026-04-21 订单服务 v2.3.1  │
+│ • 用户使用 AWS               │ • 2026-04-22 test1 CPU 告警   │
+├─────────────────────────────┼───────────────────────────────┤
+│ 存储: SQLite semantic_memory │ 存储: SQLite events.db        │
+│ 检索: 关键词重叠评分         │ 检索: 时间 + 实体 + 类型过滤   │
+│ 注入: System Prompt 前缀     │ 注入: User Prompt 后附录       │
+│ 影响: Agent 行为风格         │ 影响: 仅作参考，不影响行为      │
+└─────────────────────────────┴───────────────────────────────┘
+```
 
-### 第一步：飞书开放平台创建应用
+---
+
+## 🚀 快速开始
+
+### 1. 飞书开放平台配置
 
 1. 打开 https://open.feishu.cn/app 登录
-2. 点击「创建企业自建应用」
-3. 记录 `App ID` 和 `App Secret`
+2. 创建企业自建应用，记录 **App ID** 和 **App Secret**
+3. 添加「机器人」能力
+4. 事件订阅 → 选择 **「使用长连接接收事件」** → 添加 `im.message.receive_v1`
+5. 权限管理 → 开通 `im:message`、`im:message:send_as_bot`、`im:resource`
+6. 版本管理与发布 → 提交审核 → 发布
 
-### 第二步：添加机器人能力 & 权限
+> 完整权限列表见 `feishu-auth.json`，最小权限为 `im:message` + `im:message:send_as_bot`。
 
-1. 应用详情 → 「添加应用能力」→ 选择「机器人」
-2. 「权限管理」→ 开通以下权限：
-
-**应用权限（tenant）：**
-
-| 权限 | 说明 |
-|------|------|
-| `im:message` | 获取与发送消息 |
-| `im:message:send_as_bot` | 以应用身份发送消息 |
-| `im:message:readonly` | 读取消息 |
-| `im:message.p2p_msg:readonly` | 读取私聊消息 |
-| `im:message.group_msg` | 获取群组消息 |
-| `im:message.group_at_msg:readonly` | 读取群内 @机器人消息 |
-| `im:chat` | 获取与管理群组 |
-| `im:chat.members:bot_access` | 获取群成员（机器人所在群） |
-| `im:chat.access_event.bot_p2p_chat:read` | 读取机器人单聊事件 |
-| `im:resource` | 上传图片/文件资源 |
-| `contact:contact.base:readonly` | 读取通讯录基本信息 |
-| `contact:user.employee_id:readonly` | 读取用户工号 |
-| `docs:document.content:read` | 读取文档内容 |
-| `sheets:spreadsheet` | 读写电子表格 |
-| `wiki:wiki:readonly` | 读取知识库 |
-| `aily:file:read` | 读取智能伙伴文件 |
-| `aily:file:write` | 写入智能伙伴文件 |
-| `cardkit:card:write` | 发送卡片消息 |
-| `corehr:file:download` | 下载人事文件 |
-| `application:application.app_message_stats.overview:readonly` | 读取应用消息统计 |
-| `application:application:self_manage` | 应用自管理 |
-| `application:bot.menu:write` | 配置机器人菜单 |
-| `event:ip_list` | 获取事件 IP 列表 |
-
-**用户权限（user）：**
-
-| 权限 | 说明 |
-|------|------|
-| `aily:file:read` | 读取智能伙伴文件 |
-| `aily:file:write` | 写入智能伙伴文件 |
-| `im:chat.access_event.bot_p2p_chat:read` | 读取机器人单聊事件 |
-
-> **提示**：完整权限列表见 `feishu-auth.json`。最小可用权限为 `im:message` + `im:message:send_as_bot`，其余按需开通。
-
-### 第三步：配置事件订阅（关键！）
-
-1. 应用详情 → 「事件与回调」→ 「事件配置」
-2. **接收方式选择「使用长连接接收事件」**（不是 Webhook URL）
-3. 添加事件：`im.message.receive_v1`（接收消息）
-
-### 第四步：发布应用
-
-1. 「版本管理与发布」→ 创建版本 → 提交审核 → 发布
-
-### 第五步：配置本服务
+### 2. 配置本服务
 
 ```bash
 cd /home/ubuntu/feishu-kiro-bot
 cp .env.example .env
-vim .env   # 填入 APP_ID、APP_SECRET
+# 编辑 .env，填入 FEISHU_APP_ID 和 FEISHU_APP_SECRET
 ```
 
-**可选配置项：**
+**可选配置：**
 
 | 变量 | 说明 | 默认值 |
 |------|------|--------|
-| `KIRO_TIMEOUT` | Kiro CLI 同步超时时间（秒） | `120` |
-| `KIRO_ASYNC_TIMEOUT` | 异步任务最长等待时间（秒） | `1800` |
-| `KIRO_SYNC_TIMEOUT` | 同步阶段超时时间（秒） | `120` |
-| `KIRO_PROGRESS_INTERVAL` | 异步任务进度汇报间隔（秒） | `300` |
-| `KIRO_AGENT` | 指定 Kiro agent，留空使用默认 agent | 空 |
+| `KIRO_TIMEOUT` | Kiro CLI 同步超时（秒） | `120` |
+| `KIRO_ASYNC_TIMEOUT` | 异步任务最长等待（秒） | `1800` |
+| `KIRO_AGENT` | 指定 Kiro agent | 空 |
 | `ENABLE_MEMORY` | 启用记忆功能 | `false` |
 
-### 第六步：启动服务
+### 3. 启动服务
 
 ```bash
-# 前台运行（调试用）
+# 前台调试
 ./start.sh
 
-# systemd 后台运行（生产用）
+# systemd 后台（生产）
 sudo cp feishu-kiro-bot.service /etc/systemd/system/
 sudo systemctl daemon-reload
 sudo systemctl enable feishu-kiro-bot
 sudo systemctl start feishu-kiro-bot
 ```
 
-## 依赖
+### 4. 查看日志
 
 ```bash
-# 核心依赖（必装）
-pip3 install lark-oapi
-
-# 记忆功能为零额外依赖（基于 Python 内置 sqlite3）
-# 如需恢复旧版向量记忆，需手动安装：
-# pip3 install chromadb sentence-transformers
+sudo journalctl -u feishu-kiro-bot -f
 ```
 
-## 图片与文件发送
+---
 
-Bot 支持自动检测 Kiro 输出中的文件路径，上传并发送到飞书：
+## 🧠 记忆系统
 
-- **图片**：`.png` `.jpg` `.jpeg` `.gif` `.bmp` `.webp` → 以图片消息回复
-- **文件**：`.pdf` `.doc` `.docx` `.xls` `.xlsx` `.ppt` `.pptx` `.csv` `.txt` `.zip` `.mp4` → 以文件消息回复
+记忆功能默认关闭，在 `.env` 中设置 `ENABLE_MEMORY=true` 开启。
 
-**工作流程：**
+**零额外依赖**，全部基于 Python 内置 `sqlite3`。
 
-1. Kiro 处理用户请求，生成图表或文件（如 EC2 CPU 趋势图）
-2. Bot 先回复文本内容
-3. 自动扫描文本中的绝对路径（如 `/tmp/report/cpu.png`）
-4. 检测到存在的文件 → 上传到飞书 → 以图片/文件消息回复
+### 双层记忆
 
-> **注意**：飞书应用需开通 `im:resource` 权限（上传图片/文件）。在飞书开放平台「权限管理」中添加。
+| 类型 | 内容 | 检索 | Prompt 注入 |
+|------|------|------|------------|
+| **Semantic** | 用户偏好、事实、决策 | 关键词重叠评分 | 前缀注入，影响 Agent 行为 |
+| **Episodic** | 系统变更、应用发版、指标异常、故障 | 时间+实体+类型过滤 | 附录在 user prompt 后，标注"仅供参考" |
 
-## 记忆功能（可选）
-
-记忆功能默认**关闭**，无需安装额外依赖即可运行 Bot。如需启用，在 `.env` 中设置：
-
-```bash
-ENABLE_MEMORY=true
-```
-
-### 双层记忆架构
-
-改造后采用 **Semantic Memory + Episodic Memory** 双层架构，全部基于 SQLite，零向量模型依赖：
-
-| 记忆类型 | 存储内容 | 检索方式 | Prompt 注入策略 |
-|---------|---------|---------|----------------|
-| **Semantic** | 用户偏好、事实、决策 | SQLite + 关键词重叠评分 | 前缀注入，影响 Agent 行为 |
-| **Episodic** | 系统变更、应用发版、指标异常、故障处理 | SQLite + 时间/实体/类型过滤 | 附录在 user prompt 后，标注"仅供参考" |
-
-**Episodic Memory 典型场景：**
-
-> 用户问："test1 数据库指标异常，分析一下"
-> Bot 自动检索过去两周与 "test1" 相关的变更和发版记录，附在 prompt 后供 Kiro 参考，同时提示用户："📎 本次分析关联了 2 条历史事件"
-
-### 记忆管理命令
-
-在飞书中发送以下命令管理记忆功能（按用户隔离，互不影响）：
-
-| 命令 | 功能 |
-|------|------|
-| `/memory status` | 查看记忆开关状态和语义记忆条数 |
-| `/memory on` | 开启记忆（默认状态） |
-| `/memory off` | 关闭记忆 — 不再存储、检索、提取记忆 |
-| `/memory clear` | 清除所有语义记忆 |
-| `/memory events` | 查看最近 30 天的事件记录 |
-| `/memory events clear` | 清空所有事件记录 |
-| `/memory` | 显示帮助信息 |
-
-### 事件录入
+### 事件录入方式
 
 **方式一：飞书手动录入**
 
 ```
-/event 类型=系统变更 实体=test1,MySQL 标题=索引优化 描述=增加联合索引
+/event 类型=系统变更 实体=test1,MySQL 标题="test1 数据库索引优化" 描述="orders 表增加联合索引"
 ```
-
-支持字段：类型、实体（逗号分隔）、标题、描述、级别、来源。值含空格时用引号包裹。
 
 **方式二：外部系统 Webhook 推送**
 
-```python
-POST /events
-Content-Type: application/json
-
+```json
 {
   "id": "jenkins-12345",
   "event_type": "应用发版",
@@ -212,12 +179,49 @@ Content-Type: application/json
 }
 ```
 
-Webhook 接口需自行暴露 HTTP 端点（可复用 app.py 同进程或独立服务），调用 `event_ingest.webhook_handler()` 处理。
+### 记忆管理命令
 
-> **提示**：当记忆内容干扰 Kiro skill 触发时，可先 `/memory off` 关闭记忆再发送指令。
+| 命令 | 功能 |
+|------|------|
+| `/memory status` | 查看记忆开关状态和语义记忆条数 |
+| `/memory on` | 开启记忆 |
+| `/memory off` | 关闭记忆 |
+| `/memory clear` | 清除语义记忆 |
+| `/memory events` | 查看最近 30 天事件 |
+| `/memory events clear` | 清空事件记录 |
+
+---
+
+## ⌨️ 命令参考
+
+| 命令 | 说明 |
+|------|------|
+| `/new` | 强制开启新会话 |
+| `/resume <编号>` | 恢复历史会话 |
+| `/sessions` | 列出历史会话 |
+| `/status` | 查看后台任务状态 |
+| `/cancel` | 取消后台任务 |
+| `/schedule` | 定时任务管理 |
+| `/memory` | 记忆管理 |
+| `/event` | 手动录入事件 |
+
+---
+
+## 📦 依赖
 
 ```bash
-# 运行全部测试
+# 唯一必需依赖
+pip3 install lark-oapi
+```
+
+> 记忆功能为零额外依赖（基于 sqlite3）。如需恢复旧版向量记忆，需手动安装 `chromadb sentence-transformers`。
+
+---
+
+## 🧪 测试
+
+```bash
+# 全部测试
 python3 test_event_store.py
 python3 test_memory.py
 python3 test_prompt_builder.py
@@ -225,134 +229,24 @@ python3 test_event_ingest.py
 python3 test_step3_integration.py
 python3 test_step5_integration.py
 python3 test_performance.py
+python3 test_rollback.py
 ```
 
-## 查看日志
+---
+
+## 🔄 回退方案
+
+如需恢复改造前的 ChromaDB 版本：
 
 ```bash
-sudo journalctl -u feishu-kiro-bot -f
+sudo systemctl stop feishu-kiro-bot
+git reset --hard backup/before-memory-rewrite
+# 重新安装旧依赖：pip3 install chromadb sentence-transformers
+sudo systemctl start feishu-kiro-bot
 ```
 
-## 使用 Skills（自定义 Agent）
+---
 
-Kiro CLI 支持通过 **skills** 扩展能力（如 AWS 巡检、文档生成、成本分析等）。要让 Bot 使用 skills，需要：
+## 📄 许可证
 
-### 1. 创建自定义 Agent 配置
-
-在 `~/.kiro/agents/` 目录下创建 JSON 文件，例如 `my-dev-bot.json`：
-
-```json
-{
-    "name": "my-dev-bot",
-    "description": "Simple bot for development purposes",
-    "resources": [
-        "skill://.kiro/skills/**/SKILL.md"
-    ],
-    "tools": ["*"]
-}
-```
-
-字段说明：
-
-| 字段 | 说明 |
-|------|------|
-| `name` | Agent 名称，用于 `KIRO_AGENT` 引用 |
-| `description` | Agent 描述 |
-| `resources` | 引用的 skills，`skill://.kiro/skills/**/SKILL.md` 表示加载所有 skills |
-| `tools` | 允许使用的工具，`["*"]` 表示全部 |
-
-Skills 文件放在 `~/.kiro/skills/<skill-name>/SKILL.md`，每个 SKILL.md 定义一个技能的触发条件和执行逻辑。
-
-### 2. 在 .env 中指定 Agent
-
-```bash
-KIRO_AGENT=my-dev-bot
-```
-
-### 3. 重启服务
-
-```bash
-sudo systemctl restart feishu-kiro-bot
-```
-
-Bot 启动后会使用 `--agent my-dev-bot` 参数调用 kiro-cli，自动加载该 Agent 配置的所有 skills。
-
-## 多轮对话与会话管理
-
-Bot 支持跨消息的上下文保持。30 分钟内的连续消息自动延续同一个 Kiro 会话，无需额外操作。
-
-### 会话管理命令
-
-| 命令 | 功能 |
-|------|------|
-| `/new` | 强制开启新会话（不再延续之前的上下文） |
-| `/resume <编号>` | 恢复指定历史会话 |
-| `/sessions` | 列出你的历史会话 |
-| `/status` | 查看当前后台任务状态 |
-| `/cancel` | 取消当前后台任务 |
-
-### 异步执行
-
-对于复杂任务（如生成报告、多步骤分析），如果 120 秒内未完成，Bot 会自动转入后台处理并在完成后主动推送结果。
-
-## 测试场景
-
-部署完成后，按以下场景验证功能是否正常。
-
-### 场景 1：基础命令
-
-| 步骤 | 发送 | 预期结果 |
-|------|------|---------|
-| 1 | `/sessions` | 📭 你还没有历史会话 |
-| 2 | `/status` | 没有正在运行的后台任务。 |
-| 3 | `/cancel` | 没有正在运行的后台任务 |
-
-### 场景 2：新建会话 + 自动 resume（上下文保持）
-
-| 步骤 | 发送 | 预期结果 |
-|------|------|---------|
-| 1 | `今天是几月几号？` | 回复日期，末尾带 `📎 会话 #1 ...` |
-| 2 | `那再加三天呢` | 回复正确日期（理解上下文），仍是 `📎 会话 #1` |
-| 3 | `/sessions` | 显示 `#1 \| 刚刚 \| 今天是几月几号？ (2条)` |
-
-### 场景 3：/new 强制新建
-
-| 步骤 | 发送 | 预期结果 |
-|------|------|---------|
-| 1 | `/new` | 🆕 已切换到新会话模式 |
-| 2 | `1+1等于几` | 回复结果，末尾带 `📎 会话 #2`（新编号） |
-| 3 | `/sessions` | 显示 #1 和 #2 两个会话 |
-
-### 场景 4：/resume 恢复历史会话
-
-| 步骤 | 发送 | 预期结果 |
-|------|------|---------|
-| 1 | `/resume 1` | 🔄 已恢复会话 #1 ... |
-| 2 | `之前算到多少了` | Kiro 能回忆起会话 #1 的上下文 |
-
-### 场景 5：异步执行（复杂任务）
-
-| 步骤 | 发送 | 预期结果 |
-|------|------|---------|
-| 1 | `/new` | 新建会话 |
-| 2 | `检查cn-northwest-1 EC2 实例状态` | 120s 内完成则直接返回；超时则收到"⏳ 任务较复杂，已转入后台处理" |
-| 3 | `/status`（等待期间） | 显示后台任务运行时间和指令 |
-
-### 场景 6：错误处理
-
-| 步骤 | 发送 | 预期结果 |
-|------|------|---------|
-| 1 | `/resume 999` | ❌ 未找到会话 #999 |
-| 2 | `/resume` | 用法提示 |
-| 3 | `/resume abc` | ❌ 请输入数字编号 |
-
-## 常见问题
-
-**Q: 连接不上飞书？**
-A: 确认事件订阅已切换为「使用长连接接收事件」，且应用已发布。
-
-**Q: 机器人不回复？**
-A: 检查日志，确认 kiro-cli 可正常运行：`kiro-cli chat --prompt "hello"`
-
-**Q: 断线会自动重连吗？**
-A: 会。飞书 SDK 内置自动重连机制。
+[MIT](LICENSE)
