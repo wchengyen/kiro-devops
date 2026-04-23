@@ -272,8 +272,6 @@ The bot supports automatic detection of file paths in Kiro output and uploads th
 pip3 install lark-oapi
 ```
 
-> Memory features require zero extra dependencies (sqlite3 built-in). To restore legacy vector memory, manually install `chromadb sentence-transformers`.
-
 ---
 
 ## 📄 License
