@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """Dashboard blueprint with auth middleware."""
 
+import hmac
 import os
 import uuid
 from functools import wraps
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 from flask import (
     Blueprint,
@@ -26,12 +27,27 @@ DASHBOARD_TOKEN = os.environ.get("DASHBOARD_TOKEN", "")
 _sessions: dict[str, dict] = {}
 
 
+SESSION_TTL_HOURS = 24
+
+
 def require_auth(f):
     """Decorator that checks Cookie dashboard_session against _sessions."""
 
     @wraps(f)
     def wrapper(*args, **kwargs):
         session_id = request.cookies.get("dashboard_session")
+        now = datetime.now(timezone.utc)
+        cutoff = now - timedelta(hours=SESSION_TTL_HOURS)
+
+        # Prune expired sessions
+        expired = [
+            sid
+            for sid, meta in _sessions.items()
+            if datetime.fromisoformat(meta["created_at"]) < cutoff
+        ]
+        for sid in expired:
+            del _sessions[sid]
+
         if not session_id or session_id not in _sessions:
             return jsonify({"error": "Unauthorized"}), 401
         return f(*args, **kwargs)
@@ -47,7 +63,7 @@ def auth_login():
     payload = request.get_json(silent=True) or {}
     token = payload.get("token", "")
 
-    if token != DASHBOARD_TOKEN:
+    if not hmac.compare_digest(token, DASHBOARD_TOKEN):
         return jsonify({"error": "Unauthorized"}), 401
 
     session_id = str(uuid.uuid4())
