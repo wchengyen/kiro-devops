@@ -67,6 +67,24 @@ def post_mappings():
     return jsonify({"ok": True})
 
 
+@dashboard_bp.route("/api/dashboard/service-rules", methods=["GET"])
+@require_auth
+def get_service_rules():
+    store = ConfigStore(env_path=os.environ.get("ENV_PATH", ".env"))
+    rules = store.read_service_rules()
+    return jsonify({"ok": True, "rules": rules})
+
+
+@dashboard_bp.route("/api/dashboard/service-rules", methods=["POST"])
+@require_auth
+def post_service_rules():
+    payload = request.get_json(silent=True) or {}
+    store = ConfigStore(env_path=os.environ.get("ENV_PATH", ".env"))
+    rules = payload.get("rules", [])
+    store.write_service_rules(rules)
+    return jsonify({"ok": True})
+
+
 @dashboard_bp.route("/api/dashboard/events", methods=["GET"])
 @require_auth
 def get_events():

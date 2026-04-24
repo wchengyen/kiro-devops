@@ -268,16 +268,17 @@ const EventsPage = {
     const filter = reactive({ severity: "", source: "", q: "" });
     const showModal = ref(false);
     const form = reactive({ title: "", event_type: "", source: "", severity: "medium", description: "", entities_raw: "" });
+    const serviceRules = ref([]);
 
     function fmtServiceName(event) {
-      const title = (event.title || "").toLowerCase();
-      const type = (event.event_type || "").toLowerCase();
+      for (const rule of serviceRules.value) {
+        const field = rule.field === "type" ? "event_type" : rule.field;
+        const fieldVal = (event[field] || "").toLowerCase();
+        if (fieldVal.includes((rule.keyword || "").toLowerCase())) {
+          return rule.service;
+        }
+      }
       const source = (event.source || "").toLowerCase();
-      if (title.includes("rds") || type.includes("rds")) return "RDS";
-      if (title.includes("ec2") || title.includes("cpu") || title.includes("memory") || title.includes("disk") || title.includes("node")) return "EC2";
-      if (source.includes("jenkins")) return "CI/CD";
-      if (source.includes("prometheus")) return "EC2";
-      if (source.includes("cloudwatch")) return "CloudWatch";
       return source ? source.charAt(0).toUpperCase() + source.slice(1) : "-";
     }
     function fmtEntityName(event) {
@@ -297,7 +298,7 @@ const EventsPage = {
       const name = fmtEntityName(event);
       return `(${svc}, ${name})`;
     }
-    async function load() {
+    async function loadEvents() {
       const qs = new URLSearchParams();
       if (filter.severity) qs.append("severity", filter.severity);
       if (filter.source) qs.append("source", filter.source);
@@ -309,12 +310,12 @@ const EventsPage = {
       filter.severity = "";
       filter.source = "";
       filter.q = "";
-      load();
+      loadEvents();
     }
     async function remove(id) {
       if (!confirm("确定删除?")) return;
       await api("/events/" + id, { method: "DELETE" });
-      load();
+      loadEvents();
     }
     function openModal() {
       form.title = "";
@@ -337,10 +338,16 @@ const EventsPage = {
       };
       await api("/events", { method: "POST", body });
       closeModal();
-      load();
+      loadEvents();
     }
-    onMounted(load);
-    return { events, filter, load, reset, remove, showModal, form, openModal, closeModal, save, fmtEntityPair };
+    onMounted(async () => {
+      try {
+        const sr = await api("/service-rules");
+        serviceRules.value = sr.rules || [];
+      } catch {}
+      loadEvents();
+    });
+    return { events, filter, load: loadEvents, reset, remove, showModal, form, openModal, closeModal, save, fmtEntityPair };
   }
 };
 
@@ -453,6 +460,7 @@ const ConfigPage = {
       <div class="tabs">
         <button :class="{ active: tab === 'core' }" @click="tab = 'core'">Core Config</button>
         <button :class="{ active: tab === 'mappings' }" @click="tab = 'mappings'">Alert Mappings</button>
+        <button :class="{ active: tab === 'service_rules' }" @click="tab = 'service_rules'">Service Rules</button>
       </div>
       <div v-if="tab === 'core'">
         <div class="toolbar"><button @click="saveCore">保存</button></div>
@@ -493,12 +501,43 @@ const ConfigPage = {
           </table>
         </div>
       </div>
+      <div v-if="tab === 'service_rules'">
+        <div class="toolbar">
+          <button @click="addServiceRule">添加</button>
+          <button class="secondary" @click="saveServiceRules">保存 Rules</button>
+        </div>
+        <div class="info-card" style="margin-bottom:12px">
+          <p>按<strong>顺序</strong>匹配第一条满足的规则。Field 可选 title / source / event_type，Keyword 支持部分匹配（不区分大小写）。</p>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>顺序</th><th>Field</th><th>Keyword</th><th>Service</th><th>操作</th></tr></thead>
+            <tbody>
+              <tr v-for="(r, i) in serviceRules" :key="i">
+                <td>{{ i + 1 }}</td>
+                <td>
+                  <select v-model="r.field">
+                    <option value="title">Title</option>
+                    <option value="source">Source</option>
+                    <option value="event_type">Event Type</option>
+                  </select>
+                </td>
+                <td><input v-model="r.keyword" /></td>
+                <td><input v-model="r.service" /></td>
+                <td><button class="danger" @click="removeServiceRule(i)">删除</button></td>
+              </tr>
+              <tr v-if="serviceRules.length === 0"><td colspan="5" class="empty">暂无规则</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   `,
   setup() {
     const tab = ref("core");
     const core = reactive({});
     const mappings = ref([]);
+    const serviceRules = ref([]);
 
     async function load() {
       try {
@@ -508,6 +547,10 @@ const ConfigPage = {
       try {
         const m = await api("/mappings");
         mappings.value = m.mappings || [];
+      } catch {}
+      try {
+        const sr = await api("/service-rules");
+        serviceRules.value = sr.rules || [];
       } catch {}
     }
     async function saveCore() {
@@ -524,8 +567,18 @@ const ConfigPage = {
     function removeMapping(i) {
       mappings.value.splice(i, 1);
     }
+    async function saveServiceRules() {
+      await api("/service-rules", { method: "POST", body: { rules: serviceRules.value } });
+      alert("已保存");
+    }
+    function addServiceRule() {
+      serviceRules.value.push({ field: "title", keyword: "", service: "" });
+    }
+    function removeServiceRule(i) {
+      serviceRules.value.splice(i, 1);
+    }
     onMounted(load);
-    return { tab, core, mappings, saveCore, saveMappings, addMapping, removeMapping };
+    return { tab, core, mappings, serviceRules, saveCore, saveMappings, addMapping, removeMapping, saveServiceRules, addServiceRule, removeServiceRule };
   }
 };
 

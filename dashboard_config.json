@@ -10,5 +10,52 @@
       "severity": "critical",
       "agent": "ec2-alert-analyzer"
     }
+  ],
+  "service_rules": [
+    {
+      "field": "title",
+      "keyword": "rds",
+      "service": "RDS"
+    },
+    {
+      "field": "title",
+      "keyword": "ec2",
+      "service": "EC2"
+    },
+    {
+      "field": "title",
+      "keyword": "cpu",
+      "service": "EC2"
+    },
+    {
+      "field": "title",
+      "keyword": "memory",
+      "service": "EC2"
+    },
+    {
+      "field": "title",
+      "keyword": "disk",
+      "service": "EC2"
+    },
+    {
+      "field": "title",
+      "keyword": "node",
+      "service": "EC2"
+    },
+    {
+      "field": "source",
+      "keyword": "jenkins",
+      "service": "CI/CD"
+    },
+    {
+      "field": "source",
+      "keyword": "prometheus",
+      "service": "EC2"
+    },
+    {
+      "field": "source",
+      "keyword": "cloudwatch",
+      "service": "CloudWatch"
+    }
   ]
 }

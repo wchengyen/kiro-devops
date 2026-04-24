@@ -21,6 +21,19 @@ class ConfigStore:
         self.env_path = env_path
         self.mappings_path = mappings_path
 
+    def _read_dashboard_config(self) -> dict:
+        if not os.path.exists(self.mappings_path):
+            return {}
+        try:
+            with open(self.mappings_path, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except (json.JSONDecodeError, OSError):
+            return {}
+
+    def _write_dashboard_config(self, data: dict) -> None:
+        with open(self.mappings_path, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+
     def read_core_config(self) -> dict:
         """Read .env and return dict of CORE_KEYS values.
 
@@ -77,18 +90,22 @@ class ConfigStore:
 
         Return [] if file missing or malformed.
         """
-        if not os.path.exists(self.mappings_path):
-            return []
-        try:
-            with open(self.mappings_path, "r", encoding="utf-8") as f:
-                data = json.load(f)
-            if isinstance(data, dict) and "mappings" in data:
-                return data["mappings"]
-            return []
-        except (json.JSONDecodeError, OSError):
-            return []
+        data = self._read_dashboard_config()
+        return data.get("mappings", [])
 
     def write_mappings(self, mappings: list[dict]) -> None:
-        """Write {"mappings": [...]} to dashboard_config.json."""
-        with open(self.mappings_path, "w", encoding="utf-8") as f:
-            json.dump({"mappings": mappings}, f, ensure_ascii=False, indent=2)
+        """Write mappings to dashboard_config.json, preserving other keys."""
+        data = self._read_dashboard_config()
+        data["mappings"] = mappings
+        self._write_dashboard_config(data)
+
+    def read_service_rules(self) -> list[dict]:
+        """Read service name inference rules from dashboard_config.json."""
+        data = self._read_dashboard_config()
+        return data.get("service_rules", [])
+
+    def write_service_rules(self, rules: list[dict]) -> None:
+        """Write service_rules to dashboard_config.json, preserving other keys."""
+        data = self._read_dashboard_config()
+        data["service_rules"] = rules
+        self._write_dashboard_config(data)
