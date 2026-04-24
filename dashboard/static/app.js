@@ -6,6 +6,7 @@ const BASE = "/api/dashboard";
 async function api(path, opts = {}) {
   opts.headers = opts.headers || {};
   opts.headers["Content-Type"] = opts.headers["Content-Type"] || "application/json";
+  opts.credentials = "include";
   if (opts.body && typeof opts.body === "object") {
     opts.body = JSON.stringify(opts.body);
   }
