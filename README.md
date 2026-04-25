@@ -296,6 +296,10 @@ kiro-devops 同时支持 **飞书** 和 **微信** 两个沟通渠道。
 
 **方式二：外部系统 Webhook 推送**
 
+`/event` 接口同时支持两种格式：
+
+**A. 通用事件格式**（Jenkins/Zabbix/Apollo 等自定义系统）
+
 ```json
 {
   "id": "jenkins-12345",
@@ -304,9 +308,29 @@ kiro-devops 同时支持 **飞书** 和 **微信** 两个沟通渠道。
   "description": "修复支付回调超时",
   "entities": ["订单服务"],
   "source": "jenkins",
-  "user_id": "ou_xxx"
+  "severity": "medium",
+  "timestamp": "2026-04-25T10:00:00Z",
+  "user_id": "feishu:ou_xxx"
 }
 ```
+
+| 字段 | 必填 | 说明 |
+|------|------|------|
+| `id` / `event_id` | ✅ | 业务系统唯一标识，用于幂等去重 |
+| `event_type` | ✅ | 事件类型，如「应用发版」「系统变更」「指标异常」 |
+| `title` | ✅ | 事件标题 |
+| `description` | ❌ | 详细描述 |
+| `entities` | ❌ | 关联实体列表，未提供时自动从 title+description 提取 |
+| `source` | ❌ | 来源标识，默认 `webhook` |
+| `severity` | ❌ | 严重级别 `critical`/`high`/`medium`/`low`，默认 `medium` |
+| `timestamp` | ❌ | ISO 格式时间，默认当前时间 |
+| `user_id` | ❌ | 归属用户（`feishu:ou_xxx` 或 `weixin:wxid_xxx`），默认 `system` |
+
+> 💡 `user_id` 仅用于事件入库的归属标识，**不影响告警推送目标**。告警推送到哪由 `ALERT_NOTIFY_TARGETS` 控制。
+
+**B. Prometheus Alertmanager 原生格式**
+
+Alertmanager 直接推送的 JSON（含 `alerts` 字段）会被**自动识别并转换**，无需额外适配。详见上文「Prometheus Alertmanager 配置」章节。
 
 ### 记忆管理命令
 
@@ -567,6 +591,7 @@ http://<服务器IP>:8080/dashboard/
 | **Skills** | 扫描 `~/.kiro/skills/**/SKILL.md`，展示名称、描述、触发词 |
 | **Events** | 事件列表（支持按 severity/source/关键词过滤）、新增、删除 |
 | **Scheduler** | 定时任务 CRUD（启用/禁用/编辑/删除） |
+| **Resources** | AWS EC2 / RDS 资源自动发现 + CloudWatch 指标 |
 | **Config** | Core 环境变量编辑 + Alert-to-Agent 映射规则管理 |
 
 ### Alert Mappings
@@ -581,6 +606,30 @@ http://<服务器IP>:8080/dashboard/
 ```
 
 当前 webhook 告警路由为硬编码（`ec2-alert-analyzer`），Dashboard Mappings 用于可视化展示配置，后续可扩展为动态路由。
+
+### Resources（AWS 资源监控）
+
+Dashboard 自动发现 AWS 资源并展示 CloudWatch 指标：
+
+| 资源类型 | 发现方式 | 指标 |
+|----------|----------|------|
+| **EC2** | boto3 `describe_instances` | CPUUtilization（7天/30天） |
+| **RDS** | boto3 `describe_db_instances` | CPUUtilization（7天/30天） |
+
+**展示内容：**
+- 资源列表（名称、实例类型、状态、区域）
+- Sparkline 迷你趋势图（7 天 CPU 均值）
+- 统计卡片：7天 avg / p95 / max，30天 avg / p95 / max
+- 置顶（Pin）常用资源，置顶项优先显示
+
+**前置条件：**
+1. 安装 `boto3`：`pip3 install boto3`
+2. 配置 AWS 凭证（以下任一方式）：
+   - `.env` 中设置 `AWS_ACCESS_KEY_ID` 和 `AWS_SECRET_ACCESS_KEY`
+   - 实例挂载 IAM Role
+   - `~/.aws/credentials` 标准凭证文件
+
+**缓存策略：** 5 分钟 TTL，支持手动刷新。
 
 ---
 
