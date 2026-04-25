@@ -565,10 +565,14 @@ const ResourcesPage = {
               <th style="width:40px">⭐</th>
               <th>Name</th>
               <th>Type</th>
+              <th>Region</th>
+              <th>机型</th>
+              <th>OS</th>
               <th>ID</th>
               <th>Status</th>
               <th style="width:120px">7d Trend</th>
-              <th style="width:70px">CPU</th>
+              <th style="width:120px">7d Avg/P95/Max</th>
+              <th style="width:120px">30d Avg/P95/Max</th>
             </tr>
           </thead>
           <tbody>
@@ -576,12 +580,16 @@ const ResourcesPage = {
               <td><button class="pin-btn" @click="togglePin(r.id)">{{ isPinned(r.id) ? '★' : '☆' }}</button></td>
               <td>{{ r.name }}</td>
               <td><span :class="'badge badge-' + r.type">{{ r.type }}</span></td>
+              <td>{{ r.meta.region || '-' }}</td>
+              <td>{{ r.type === 'ec2' ? (r.meta.instance_type || '-') : (r.meta.db_instance_class || '-') }}</td>
+              <td>{{ r.type === 'ec2' ? (r.meta.os || '-') : (r.meta.engine || '-') }}</td>
               <td><code class="tag">{{ r.raw_id }}</code></td>
               <td>{{ r.status }}</td>
               <td v-html="sparklineSvg(r.sparkline, sparklineColor(r.type))"></td>
-              <td>{{ r.current != null ? r.current + '%' : '-' }}</td>
+              <td>{{ formatStats(r.stats_7d) }}</td>
+              <td>{{ formatStats(r.stats_30d) }}</td>
             </tr>
-            <tr v-if="filteredResources.length === 0"><td colspan="7" class="empty">暂无数据</td></tr>
+            <tr v-if="filteredResources.length === 0"><td colspan="11" class="empty">暂无数据</td></tr>
           </tbody>
         </table>
       </div>
@@ -626,6 +634,10 @@ const ResourcesPage = {
       }).filter(Boolean).join(" ");
       return `<svg viewBox="0 0 100 30" width="100" height="30" style="display:block"><polyline fill="none" stroke="${color}" stroke-width="2" points="${pts}"/></svg>`;
     }
+    function formatStats(stats) {
+      if (!stats || stats.avg == null) return '-';
+      return `${stats.avg}% / ${stats.p95}% / ${stats.max}%`;
+    }
     async function load(refresh = false) {
       const qs = new URLSearchParams();
       if (refresh) qs.append("refresh", "1");
@@ -644,7 +656,7 @@ const ResourcesPage = {
     });
 
     onMounted(() => load());
-    return { resources, pins, filterType, searchQ, onlyPinned, isPinned, togglePin, sparklineSvg, sparklineColor, filteredResources, load };
+    return { resources, pins, filterType, searchQ, onlyPinned, isPinned, togglePin, sparklineSvg, sparklineColor, formatStats, filteredResources, load };
   }
 };
 
