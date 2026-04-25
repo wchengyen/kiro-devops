@@ -37,6 +37,8 @@ class ScheduledJob:
     prompt: str         # 要执行的 kiro 指令
     created_at: str = field(default_factory=lambda: datetime.now().isoformat())
     enabled: bool = True
+    notify_target: str = ""
+    source_platform: str = "feishu"
 
 
 class Scheduler:
@@ -97,11 +99,12 @@ class Scheduler:
 
     def _execute_job(self, job: ScheduledJob):
         log.info(f"执行定时任务 #{job.id}: {job.prompt[:50]}...")
+        target = job.notify_target or job.user_id
         try:
             result = self._kiro(job.prompt)
-            self._send(job.user_id, f"⏰ 定时任务 #{job.id} 执行结果：\n\n{result}")
+            self._send(target, f"⏰ 定时任务 #{job.id} 执行结果：\n\n{result}")
         except Exception as e:
-            self._send(job.user_id, f"❌ 定时任务 #{job.id} 执行失败: {e}")
+            self._send(target, f"❌ 定时任务 #{job.id} 执行失败: {e}")
 
     # ---- 后台线程 ----
     def _start_runner(self):
@@ -114,7 +117,7 @@ class Scheduler:
         log.info("定时任务调度器已启动")
 
     # ---- 用户命令处理 ----
-    def handle_command(self, user_id: str, text: str) -> str:
+    def handle_command(self, user_id: str, text: str, source_platform: str = "feishu") -> str:
         """处理 /schedule 命令，返回回复文本"""
         text = text.strip()
 
@@ -147,6 +150,7 @@ class Scheduler:
             job = ScheduledJob(
                 id=self._next_id, user_id=user_id,
                 frequency=freq, time_str=time_str, prompt=prompt,
+                notify_target=user_id, source_platform=source_platform,
             )
             self._jobs.append(job)
             self._next_id += 1
