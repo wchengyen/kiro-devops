@@ -10,6 +10,8 @@ import urllib.request
 import urllib.error
 from typing import Callable
 
+import qrcode
+
 from .base import PlatformAdapter, IncomingMessage, OutgoingPayload
 
 log = logging.getLogger("adapter-weixin")
@@ -95,7 +97,14 @@ class WeixinAdapter(PlatformAdapter):
         qr_resp = _get(base + "ilink/bot/get_bot_qrcode?bot_type=3")
         qrcode_id = qr_resp.get("qrcode")
         qrcode_url = qr_resp.get("qrcode_img_content")
-        print(f"\n请扫描二维码登录微信 Bot:\n{qrcode_url}\n", flush=True)
+        print(f"\n📱 请用微信扫描下方二维码登录 Bot:\n", flush=True)
+        try:
+            qr = qrcode.QRCode(border=1)
+            qr.add_data(qrcode_url)
+            qr.print_ascii(invert=True)
+        except Exception as e:
+            log.warning(f"打印二维码失败: {e}")
+        print(f"\n或复制链接到浏览器: {qrcode_url}\n", flush=True)
 
         poll_url = base + f"ilink/bot/get_qrcode_status?qrcode={qrcode_id}"
         deadline = time.time() + 480
