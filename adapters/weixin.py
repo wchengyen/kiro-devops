@@ -4,6 +4,7 @@ import base64
 import json
 import logging
 import os
+import secrets
 import struct
 import time
 import urllib.request
@@ -221,7 +222,9 @@ class WeixinAdapter(PlatformAdapter):
         for chunk in chunks:
             body = {
                 "msg": {
+                    "from_user_id": "",
                     "to_user_id": raw_user_id,
+                    "client_id": f"kiro-{secrets.token_hex(8)}",
                     "message_type": 2,
                     "message_state": 2,
                     "context_token": ctx,
