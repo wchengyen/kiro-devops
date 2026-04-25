@@ -109,3 +109,12 @@ class ConfigStore:
         data = self._read_dashboard_config()
         data["service_rules"] = rules
         self._write_dashboard_config(data)
+
+    def read_pinned_resources(self) -> list[str]:
+        data = self._read_dashboard_config()
+        return data.get("pinned_resources", [])
+
+    def write_pinned_resources(self, pins: list[str]) -> None:
+        data = self._read_dashboard_config()
+        data["pinned_resources"] = pins
+        self._write_dashboard_config(data)

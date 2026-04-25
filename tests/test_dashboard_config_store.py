@@ -119,3 +119,26 @@ def test_read_mappings_malformed_json(temp_mappings_file):
         f.write("not json at all")
     store = ConfigStore(env_path="/nonexistent.env", mappings_path=temp_mappings_file)
     assert store.read_mappings() == []
+
+
+def test_pinned_resources_roundtrip(temp_mappings_file):
+    store = ConfigStore(env_path="/nonexistent.env", mappings_path=temp_mappings_file)
+    pins = ["ec2:i-123", "rds:my-db"]
+    store.write_pinned_resources(pins)
+
+    read_back = store.read_pinned_resources()
+    assert read_back == pins
+
+
+def test_read_pinned_resources_missing_file():
+    store = ConfigStore(env_path="/nonexistent.env", mappings_path="/nonexistent.json")
+    assert store.read_pinned_resources() == []
+
+
+def test_read_pinned_resources_preserves_other_keys(temp_mappings_file):
+    store = ConfigStore(env_path="/nonexistent.env", mappings_path=temp_mappings_file)
+    store.write_mappings([{"alert_keyword": "cpu", "agent": "infra-agent"}])
+    store.write_pinned_resources(["ec2:i-123"])
+
+    assert store.read_mappings() == [{"alert_keyword": "cpu", "agent": "infra-agent"}]
+    assert store.read_pinned_resources() == ["ec2:i-123"]
