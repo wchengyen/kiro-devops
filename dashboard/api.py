@@ -11,6 +11,7 @@ from dashboard.config_store import ConfigStore, CORE_KEYS
 from event_ingest import webhook_handler, ingest_to_store
 from event_store import EventStore
 from dashboard.resources import get_all_resources_with_metrics
+from dashboard.metrics_store import MetricsStore
 
 
 SENSITIVE_KEYS = {"WEBHOOK_TOKEN", "DASHBOARD_TOKEN"}
@@ -256,3 +257,22 @@ def set_resource_pins():
     store = ConfigStore()
     store.write_pinned_resources(pins)
     return jsonify({"ok": True})
+
+
+@dashboard_bp.route("/api/dashboard/resources/<path:resource_id>/history", methods=["GET"])
+@require_auth
+def get_resource_history(resource_id):
+    metric = request.args.get("metric", "cpu_utilization")
+    range_label = request.args.get("range", "24h")
+    valid_ranges = {"24h", "7d", "30d", "180d"}
+    if range_label not in valid_ranges:
+        return jsonify({"ok": False, "error": f"Invalid range. Use one of: {', '.join(valid_ranges)}"}), 400
+
+    store = MetricsStore()
+    try:
+        result = store.query_history(resource_id, metric, range_label)
+        return jsonify({"ok": True, **result})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
+    finally:
+        store.close()
