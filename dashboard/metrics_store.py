@@ -84,6 +84,63 @@ class MetricsStore:
             self._agg_conn = conn
         return self._agg_conn
 
+    def write_hourly(self, records: list[tuple]):
+        """Bulk insert hourly records with UPSERT.
+
+        records: list of (resource_id, metric_name, timestamp, value, region)
+        """
+        if not records:
+            return
+        # Group by (year, month) to write to correct DB
+        grouped: dict[tuple[int, int], list[tuple]] = {}
+        for r in records:
+            ts = r[2]
+            dt = datetime.utcfromtimestamp(ts)
+            key = (dt.year, dt.month)
+            grouped.setdefault(key, []).append(r)
+
+        for (year, month), rows in grouped.items():
+            conn = self._raw_conn(year, month)
+            conn.executemany(
+                """
+                INSERT INTO hourly_metrics (resource_id, metric_name, timestamp, value, region)
+                VALUES (?, ?, ?, ?, ?)
+                ON CONFLICT(resource_id, metric_name, timestamp) DO UPDATE SET
+                    value=excluded.value,
+                    region=excluded.region
+                """,
+                rows,
+            )
+            conn.commit()
+
+    def query_hourly(self, resource_id: str, metric_name: str, start_ts: int, end_ts: int) -> list[dict]:
+        """Query hourly data across one or two monthly DBs."""
+        start_dt = datetime.utcfromtimestamp(start_ts)
+        end_dt = datetime.utcfromtimestamp(end_ts)
+        months = []
+        y, m = start_dt.year, start_dt.month
+        while (y, m) <= (end_dt.year, end_dt.month):
+            months.append((y, m))
+            m += 1
+            if m > 12:
+                m = 1
+                y += 1
+
+        results = []
+        for year, month in months:
+            conn = self._raw_conn(year, month)
+            cursor = conn.execute(
+                """
+                SELECT timestamp, value FROM hourly_metrics
+                WHERE resource_id = ? AND metric_name = ? AND timestamp >= ? AND timestamp <= ?
+                ORDER BY timestamp
+                """,
+                (resource_id, metric_name, start_ts, end_ts),
+            )
+            for row in cursor.fetchall():
+                results.append({"timestamp": row[0], "value": row[1]})
+        return results
+
     def close(self):
         for conn in self._raw_conns.values():
             conn.close()
