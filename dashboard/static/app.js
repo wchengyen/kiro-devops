@@ -578,6 +578,7 @@ const ResourcesPage = {
               <th style="width:120px">7d Trend</th>
               <th style="width:120px">7d Avg/P95/Max</th>
               <th style="width:120px">30d Avg/P95/Max</th>
+              <th style="width:40px"></th>
             </tr>
           </thead>
           <tbody>
@@ -593,8 +594,39 @@ const ResourcesPage = {
               <td v-html="sparklineSvg(r.sparkline, sparklineColor(r.type))"></td>
               <td>{{ formatStats(r.stats_7d) }}</td>
               <td>{{ formatStats(r.stats_30d) }}</td>
+              <td><button class="pin-btn" @click="toggleExpand(r.id)">{{ expandedId === r.id ? '▼' : '▶' }}</button></td>
             </tr>
-            <tr v-if="filteredResources.length === 0"><td colspan="11" class="empty">暂无数据</td></tr>
+            <tr v-if="expandedId === r.id" :key="r.id + '-history'">
+              <td colspan="13" style="background:#f8fafc;padding:16px">
+                <div style="max-width:800px">
+                  <div style="display:flex;gap:8px;margin-bottom:12px">
+                    <button
+                      v-for="rng in historyRanges"
+                      :key="rng"
+                      :class="{ active: historyRange === rng }"
+                      @click="historyRange = rng; loadHistory(r.id, rng)"
+                      style="padding:4px 12px;border:1px solid #cbd5e1;border-radius:4px;background:#fff;cursor:pointer"
+                      :style="historyRange === rng ? 'background:#3b82f6;color:#fff;border-color:#3b82f6' : ''"
+                    >{{ rng }}</button>
+                  </div>
+                  <div v-if="historyLoading" style="color:#64748b">加载中...</div>
+                  <div v-else-if="historyData && historyData.error" style="color:#ef4444">{{ historyData.error }}</div>
+                  <div v-else-if="historyData && historyData.ok">
+                    <div style="font-size:12px;color:#64748b;margin-bottom:4px">
+                      粒度: {{ historyData.granularity }}
+                    </div>
+                    <div v-html="historyChartSvg(historyData.data, sparklineColor(r.type))"></div>
+                    <div style="display:flex;gap:24px;margin-top:8px;font-size:13px">
+                      <span>MIN: <b>{{ historyData.stats.min != null ? historyData.stats.min + '%' : '-' }}</b></span>
+                      <span>AVG: <b>{{ historyData.stats.avg != null ? historyData.stats.avg + '%' : '-' }}</b></span>
+                      <span>P95: <b>{{ historyData.stats.p95 != null ? historyData.stats.p95 + '%' : '-' }}</b></span>
+                      <span>MAX: <b>{{ historyData.stats.max != null ? historyData.stats.max + '%' : '-' }}</b></span>
+                    </div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+            <tr v-if="filteredResources.length === 0"><td colspan="13" class="empty">暂无数据</td></tr>
           </tbody>
         </table>
       </div>
@@ -610,6 +642,50 @@ const ResourcesPage = {
     const filterClass = ref("");
     const filterOs = ref("");
     const onlyPinned = ref(false);
+    const expandedId = ref(null);
+    const historyData = ref(null);
+    const historyLoading = ref(false);
+    const historyRange = ref("24h");
+    const historyRanges = ["24h", "7d", "30d", "180d"];
+
+    async function loadHistory(resourceId, range) {
+      historyLoading.value = true;
+      historyData.value = null;
+      try {
+        const data = await api(`/resources/${encodeURIComponent(resourceId)}/history?range=${range}`);
+        historyData.value = data;
+      } catch (e) {
+        historyData.value = { error: e.message };
+      } finally {
+        historyLoading.value = false;
+      }
+    }
+
+    function toggleExpand(id) {
+      if (expandedId.value === id) {
+        expandedId.value = null;
+        historyData.value = null;
+      } else {
+        expandedId.value = id;
+        loadHistory(id, historyRange.value);
+      }
+    }
+
+    function historyChartSvg(data, color) {
+      if (!data || data.length < 2) return '<span style="color:#cbd5e1">-</span>';
+      const values = data.map(d => d.value != null ? d.value : d.avg_value);
+      const valid = values.filter(v => v != null);
+      if (valid.length < 2) return '<span style="color:#cbd5e1">-</span>';
+      const min = Math.min(...valid), max = Math.max(...valid);
+      const range = max - min || 1;
+      const pts = values.map((v, i) => {
+        if (v == null) return "";
+        const x = (i / (values.length - 1)) * 100;
+        const y = 60 - ((v - min) / range) * 60;
+        return `${x},${y}`;
+      }).filter(Boolean).join(" ");
+      return `<svg viewBox="0 0 100 60" width="100%" height="120" style="display:block"><polyline fill="none" stroke="${color}" stroke-width="2" points="${pts}"/></svg>`;
+    }
 
     function isPinned(id) { return pins.value.includes(id); }
     async function togglePin(id) {
@@ -697,7 +773,7 @@ const ResourcesPage = {
     });
 
     onMounted(() => load());
-    return { resources, pins, filterType, searchQ, filterRegion, filterStatus, filterClass, filterOs, onlyPinned, isPinned, togglePin, sparklineSvg, sparklineColor, formatStats, resetFilters, filteredResources, load };
+    return { resources, pins, filterType, searchQ, filterRegion, filterStatus, filterClass, filterOs, onlyPinned, isPinned, togglePin, sparklineSvg, sparklineColor, formatStats, resetFilters, filteredResources, load, expandedId, historyData, historyLoading, historyRange, historyRanges, toggleExpand, loadHistory, historyChartSvg };
   }
 };
 
