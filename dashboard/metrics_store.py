@@ -224,6 +224,69 @@ class MetricsStore:
         conn.commit()
         return cursor.rowcount
 
+    def query_history(self, resource_id: str, metric_name: str, range_label: str) -> dict:
+        """Unified history query. range_label: 24h, 7d, 30d, 180d."""
+        now = datetime.utcnow()
+        if range_label == "24h":
+            start = now - timedelta(hours=24)
+            granularity = "hourly"
+        elif range_label == "7d":
+            start = now - timedelta(days=7)
+            granularity = "hourly"
+        elif range_label == "30d":
+            start = now - timedelta(days=30)
+            granularity = "hourly"
+        elif range_label == "180d":
+            start = now - timedelta(days=180)
+            granularity = "daily"
+        else:
+            raise ValueError(f"Unsupported range: {range_label}")
+
+        if granularity == "hourly":
+            data = self.query_hourly(
+                resource_id, metric_name,
+                int(start.timestamp()), int(now.timestamp()),
+            )
+            values = [d["value"] for d in data if d["value"] is not None]
+            stats = self._compute_stats(values)
+        else:
+            data_raw = self.query_daily(
+                resource_id, metric_name,
+                start.strftime("%Y-%m-%d"), now.strftime("%Y-%m-%d"),
+            )
+            data = [{"timestamp": int(datetime.strptime(d["date"], "%Y-%m-%d").timestamp()), **d}
+                    for d in data_raw]
+            values = [d["avg_value"] for d in data_raw]
+            stats = {
+                "min": round(min([d["min_value"] for d in data_raw]), 1) if data_raw else None,
+                "avg": round(sum(values) / len(values), 1) if values else None,
+                "p95": round(sorted([d["p95_value"] for d in data_raw])[int(len(data_raw) * 0.95)], 1) if data_raw else None,
+                "max": round(max([d["max_value"] for d in data_raw]), 1) if data_raw else None,
+            }
+
+        return {
+            "resource_id": resource_id,
+            "metric": metric_name,
+            "range": range_label,
+            "granularity": granularity,
+            "data": data,
+            "stats": stats,
+        }
+
+    @staticmethod
+    def _compute_stats(values: list[float]) -> dict:
+        if not values:
+            return {"min": None, "avg": None, "p95": None, "max": None}
+        sorted_vals = sorted(values)
+        idx = int(len(sorted_vals) * 0.95)
+        p95 = sorted_vals[min(idx, len(sorted_vals) - 1)]
+        return {
+            "min": round(min(values), 1),
+            "avg": round(sum(values) / len(values), 1),
+            "p95": round(p95, 1),
+            "max": round(max(values), 1),
+        }
+
     def close(self):
         for conn in self._raw_conns.values():
             conn.close()

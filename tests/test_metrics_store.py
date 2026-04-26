@@ -2,6 +2,7 @@ import os
 import sqlite3
 import tempfile
 from datetime import datetime
+from unittest.mock import patch
 
 import pytest
 
@@ -64,4 +65,37 @@ def test_downsample_and_query_daily():
         assert row["max_value"] == 33.0
         assert row["p95_value"] == 32.0  # 95th percentile of 24 values
 
+        store.close()
+
+def test_query_history_routes_to_hourly():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        store = MetricsStore(base_dir=tmpdir)
+        base = int(datetime(2026, 4, 25, 0, 0, 0).timestamp())
+        store.write_hourly([
+            ("ec2:cn-north-1:i-123", "cpu_utilization", base, 10.0, "cn-north-1"),
+        ])
+        with patch("dashboard.metrics_store.datetime") as mock_dt:
+            mock_dt.utcnow.return_value = datetime(2026, 4, 25, 12, 0, 0)
+            mock_dt.utcfromtimestamp = datetime.utcfromtimestamp
+            mock_dt.strptime = datetime.strptime
+            mock_dt.timedelta = __import__("datetime").timedelta
+            result = store.query_history("ec2:cn-north-1:i-123", "cpu_utilization", "24h")
+        assert result["granularity"] == "hourly"
+        assert len(result["data"]) == 1
+        store.close()
+
+
+def test_query_history_routes_to_daily():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        store = MetricsStore(base_dir=tmpdir)
+        base = int(datetime(2026, 4, 25, 0, 0, 0).timestamp())
+        store.write_hourly([
+            ("ec2:cn-north-1:i-123", "cpu_utilization", base + h * 3600, float(10 + h), "cn-north-1")
+            for h in range(24)
+        ])
+        store.downsample_month(2026, 4)
+
+        result = store.query_history("ec2:cn-north-1:i-123", "cpu_utilization", "180d")
+        assert result["granularity"] == "daily"
+        assert len(result["data"]) == 1
         store.close()
