@@ -1,7 +1,9 @@
 from dashboard.providers.aws import AWSProvider
+from dashboard.providers.tencent import TencentProvider
 
 _REGISTRY = {
     "aws": AWSProvider,
+    "tencent": TencentProvider,
 }
 
 
