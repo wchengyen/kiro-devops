@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Optional
 @dataclass
 class Resource:
     provider: str
-    type: str
+    resource_type: str
     region: str
     id: str
     name: str
@@ -19,7 +19,7 @@ class Resource:
 
     @property
     def unique_id(self) -> str:
-        return f"{self.provider}:{self.type}:{self.region}:{self.id}"
+        return f"{self.provider}:{self.resource_type}:{self.region}:{self.id}"
 
 
 @dataclass
@@ -35,8 +35,8 @@ class ResourceMetrics:
     points_7d: List[MetricPoint]
     points_30d: List[MetricPoint]
     current: Optional[float] = None
-    stats_7d: Optional[Dict] = None
-    stats_30d: Optional[Dict] = None
+    stats_7d: Optional[Dict[str, Any]] = None
+    stats_30d: Optional[Dict[str, Any]] = None
     sparkline_7d: List[float] = field(default_factory=list)
 
 
@@ -65,4 +65,10 @@ class BaseResourceProvider(ABC):
     ) -> ResourceMetrics: ...
 
     @abstractmethod
-    def sync_metrics_to_store(self, store, backfill_days: int = 1) -> None: ...
+    def sync_metrics_to_store(self, store, backfill_days: int = 1) -> None:
+        """Sync metrics to a store that implements write_raw(provider, timestamp, resource_id, metric, value).
+
+        Args:
+            store: A metrics store with a ``write_raw`` method (e.g. MetricsStore).
+            backfill_days: Number of days to backfill when syncing.
+        """
