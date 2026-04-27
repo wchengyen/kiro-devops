@@ -807,3 +807,35 @@ main() {
 }
 
 main "$@"
+
+# ---------------------------------------------------------------------------
+# Tencent Cloud dashboard enable/disable prompt
+# ---------------------------------------------------------------------------
+read -p "Enable Tencent Cloud dashboard? [y/N] " enable_tencent
+enable_tencent=${enable_tencent:-N}
+if [[ "$enable_tencent" =~ ^[Yy]$ ]]; then
+    read -p "Tencent regions to monitor [ap-tokyo]: " tencent_regions
+    tencent_regions=${tencent_regions:-ap-tokyo}
+    # Convert space-separated to JSON array
+    tencent_regions_json=$(echo "$tencent_regions" | tr ' ' '\n' | jq -R . | jq -s .)
+    python3 -c "
+import json, sys
+with open('dashboard_config.json', 'r+') as f:
+    cfg = json.load(f)
+    cfg.setdefault('providers', {})
+    cfg['providers']['tencent'] = {'enabled': True, 'regions': $tencent_regions_json}
+    f.seek(0); json.dump(cfg, f, indent=2); f.truncate()
+"
+    if ! command -v tccli &> /dev/null; then
+        echo "WARNING: tccli not found in PATH. Please install and configure it."
+    fi
+else
+    python3 -c "
+import json
+with open('dashboard_config.json', 'r+') as f:
+    cfg = json.load(f)
+    cfg.setdefault('providers', {})
+    cfg['providers']['tencent'] = {'enabled': False, 'regions': []}
+    f.seek(0); json.dump(cfg, f, indent=2); f.truncate()
+"
+fi
