@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Tests for dashboard resources API routes."""
 
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
 import pytest
 from flask import Flask
@@ -29,41 +29,65 @@ def auth_client(client):
     return client
 
 
-@patch("dashboard.api.get_all_resources_with_metrics")
-def test_get_resources(mock_get, auth_client):
-    mock_get.return_value = {
-        "resources": [
-            {
-                "id": "ec2:i-123",
-                "type": "ec2",
-                "name": "test1",
-                "raw_id": "i-123",
-                "status": "running",
-                "meta": {},
-                "sparkline": [10.0, 20.0],
-                "current": 20.0,
-            }
-        ],
-        "cached": False,
-        "error": None,
+def _make_mock_resource(**kwargs):
+    defaults = {
+        "unique_id": "aws:ec2:us-east-1:i-123",
+        "resource_type": "ec2",
+        "name": "test1",
+        "id": "i-123",
+        "status": "running",
+        "meta": {},
+        "tags": {},
     }
+    defaults.update(kwargs)
+    m = MagicMock()
+    for k, v in defaults.items():
+        setattr(m, k, v)
+    return m
+
+
+def _make_mock_metrics(**kwargs):
+    defaults = {
+        "sparkline_7d": [10.0, 20.0],
+        "current": 20.0,
+        "stats_7d": {"avg": None, "p95": None, "max": None},
+        "stats_30d": {"avg": None, "p95": None, "max": None},
+    }
+    defaults.update(kwargs)
+    m = MagicMock()
+    for k, v in defaults.items():
+        setattr(m, k, v)
+    return m
+
+
+@patch("dashboard.api.get_provider")
+def test_get_resources(mock_get_provider, auth_client):
+    mock_provider = mock_get_provider.return_value
+    mock_provider.name = "aws"
+    mock_provider.regions.return_value = ["us-east-1"]
+    mock_provider.resource_types.return_value = ["ec2"]
+    mock_provider.discover_resources.return_value = [
+        _make_mock_resource(),
+    ]
+    mock_provider.get_metrics.return_value = _make_mock_metrics()
     resp = auth_client.get("/api/dashboard/resources")
     assert resp.status_code == 200
     assert resp.json["ok"] is True
     assert len(resp.json["resources"]) == 1
-    assert resp.json["resources"][0]["id"] == "ec2:i-123"
+    assert resp.json["resources"][0]["id"] == "aws:ec2:us-east-1:i-123"
 
 
-@patch("dashboard.api.get_all_resources_with_metrics")
-def test_get_resources_filter_by_type(mock_get, auth_client):
-    mock_get.return_value = {
-        "resources": [
-            {"id": "ec2:i-123", "type": "ec2", "name": "test1", "raw_id": "i-123", "status": "running", "meta": {}, "sparkline": [], "current": None},
-            {"id": "rds:my-db", "type": "rds", "name": "my-db", "raw_id": "my-db", "status": "available", "meta": {}, "sparkline": [], "current": None},
-        ],
-        "cached": False,
-        "error": None,
-    }
+@patch("dashboard.api.get_provider")
+def test_get_resources_filter_by_type(mock_get_provider, auth_client):
+    mock_provider = mock_get_provider.return_value
+    mock_provider.name = "aws"
+    mock_provider.regions.return_value = ["us-east-1"]
+    mock_provider.resource_types.return_value = ["ec2", "rds"]
+    mock_provider.discover_resources.return_value = [
+        _make_mock_resource(unique_id="aws:ec2:us-east-1:i-123", resource_type="ec2", name="test1", id="i-123"),
+        _make_mock_resource(unique_id="aws:rds:us-east-1:my-db", resource_type="rds", name="my-db", id="my-db"),
+    ]
+    mock_provider.get_metrics.return_value = _make_mock_metrics(sparkline_7d=[], current=None)
     resp = auth_client.get("/api/dashboard/resources?type=ec2")
     assert resp.status_code == 200
     assert len(resp.json["resources"]) == 1

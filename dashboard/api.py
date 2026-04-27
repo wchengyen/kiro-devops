@@ -3,6 +3,7 @@
 
 import json
 import os
+import time
 from flask import jsonify, request
 
 from dashboard import dashboard_bp, require_auth
@@ -19,11 +20,68 @@ from dashboard.kiro_scanner import (
 from dashboard.config_store import ConfigStore, CORE_KEYS
 from event_ingest import webhook_handler, ingest_to_store
 from event_store import EventStore
-from dashboard.resources import get_all_resources_with_metrics
+from dashboard.providers import get_provider
 from dashboard.metrics_store import MetricsStore
 
 
 SENSITIVE_KEYS = {"WEBHOOK_TOKEN", "DASHBOARD_TOKEN"}
+
+_resource_cache = {}
+CACHE_TTL = 300
+
+
+def _parse_provider_from_id(resource_id: str) -> str:
+    first = resource_id.split(":", 1)[0]
+    if first in ("aws", "tencent"):
+        return first
+    return "aws"
+
+
+def _cache_key(provider_name: str) -> str:
+    return f"resources:{provider_name}"
+
+
+def _fetch_resources_for_provider(provider, refresh=False):
+    key = _cache_key(provider.name)
+    now = time.time()
+    if not refresh and key in _resource_cache:
+        data, ts = _resource_cache[key]
+        if (now - ts) < CACHE_TTL:
+            data["cached"] = True
+            return data
+
+    resources = []
+    for region in provider.regions():
+        for rtype in provider.resource_types():
+            resources.extend(provider.discover_resources(region, rtype))
+
+    result_resources = []
+    for resource in resources:
+        metrics = provider.get_metrics(resource, range_days=7)
+        result_resources.append(
+            {
+                "id": resource.unique_id,
+                "type": resource.resource_type,
+                "name": resource.name,
+                "raw_id": resource.id,
+                "status": resource.status,
+                "meta": resource.meta,
+                "tags": resource.tags,
+                "sparkline": metrics.sparkline_7d,
+                "current": metrics.current,
+                "stats_7d": metrics.stats_7d or {"avg": None, "p95": None, "max": None},
+                "stats_30d": metrics.stats_30d or {"avg": None, "p95": None, "max": None},
+            }
+        )
+
+    data = {
+        "resources": result_resources,
+        "regions": provider.regions(),
+        "cached": False,
+        "error": None,
+    }
+    _resource_cache[key] = (data, now)
+    return data
 
 
 @dashboard_bp.route("/api/dashboard/agents", methods=["GET"])
@@ -300,8 +358,10 @@ def get_resources():
     resource_type = request.args.get("type", "")
     tag_key = request.args.get("tag_key", "")
     tag_value = request.args.get("tag_value", "")
+    provider_name = request.args.get("provider", "aws")
     try:
-        data = get_all_resources_with_metrics(refresh=refresh)
+        provider = get_provider(provider_name)
+        data = _fetch_resources_for_provider(provider, refresh=refresh)
         resources = data.get("resources", [])
         if resource_type:
             resources = [r for r in resources if r["type"] == resource_type]
@@ -348,6 +408,9 @@ def get_resource_history(resource_id):
     valid_ranges = {"24h", "7d", "30d", "180d"}
     if range_label not in valid_ranges:
         return jsonify({"ok": False, "error": f"Invalid range. Use one of: {', '.join(valid_ranges)}"}), 400
+
+    provider_name = _parse_provider_from_id(resource_id)
+    get_provider(provider_name)  # validate provider exists
 
     store = MetricsStore()
     try:
