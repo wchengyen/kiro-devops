@@ -441,6 +441,34 @@ code.tag {
 /* ===== Misc ===== */
 .empty { text-align: center; padding: 48px; color: #cbd5e1; font-weight: 500; }
 h2.page-title { font-size: 22px; margin-bottom: 20px; color: #0b0f19; font-weight: 700; letter-spacing: -0.02em; }
+.provider-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 16px;
+  background: #f1f5f9;
+  padding: 4px;
+  border-radius: 10px;
+  width: fit-content;
+}
+.provider-tabs button {
+  padding: 6px 18px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.provider-tabs button:hover {
+  color: #0f172a;
+}
+.provider-tabs button.active {
+  background: #fff;
+  color: #0f172a;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
 /* ===== Resources Page ===== */
 tr.pinned td { background: #f8fafc; }
 tr.pinned td:first-child { border-left: 3px solid #f59e0b; }

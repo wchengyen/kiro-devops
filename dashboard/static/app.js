@@ -798,7 +798,15 @@ const ResourcesPage = {
   props: ['provider'],
   template: `
     <div>
-      <h2 class="page-title">Resources — {{ provider.toUpperCase() }}</h2>
+      <h2 class="page-title">Resources</h2>
+      <div class="provider-tabs" v-if="Object.keys(enabledProviders).length > 1">
+        <button
+          v-for="(cfg, key) in enabledProviders"
+          :key="key"
+          :class="{ active: provider === key }"
+          @click="switchProvider(key)"
+        >{{ key.toUpperCase() }}</button>
+      </div>
       <div class="toolbar">
         <select v-model="filterType" @change="load()">
           <option value="">全部类型</option>
@@ -898,11 +906,13 @@ const ResourcesPage = {
     </div>
   `,
   setup(props) {
+    const router = VueRouter.useRouter();
     const provider = props.provider || 'aws';
     const meta = providerMeta[provider] || providerMeta.aws;
     const resources = ref([]);
     const pins = ref([]);
     const regions = ref([]);
+    const enabledProviders = ref({});
     const filterType = ref("");
     const searchQ = ref("");
     const filterRegion = ref("");
@@ -1003,6 +1013,24 @@ const ResourcesPage = {
       filterTagValue.value = "";
       onlyPinned.value = false;
     }
+    async function loadProviders() {
+      try {
+        const cfg = await api("/config");
+        const all = cfg.providers || {};
+        const enabled = {};
+        for (const [k, v] of Object.entries(all)) {
+          if (v && v.enabled) enabled[k] = v;
+        }
+        enabledProviders.value = enabled;
+      } catch {
+        enabledProviders.value = {};
+      }
+    }
+    function switchProvider(key) {
+      if (key !== provider) {
+        router.push(`/resources/${key}`);
+      }
+    }
     async function load(refresh = false) {
       const qs = new URLSearchParams();
       if (refresh) qs.append("refresh", "1");
@@ -1050,8 +1078,8 @@ const ResourcesPage = {
       return list;
     });
 
-    onMounted(() => load());
-    return { meta, resources, pins, regions, filterType, searchQ, filterRegion, filterStatus, filterClass, filterOs, filterTagKey, filterTagValue, onlyPinned, isPinned, togglePin, sparklineSvg, sparklineColor, formatStats, resetFilters, filteredResources, load, expandedId, historyData, historyLoading, historyRange, historyRanges, toggleExpand, loadHistory, historyChartSvg };
+    onMounted(() => { loadProviders(); load(); });
+    return { meta, resources, pins, regions, filterType, searchQ, filterRegion, filterStatus, filterClass, filterOs, filterTagKey, filterTagValue, onlyPinned, isPinned, togglePin, sparklineSvg, sparklineColor, formatStats, resetFilters, filteredResources, load, expandedId, historyData, historyLoading, historyRange, historyRanges, toggleExpand, loadHistory, historyChartSvg, enabledProviders, switchProvider, provider };
   }
 };
 
