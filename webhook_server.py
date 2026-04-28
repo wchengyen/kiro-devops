@@ -7,6 +7,7 @@ import re
 import shutil
 import subprocess
 import threading
+import time
 
 from flask import Flask, request, jsonify
 
@@ -15,6 +16,40 @@ from dashboard import dashboard_bp
 log = logging.getLogger("webhook-server")
 webhook_app = Flask("kiro-ec2-webhook")
 webhook_app.register_blueprint(dashboard_bp)
+
+# ---- 告警去重缓存 ----
+# Alertmanager 会在告警持续期间周期性重推 webhook，需在内存层去重
+_processed_alert_ids: set[str] = set()
+_MAX_ALERT_ID_CACHE = 5000
+
+# 基于 (alertname, instance, status) 的滑动窗口去重（处理 startsAt 微秒差异导致的不同 event_id）
+_alert_window_cache: dict[tuple[str, str, str], float] = {}
+_ALERT_DEDUP_WINDOW_SEC = 300  # 5 分钟窗口
+
+
+def _is_duplicate_alert(record: dict) -> bool:
+    """检查是否为重复告警推送。"""
+    event_id = record.get("event_id", "")
+    if event_id in _processed_alert_ids:
+        log.info(f"告警去重(event_id): {event_id}")
+        return True
+    _processed_alert_ids.add(event_id)
+    if len(_processed_alert_ids) > _MAX_ALERT_ID_CACHE:
+        half = list(_processed_alert_ids)[_MAX_ALERT_ID_CACHE // 2:]
+        _processed_alert_ids.clear()
+        _processed_alert_ids.update(half)
+
+    # 窗口去重：同一 alert + instance + status 在 5 分钟内只处理一次
+    labels = record.get("entities", [])
+    instance = labels[0] if labels else "unknown"
+    alert_key = (record.get("source", "prometheus"), instance, record.get("event_type", ""))
+    now = time.time()
+    last = _alert_window_cache.get(alert_key, 0)
+    if now - last < _ALERT_DEDUP_WINDOW_SEC:
+        log.info(f"告警去重(5min窗口): {alert_key}")
+        return True
+    _alert_window_cache[alert_key] = now
+    return False
 
 
 def strip_ansi(text: str) -> str:
@@ -55,7 +90,7 @@ def _parse_alertmanager(payload: dict) -> dict:
     is_resolved = alert.get("status") == "resolved"
     return {
         "ok": True,
-        "event_id": f"prom-{labels.get('alertname', 'unknown')}-{alert['startsAt'][:19]}",
+        "event_id": f"prom-{labels.get('alertname', 'unknown')}-{alert['startsAt'][:19]}-{'resolved' if is_resolved else 'firing'}",
         "user_id": os.environ.get("ALERT_NOTIFY_USER_ID", "system"),
         "event_type": "故障处理" if is_resolved else "指标异常",
         "title": f"{'[RESOLVED] ' if is_resolved else ''}{ann.get('summary', labels.get('alertname'))}",
@@ -111,18 +146,22 @@ def create_routes(handler):
             log.warning("事件存储不可用，跳过入库")
 
         auto_severities = os.environ.get("ALERT_AUTO_ANALYZE_SEVERITY", "high,critical").split(",")
-        if record.get("severity") in auto_severities:
+        should_analyze = record.get("severity") in auto_severities
+
+        if should_analyze and not _is_duplicate_alert(record):
             threading.Thread(
                 target=_trigger_analysis,
                 args=(handler, record),
                 daemon=True,
                 name=f"kiro-alert-{record['event_id'][:8]}"
             ).start()
+        elif should_analyze:
+            should_analyze = False
 
         return jsonify({
             "ok": True,
             "event_id": record["event_id"],
-            "analysis_triggered": record.get("severity") in auto_severities
+            "analysis_triggered": should_analyze
         }), 200
 
     @webhook_app.route("/health", methods=["GET"])
