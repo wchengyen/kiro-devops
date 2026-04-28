@@ -55,9 +55,21 @@ def _fetch_resources_for_provider(provider, refresh=False):
         for rtype in provider.resource_types():
             resources.extend(provider.discover_resources(region, rtype))
 
+    store = MetricsStore()
     result_resources = []
     for resource in resources:
-        metrics = provider.get_metrics(resource, range_days=7)
+        try:
+            hist_7d = store.query_history(resource.unique_id, "CPUUtilization", "7d")
+            hist_30d = store.query_history(resource.unique_id, "CPUUtilization", "30d")
+            sparkline = [d["value"] for d in hist_7d["data"]]
+            current = sparkline[-1] if sparkline else None
+            stats_7d = hist_7d["stats"]
+            stats_30d = hist_30d["stats"]
+        except Exception:
+            sparkline = []
+            current = None
+            stats_7d = {"avg": None, "p95": None, "max": None}
+            stats_30d = {"avg": None, "p95": None, "max": None}
         result_resources.append(
             {
                 "id": resource.unique_id,
@@ -69,12 +81,13 @@ def _fetch_resources_for_provider(provider, refresh=False):
                 "class_type": getattr(resource, "class_type", None) if isinstance(getattr(resource, "class_type", None), str) else None,
                 "os_or_engine": getattr(resource, "os_or_engine", None) if isinstance(getattr(resource, "os_or_engine", None), str) else None,
                 "tags": resource.tags,
-                "sparkline": metrics.sparkline_7d,
-                "current": metrics.current,
-                "stats_7d": metrics.stats_7d or {"avg": None, "p95": None, "max": None},
-                "stats_30d": metrics.stats_30d or {"avg": None, "p95": None, "max": None},
+                "sparkline": sparkline,
+                "current": current,
+                "stats_7d": stats_7d,
+                "stats_30d": stats_30d,
             }
         )
+    store.close()
 
     data = {
         "resources": result_resources,
