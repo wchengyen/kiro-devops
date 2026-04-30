@@ -1114,12 +1114,13 @@ const ConfigPage = {
         <div class="toolbar">
           <button @click="addMapping">添加规则</button>
           <button class="secondary" @click="saveMappings">保存规则</button>
+          <button class="secondary" @click="reloadConfig">🔄 Reload Agent</button>
         </div>
         <div v-for="(m, i) in mappings" :key="i" class="info-card mapping-card" :class="{ disabled: !m.enabled }">
           <div class="mapping-header">
             <span class="mapping-index">{{ i + 1 }}</span>
             <input v-model="m.name" placeholder="规则名称" class="mapping-name" />
-            <label class="toggle"><input type="checkbox" v-model="m.enabled" /><span>{{ m.enabled ? '启用' : '停用' }}</span></label>
+            <label class="toggle toggle-large"><input type="checkbox" v-model="m.enabled" /><span class="toggle-slider"></span><span class="toggle-label">{{ m.enabled ? '启用' : '停用' }}</span></label>
             <button @click="moveMapping(i, -1)" :disabled="i === 0">↑</button>
             <button @click="moveMapping(i, 1)" :disabled="i === mappings.length - 1">↓</button>
             <button class="btn-danger-sm" @click="removeMapping(i)">删除</button>
@@ -1310,6 +1311,14 @@ const ConfigPage = {
       await api("/alert-defaults", { method: "POST", body: { defaults: { ...alertDefaults } } });
       alert("默认配置已保存");
     }
+    async function reloadConfig() {
+      try {
+        await api("/reload-config", { method: "POST" });
+        alert("Agent 配置已重新加载");
+      } catch (e) {
+        alert("重新加载失败: " + e);
+      }
+    }
     async function saveServiceRules() {
       await api("/service-rules", { method: "POST", body: { rules: serviceRules.value } });
       alert("已保存");
@@ -1342,7 +1351,7 @@ const ConfigPage = {
       alertDefaults, showDefaults, toolOptions,
       sourceOptions, agentOptions,
       saveCore, saveMappings, addMapping, removeMapping, moveMapping,
-      addLabel, removeLabel, saveAlertDefaults,
+      addLabel, removeLabel, saveAlertDefaults, reloadConfig,
       saveServiceRules, addServiceRule, removeServiceRule,
       onAgentChange
     };

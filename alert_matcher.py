@@ -131,3 +131,16 @@ class ConfigReloader:
                 self._mtime = current_mtime
 
             return self._matcher
+
+    def force_reload(self) -> AlertMatcher:
+        """Force immediate reload regardless of mtime."""
+        with self._lock:
+            data = self._store.load()
+            mappings = data.get("mappings", [])
+            defaults = data.get("alert_defaults", {})
+            self._matcher = AlertMatcher(mappings, defaults)
+            try:
+                self._mtime = os.path.getmtime(self._store.mappings_path)
+            except OSError:
+                self._mtime = 0.0
+            return self._matcher

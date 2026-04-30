@@ -200,6 +200,29 @@ cp .env.example .env
 # 编辑 .env，填入飞书/微信相关配置
 ```
 
+**Kiro Agent / Skill 目录准备：**
+
+本服务依赖 kiro-cli 的 agent 和 skill 能力，需确保以下目录结构存在：
+
+```
+~/.kiro/
+├── agents/              # kiro-cli agent 配置文件 (*.json)
+│   ├── ec2-alert-analyzer.json
+│   ├── eks-alert-analyzer.json
+│   └── aws-cost-analyzer.json
+└── skills/              # kiro-cli skill 定义文件 (SKILL.md)
+    ├── ec2-alert-analyzer/
+    │   └── SKILL.md
+    ├── eks-alert-check/
+    │   └── SKILL.md
+    └── aws-cost-analyzer/
+        └── SKILL.md
+```
+
+- **Agent 配置**：`~/.kiro/agents/*.json` 定义 kiro-cli `--agent` 可用的 agent（prompt、tools、resources）
+- **Skill 配置**：`~/.kiro/skills/**/SKILL.md` 定义 trigger 关键词和详细分析流程（告警分类、指标查询模板、输出格式）
+- Dashboard 会自动扫描这两个目录展示已安装的 Agents 和 Skills
+
 **可选配置：**
 
 | 变量 | 说明 | 默认值 |
@@ -524,6 +547,88 @@ test1 EC2 CPU usage > 80%
 - Load Average: 4.2 (4 cores)
 ═══════════════════════════════════════════════
 ```
+
+---
+
+## 🎯 Alert Mapping 规则引擎（动态 Agent 路由）
+
+默认情况下，所有 Prometheus/CloudWatch 告警都走同一个 Agent 进行分析。通过 **Alert Mapping** 规则引擎，你可以根据告警的多维度特征（alertname、source、severity、labels）将不同告警路由到不同的 Kiro Agent 和 Skill。
+
+### 规则数据结构
+
+规则保存在 `dashboard_config.json` 的 `mappings` 数组中，按**顺序匹配**，第一条满足的规则生效：
+
+```json
+{
+  "mappings": [
+    {
+      "name": "k8s-node-notready",
+      "enabled": true,
+      "match": {
+        "source": "prometheus",
+        "alertname": "NodeNotReady",
+        "severity": ["critical", "high"],
+        "labels": { "job": "node-exporter" }
+      },
+      "action": {
+        "agent": "eks-node-analyzer",
+        "tools": ["execute_bash", "fs_read", "grep"],
+        "timeout": 300,
+        "instruction": "分析 K8s Node NotReady 根因，查询 kubectl 和 EC2 状态检查"
+      }
+    },
+    {
+      "name": "aws-cost-spike",
+      "enabled": true,
+      "match": {
+        "source": "cloudwatch",
+        "alertname": ".*cost.*|.*billing.*"
+      },
+      "action": {
+        "agent": "aws-cost-analyzer",
+        "tools": ["execute_bash", "fs_read"],
+        "timeout": 300
+      }
+    }
+  ],
+  "alert_defaults": {
+    "agent": "ec2-alert-analyzer",
+    "tools": ["execute_bash"],
+    "timeout": 300
+  }
+}
+```
+
+### Match 条件语法
+
+| 条件类型 | 示例 | 说明 |
+|----------|------|------|
+| 等值匹配 | `"alertname": "NodeNotReady"` | 精确匹配 |
+| 正则匹配 | `"alertname": "Node.*\|ExporterDown"` | 自动识别（含 `.*` `\|` `^` `$` 等） |
+| 数组 OR | `"severity": ["critical", "high"]` | 满足任一即可 |
+| Labels | `"labels": {"job": "node-exporter"}` | 匹配 Prometheus labels |
+
+### 配置热加载
+
+规则引擎支持两种配置刷新方式：
+
+1. **自动热加载**（默认）：基于文件 `mtime` 检测，修改 `dashboard_config.json` 后 **1 秒内**自动生效，无需重启服务
+2. **手动 Reload**：Dashboard Alert Mappings 页面点击 **🔄 Reload Agent** 按钮，立即强制刷新配置
+
+### Dashboard 管理
+
+打开 `http://<服务器IP>:8080/dashboard/` → **Config** → **Alert Mappings**：
+
+- **规则卡片**：每条规则独立卡片，显示 Match 条件和 Action 配置
+- **启用/停用**：开关切换，停用规则会被跳过
+- **规则排序**：上下箭头调整优先级（顺序匹配）
+- **Severity / Tools 多选**：checkbox 组选择多个值
+- **Labels 动态列表**：可添加/删除任意 label 键值对
+- **Fallback Defaults**：未匹配时的默认 agent/tools/timeout
+
+### 向后兼容
+
+旧版扁平格式 `{source, service, severity, agent, skill}` 会自动迁移为新格式，不影响现有配置。
 
 ---
 

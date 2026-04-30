@@ -239,6 +239,17 @@ def post_alert_defaults():
     return jsonify({"ok": True})
 
 
+@dashboard_bp.route("/api/dashboard/reload-config", methods=["POST"])
+@require_auth
+def post_reload_config():
+    try:
+        from webhook_server import config_reloader
+        config_reloader.force_reload()
+        return jsonify({"ok": True})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
+
+
 @dashboard_bp.route("/api/dashboard/service-rules", methods=["GET"])
 @require_auth
 def get_service_rules():

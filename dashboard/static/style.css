@@ -754,3 +754,11 @@ tr.pinned:hover td { background: #f1f5f9; }
 .kv-item { display: flex; gap: 6px; align-items: center; }
 .kv-item input { flex: 1; }
 .toggle span { font-size: 12px; color: #2563eb; }
+
+/* Large toggle switch */
+.toggle-large { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+.toggle-large input[type="checkbox"] { appearance: none; width: 48px; height: 26px; background: #d1d5db; border-radius: 13px; position: relative; cursor: pointer; transition: background 0.2s; flex-shrink: 0; }
+.toggle-large input[type="checkbox"]::after { content: ""; position: absolute; top: 2px; left: 2px; width: 22px; height: 22px; background: #fff; border-radius: 50%; transition: transform 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
+.toggle-large input[type="checkbox"]:checked { background: #2563eb; }
+.toggle-large input[type="checkbox"]:checked::after { transform: translateX(22px); }
+.toggle-large .toggle-label { font-size: 13px; font-weight: 600; color: #374151; }
