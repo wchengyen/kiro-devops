@@ -499,13 +499,15 @@ tr.pinned:hover td { background: #f1f5f9; }
 .btn-sm,
 .btn-outline,
 .btn-danger-sm {
-  padding: 5px 12px;
+  padding: 6px 14px;
   border-radius: 8px;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   transition: .15s ease;
   border: 1px solid transparent;
+  line-height: 1.4;
+  white-space: nowrap;
 }
 .btn-outline {
   background: #fff;
@@ -736,11 +738,74 @@ tr.pinned:hover td { background: #f1f5f9; }
   background: #f5f5f4;
 }
 
+/* Status badge (replaces toggle switch) */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+  transition: .15s ease;
+  user-select: none;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.status-on {
+  background: #dcfce7;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+.status-off {
+  background: #f3f4f6;
+  color: #6b7280;
+  border: 1px solid #e5e7eb;
+}
+.status-badge:hover {
+  filter: brightness(0.97);
+}
+
 /* ===== Alert Mapping Cards ===== */
-.mapping-header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
-.mapping-index { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; background: #2563eb; color: #fff; border-radius: 50%; font-size: 12px; font-weight: bold; }
-.mapping-name { flex: 1; font-weight: bold; font-size: 15px; border: none; background: transparent; border-bottom: 1px dashed #ccc; padding: 4px; }
-.mapping-name:focus { outline: none; border-bottom-color: #2563eb; }
+.mapping-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+  padding: 10px 12px;
+  background: #f8fafc;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+}
+.mapping-index {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: #2563eb;
+  color: #fff;
+  border-radius: 50%;
+  font-size: 13px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.mapping-name {
+  flex: 1;
+  min-width: 140px;
+  font-weight: 600;
+  font-size: 15px;
+  border: none;
+  background: transparent;
+  border-bottom: 1px dashed #cbd5e1;
+  padding: 6px 8px;
+  border-radius: 4px;
+  transition: background 0.15s;
+}
+.mapping-name:hover { background: #fff; }
+.mapping-name:focus { outline: none; border-bottom-color: #2563eb; background: #fff; }
 .mapping-card.disabled { opacity: 0.5; }
 .mapping-body { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
 @media (max-width: 800px) { .mapping-body { grid-template-columns: 1fr; } }
@@ -764,6 +829,36 @@ tr.pinned:hover td { background: #f1f5f9; }
 .toggle-large input[type="checkbox"]:checked + .toggle-track .toggle-thumb { transform: translateX(20px); }
 .toggle-label { font-size: 13px; font-weight: 600; color: #374151; white-space: nowrap; }
 
+/* Mapping header action buttons */
+.mapping-header button {
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: .15s ease;
+  border: 1px solid transparent;
+  background: #f1f5f9;
+  color: #475569;
+  line-height: 1.4;
+}
+.mapping-header button:hover:not(:disabled) {
+  background: #e2e8f0;
+  transform: translateY(-1px);
+}
+.mapping-header button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.mapping-header .btn-danger-sm {
+  background: #fff;
+  color: #dc2626;
+  border-color: #fecaca;
+}
+.mapping-header .btn-danger-sm:hover {
+  background: #fef2f2;
+  border-color: #dc2626;
+}
 
 /* ===== Cost Efficiency Scoring ===== */
 .cost-score-cell {
