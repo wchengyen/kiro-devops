@@ -66,6 +66,9 @@ class MessageHandler:
             cmd = [kiro_bin, "chat", "--no-interactive", "-a", "--wrap", "never"]
             if KIRO_AGENT:
                 cmd += ["--agent", KIRO_AGENT]
+            bg_model = os.environ.get("BACKGROUND_MODEL", "").strip()
+            if bg_model:
+                cmd += ["--model", bg_model]
             cmd.append(prompt)
             result = subprocess.run(
                 cmd, capture_output=True, text=True, timeout=KIRO_TIMEOUT,
