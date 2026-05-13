@@ -3,6 +3,8 @@
 
 import json
 import os
+import shutil
+import subprocess
 import time
 from flask import jsonify, request
 
@@ -261,10 +263,6 @@ def post_alert_defaults():
 @require_auth
 def list_models():
     """Return available models from kiro-cli --list-models."""
-    import json as _json
-    import shutil
-    import subprocess
-
     kiro_bin = shutil.which("kiro-cli") or "/home/ubuntu/.local/bin/kiro-cli"
     try:
         result = subprocess.run(
@@ -272,7 +270,7 @@ def list_models():
             capture_output=True, text=True, timeout=15,
         )
         if result.returncode == 0:
-            data = _json.loads(result.stdout)
+            data = json.loads(result.stdout)
             return jsonify(data)
     except Exception as e:
         return jsonify({"models": [], "default_model": None, "error": str(e)}), 500

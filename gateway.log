@@ -1,0 +1,844 @@
+2026-04-26 02:52:07,377 [INFO] 加载 14 个 session 映射
+2026-04-26 02:52:07,377 [INFO] 加载 2 个定时任务
+2026-04-26 02:52:07,385 [INFO] 定时任务调度器已启动
+2026-04-26 02:52:07,387 [INFO] ✅ 飞书适配器已启动
+2026-04-26 02:52:07,387 [INFO] 🚀 飞书适配器启动（WebSocket）
+2026-04-26 02:52:07,387 [INFO] 已从本地文件加载微信 token
+2026-04-26 02:52:07,389 [INFO] 🚀 微信适配器启动（iLink 长轮询）
+2026-04-26 02:52:07,389 [INFO] ✅ 微信适配器已启动
+2026-04-26 02:52:07,391 [INFO] 🌐 Webhook HTTP 监听 0.0.0.0:8080
+2026-04-26 02:52:07,391 [INFO] 🚀 kiro-devops gateway 启动完成
+ * Serving Flask app 'kiro-ec2-webhook'
+ * Debug mode: off
+2026-04-26 02:52:07,397 [INFO] [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:8080
+ * Running on http://172.31.28.116:8080
+2026-04-26 02:52:07,397 [INFO] [33mPress CTRL+C to quit[0m
+[Lark] [2026-04-26 02:52:07,908] [INFO] connected to wss://msg-frontier.feishu.cn/ws/v2?fpid=493&aid=552564&device_id=7632895285145767136&access_key=f2658a7a0904dbefc4281924168b1996&service_id=33554678&ticket=ad2f6f7b-70d0-4cb5-b6cd-7897c1577b8a [conn_id=7632895285145767136]
+2026-04-26 02:52:07,908 [INFO] connected to wss://msg-frontier.feishu.cn/ws/v2?fpid=493&aid=552564&device_id=7632895285145767136&access_key=f2658a7a0904dbefc4281924168b1996&service_id=33554678&ticket=ad2f6f7b-70d0-4cb5-b6cd-7897c1577b8a [conn_id=7632895285145767136]
+2026-04-26 02:52:32,011 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:32] "[36mGET /dashboard/ HTTP/1.1[0m" 304 -
+2026-04-26 02:52:32,018 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:32] "[36mGET /dashboard/static/style.css HTTP/1.1[0m" 304 -
+2026-04-26 02:52:32,020 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:32] "[36mGET /dashboard/static/vue.global.js HTTP/1.1[0m" 304 -
+2026-04-26 02:52:32,021 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:32] "[36mGET /dashboard/static/vue-router.global.js HTTP/1.1[0m" 304 -
+2026-04-26 02:52:32,023 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:32] "[36mGET /dashboard/static/app.js HTTP/1.1[0m" 304 -
+2026-04-26 02:52:32,035 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:32] "[31m[1mGET /api/dashboard/agents HTTP/1.1[0m" 401 -
+2026-04-26 02:52:32,048 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:32] "[31m[1mGET /api/dashboard/config HTTP/1.1[0m" 401 -
+2026-04-26 02:52:32,054 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:32] "[31m[1mGET /api/dashboard/mappings HTTP/1.1[0m" 401 -
+2026-04-26 02:52:32,058 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:32] "[31m[1mGET /api/dashboard/service-rules HTTP/1.1[0m" 401 -
+2026-04-26 02:52:33,642 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:33] "POST /api/dashboard/auth HTTP/1.1" 200 -
+2026-04-26 02:52:33,652 [INFO] 加载 2 个定时任务
+2026-04-26 02:52:33,653 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:33] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 02:52:33,656 [INFO] EventStore 初始化完成，路径: events.db
+2026-04-26 02:52:33,657 [INFO] 定时任务调度器已启动
+2026-04-26 02:52:33,657 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:33] "GET /api/dashboard/scheduler HTTP/1.1" 200 -
+2026-04-26 02:52:33,662 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:33] "GET /api/dashboard/events?limit=1 HTTP/1.1" 200 -
+2026-04-26 02:52:33,677 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:33] "GET /api/dashboard/skills HTTP/1.1" 200 -
+2026-04-26 02:52:33,681 [INFO] EventStore 初始化完成，路径: events.db
+2026-04-26 02:52:33,681 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:33] "GET /api/dashboard/events?limit=9999 HTTP/1.1" 200 -
+2026-04-26 02:52:33,684 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:33] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 02:52:33,706 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:33] "GET /api/dashboard/skills HTTP/1.1" 200 -
+2026-04-26 02:52:33,709 [INFO] 加载 2 个定时任务
+2026-04-26 02:52:33,710 [INFO] 定时任务调度器已启动
+2026-04-26 02:52:33,710 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:33] "GET /api/dashboard/scheduler HTTP/1.1" 200 -
+2026-04-26 02:52:34,580 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:34] "[36mGET /dashboard/ HTTP/1.1[0m" 304 -
+2026-04-26 02:52:34,588 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:34] "[36mGET /dashboard/static/style.css HTTP/1.1[0m" 304 -
+2026-04-26 02:52:34,590 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:34] "[36mGET /dashboard/static/app.js HTTP/1.1[0m" 304 -
+2026-04-26 02:52:34,590 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:34] "[36mGET /dashboard/static/vue.global.js HTTP/1.1[0m" 304 -
+2026-04-26 02:52:34,591 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:34] "[36mGET /dashboard/static/vue-router.global.js HTTP/1.1[0m" 304 -
+2026-04-26 02:52:34,601 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:34] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 02:52:34,609 [INFO] 加载 2 个定时任务
+2026-04-26 02:52:34,609 [INFO] 定时任务调度器已启动
+2026-04-26 02:52:34,610 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:34] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 02:52:34,610 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:34] "GET /api/dashboard/scheduler HTTP/1.1" 200 -
+2026-04-26 02:52:34,615 [INFO] EventStore 初始化完成，路径: events.db
+2026-04-26 02:52:34,621 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:34] "GET /api/dashboard/events?limit=1 HTTP/1.1" 200 -
+2026-04-26 02:52:34,635 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:34] "GET /api/dashboard/skills HTTP/1.1" 200 -
+2026-04-26 02:52:34,638 [INFO] EventStore 初始化完成，路径: events.db
+2026-04-26 02:52:34,639 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:34] "GET /api/dashboard/events?limit=9999 HTTP/1.1" 200 -
+2026-04-26 02:52:34,641 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:34] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 02:52:34,663 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:34] "GET /api/dashboard/skills HTTP/1.1" 200 -
+2026-04-26 02:52:34,665 [INFO] 加载 2 个定时任务
+2026-04-26 02:52:34,666 [INFO] 定时任务调度器已启动
+2026-04-26 02:52:34,666 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:34] "GET /api/dashboard/scheduler HTTP/1.1" 200 -
+2026-04-26 02:52:35,045 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:35] "[36mGET /dashboard/ HTTP/1.1[0m" 304 -
+2026-04-26 02:52:35,052 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:35] "[36mGET /dashboard/static/style.css HTTP/1.1[0m" 304 -
+2026-04-26 02:52:35,053 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:35] "[36mGET /dashboard/static/vue.global.js HTTP/1.1[0m" 304 -
+2026-04-26 02:52:35,054 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:35] "[36mGET /dashboard/static/vue-router.global.js HTTP/1.1[0m" 304 -
+2026-04-26 02:52:35,054 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:35] "[36mGET /dashboard/static/app.js HTTP/1.1[0m" 304 -
+2026-04-26 02:52:35,063 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:35] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 02:52:35,069 [INFO] 加载 2 个定时任务
+2026-04-26 02:52:35,070 [INFO] 定时任务调度器已启动
+2026-04-26 02:52:35,071 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:35] "GET /api/dashboard/scheduler HTTP/1.1" 200 -
+2026-04-26 02:52:35,071 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:35] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 02:52:35,075 [INFO] EventStore 初始化完成，路径: events.db
+2026-04-26 02:52:35,080 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:35] "GET /api/dashboard/events?limit=1 HTTP/1.1" 200 -
+2026-04-26 02:52:35,093 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:35] "GET /api/dashboard/skills HTTP/1.1" 200 -
+2026-04-26 02:52:35,096 [INFO] EventStore 初始化完成，路径: events.db
+2026-04-26 02:52:35,097 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:35] "GET /api/dashboard/events?limit=9999 HTTP/1.1" 200 -
+2026-04-26 02:52:35,100 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:35] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 02:52:35,123 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:35] "GET /api/dashboard/skills HTTP/1.1" 200 -
+2026-04-26 02:52:35,126 [INFO] 加载 2 个定时任务
+2026-04-26 02:52:35,126 [INFO] 定时任务调度器已启动
+2026-04-26 02:52:35,127 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:35] "GET /api/dashboard/scheduler HTTP/1.1" 200 -
+2026-04-26 02:52:35,218 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:35] "[36mGET /dashboard/ HTTP/1.1[0m" 304 -
+2026-04-26 02:52:35,227 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:35] "[36mGET /dashboard/static/style.css HTTP/1.1[0m" 304 -
+2026-04-26 02:52:35,228 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:35] "[36mGET /dashboard/static/vue.global.js HTTP/1.1[0m" 304 -
+2026-04-26 02:52:35,229 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:35] "[36mGET /dashboard/static/app.js HTTP/1.1[0m" 304 -
+2026-04-26 02:52:35,229 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:35] "[36mGET /dashboard/static/vue-router.global.js HTTP/1.1[0m" 304 -
+2026-04-26 02:52:35,239 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:35] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 02:52:35,246 [INFO] 加载 2 个定时任务
+2026-04-26 02:52:35,246 [INFO] 定时任务调度器已启动
+2026-04-26 02:52:35,247 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:35] "GET /api/dashboard/scheduler HTTP/1.1" 200 -
+2026-04-26 02:52:35,247 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:35] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 02:52:35,247 [INFO] EventStore 初始化完成，路径: events.db
+2026-04-26 02:52:35,255 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:35] "GET /api/dashboard/events?limit=1 HTTP/1.1" 200 -
+2026-04-26 02:52:35,269 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:35] "GET /api/dashboard/skills HTTP/1.1" 200 -
+2026-04-26 02:52:35,273 [INFO] EventStore 初始化完成，路径: events.db
+2026-04-26 02:52:35,273 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:35] "GET /api/dashboard/events?limit=9999 HTTP/1.1" 200 -
+2026-04-26 02:52:35,276 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:35] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 02:52:35,297 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:35] "GET /api/dashboard/skills HTTP/1.1" 200 -
+2026-04-26 02:52:35,311 [INFO] 加载 2 个定时任务
+2026-04-26 02:52:35,311 [INFO] 定时任务调度器已启动
+2026-04-26 02:52:35,312 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:35] "GET /api/dashboard/scheduler HTTP/1.1" 200 -
+2026-04-26 02:52:37,521 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:37] "[36mGET /dashboard/ HTTP/1.1[0m" 304 -
+2026-04-26 02:52:37,530 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:37] "[36mGET /dashboard/static/style.css HTTP/1.1[0m" 304 -
+2026-04-26 02:52:37,531 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:37] "[36mGET /dashboard/static/vue.global.js HTTP/1.1[0m" 304 -
+2026-04-26 02:52:37,532 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:37] "[36mGET /dashboard/static/vue-router.global.js HTTP/1.1[0m" 304 -
+2026-04-26 02:52:37,533 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:37] "[36mGET /dashboard/static/app.js HTTP/1.1[0m" 304 -
+2026-04-26 02:52:37,542 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:37] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 02:52:37,616 [INFO] Found credentials in shared credentials file: ~/.aws/credentials
+2026-04-26 02:52:38,794 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:38] "[36mGET /dashboard/ HTTP/1.1[0m" 304 -
+2026-04-26 02:52:38,806 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:38] "[36mGET /dashboard/static/vue.global.js HTTP/1.1[0m" 304 -
+2026-04-26 02:52:38,807 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:38] "[36mGET /dashboard/static/style.css HTTP/1.1[0m" 304 -
+2026-04-26 02:52:38,808 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:38] "[36mGET /dashboard/static/app.js HTTP/1.1[0m" 304 -
+2026-04-26 02:52:38,808 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:38] "[36mGET /dashboard/static/vue-router.global.js HTTP/1.1[0m" 304 -
+2026-04-26 02:52:38,819 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:38] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 02:52:39,189 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:39] "GET /api/dashboard/resources HTTP/1.1" 200 -
+2026-04-26 02:52:39,775 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:39] "GET /api/dashboard/resources HTTP/1.1" 200 -
+2026-04-26 02:52:40,520 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:40] "POST /api/dashboard/logout HTTP/1.1" 200 -
+2026-04-26 02:52:42,875 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:42] "[36mGET /dashboard/ HTTP/1.1[0m" 304 -
+2026-04-26 02:52:42,883 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:42] "[36mGET /dashboard/static/style.css HTTP/1.1[0m" 304 -
+2026-04-26 02:52:42,885 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:42] "[36mGET /dashboard/static/app.js HTTP/1.1[0m" 304 -
+2026-04-26 02:52:42,886 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:42] "[36mGET /dashboard/static/vue.global.js HTTP/1.1[0m" 304 -
+2026-04-26 02:52:42,886 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:42] "[36mGET /dashboard/static/vue-router.global.js HTTP/1.1[0m" 304 -
+2026-04-26 02:52:42,895 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:42] "[31m[1mGET /api/dashboard/agents HTTP/1.1[0m" 401 -
+2026-04-26 02:52:43,588 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:43] "[36mGET /dashboard/ HTTP/1.1[0m" 304 -
+2026-04-26 02:52:43,594 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:43] "[36mGET /dashboard/static/style.css HTTP/1.1[0m" 304 -
+2026-04-26 02:52:43,595 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:43] "[36mGET /dashboard/static/vue.global.js HTTP/1.1[0m" 304 -
+2026-04-26 02:52:43,597 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:43] "[36mGET /dashboard/static/app.js HTTP/1.1[0m" 304 -
+2026-04-26 02:52:43,597 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:43] "[36mGET /dashboard/static/vue-router.global.js HTTP/1.1[0m" 304 -
+2026-04-26 02:52:43,605 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:43] "[31m[1mGET /api/dashboard/agents HTTP/1.1[0m" 401 -
+2026-04-26 02:52:43,859 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:43] "[36mGET /dashboard/ HTTP/1.1[0m" 304 -
+2026-04-26 02:52:43,866 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:43] "[36mGET /dashboard/static/style.css HTTP/1.1[0m" 304 -
+2026-04-26 02:52:43,868 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:43] "[36mGET /dashboard/static/vue.global.js HTTP/1.1[0m" 304 -
+2026-04-26 02:52:43,869 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:43] "[36mGET /dashboard/static/app.js HTTP/1.1[0m" 304 -
+2026-04-26 02:52:43,869 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:43] "[36mGET /dashboard/static/vue-router.global.js HTTP/1.1[0m" 304 -
+2026-04-26 02:52:43,877 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:43] "[31m[1mGET /api/dashboard/agents HTTP/1.1[0m" 401 -
+2026-04-26 02:52:44,090 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:44] "[36mGET /dashboard/ HTTP/1.1[0m" 304 -
+2026-04-26 02:52:44,097 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:44] "[36mGET /dashboard/static/style.css HTTP/1.1[0m" 304 -
+2026-04-26 02:52:44,099 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:44] "[36mGET /dashboard/static/vue.global.js HTTP/1.1[0m" 304 -
+2026-04-26 02:52:44,100 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:44] "[36mGET /dashboard/static/vue-router.global.js HTTP/1.1[0m" 304 -
+2026-04-26 02:52:44,101 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:44] "[36mGET /dashboard/static/app.js HTTP/1.1[0m" 304 -
+2026-04-26 02:52:44,108 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:44] "[31m[1mGET /api/dashboard/agents HTTP/1.1[0m" 401 -
+2026-04-26 02:52:47,731 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:47] "[36mGET /dashboard/ HTTP/1.1[0m" 304 -
+2026-04-26 02:52:47,741 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:47] "[36mGET /dashboard/static/style.css HTTP/1.1[0m" 304 -
+2026-04-26 02:52:47,742 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:47] "[36mGET /dashboard/static/vue.global.js HTTP/1.1[0m" 304 -
+2026-04-26 02:52:47,744 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:47] "[36mGET /dashboard/static/vue-router.global.js HTTP/1.1[0m" 304 -
+2026-04-26 02:52:47,745 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:47] "[36mGET /dashboard/static/app.js HTTP/1.1[0m" 304 -
+2026-04-26 02:52:47,778 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:47] "[31m[1mGET /api/dashboard/agents HTTP/1.1[0m" 401 -
+2026-04-26 02:52:47,794 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:47] "[31m[1mGET /api/dashboard/events?limit=1 HTTP/1.1[0m" 401 -
+2026-04-26 02:52:47,795 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:47] "[31m[1mGET /api/dashboard/agents HTTP/1.1[0m" 401 -
+2026-04-26 02:52:47,796 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:47] "[31m[1mGET /api/dashboard/scheduler HTTP/1.1[0m" 401 -
+2026-04-26 02:52:47,796 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:47] "[31m[1mGET /api/dashboard/skills HTTP/1.1[0m" 401 -
+2026-04-26 02:52:47,804 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:47] "[31m[1mGET /api/dashboard/events?limit=9999 HTTP/1.1[0m" 401 -
+2026-04-26 02:52:47,808 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:47] "[31m[1mGET /api/dashboard/agents HTTP/1.1[0m" 401 -
+2026-04-26 02:52:47,810 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:47] "[31m[1mGET /api/dashboard/skills HTTP/1.1[0m" 401 -
+2026-04-26 02:52:47,813 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:47] "[31m[1mGET /api/dashboard/scheduler HTTP/1.1[0m" 401 -
+2026-04-26 02:52:50,000 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:50] "POST /api/dashboard/auth HTTP/1.1" 200 -
+2026-04-26 02:52:50,011 [INFO] 加载 2 个定时任务
+2026-04-26 02:52:50,013 [INFO] 定时任务调度器已启动
+2026-04-26 02:52:50,013 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:50] "GET /api/dashboard/scheduler HTTP/1.1" 200 -
+2026-04-26 02:52:50,015 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:50] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 02:52:50,019 [INFO] EventStore 初始化完成，路径: events.db
+2026-04-26 02:52:50,022 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:50] "GET /api/dashboard/events?limit=1 HTTP/1.1" 200 -
+2026-04-26 02:52:50,035 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:50] "GET /api/dashboard/skills HTTP/1.1" 200 -
+2026-04-26 02:52:50,039 [INFO] EventStore 初始化完成，路径: events.db
+2026-04-26 02:52:50,039 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:50] "GET /api/dashboard/events?limit=9999 HTTP/1.1" 200 -
+2026-04-26 02:52:50,042 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:50] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 02:52:50,064 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:50] "GET /api/dashboard/skills HTTP/1.1" 200 -
+2026-04-26 02:52:50,066 [INFO] 加载 2 个定时任务
+2026-04-26 02:52:50,067 [INFO] 定时任务调度器已启动
+2026-04-26 02:52:50,067 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:50] "GET /api/dashboard/scheduler HTTP/1.1" 200 -
+2026-04-26 02:52:51,366 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:51] "[36mGET /dashboard/ HTTP/1.1[0m" 304 -
+2026-04-26 02:52:51,375 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:51] "[36mGET /dashboard/static/style.css HTTP/1.1[0m" 304 -
+2026-04-26 02:52:51,376 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:51] "[36mGET /dashboard/static/vue.global.js HTTP/1.1[0m" 304 -
+2026-04-26 02:52:51,376 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:51] "[36mGET /dashboard/static/vue-router.global.js HTTP/1.1[0m" 304 -
+2026-04-26 02:52:51,380 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:51] "[36mGET /dashboard/static/app.js HTTP/1.1[0m" 304 -
+2026-04-26 02:52:51,393 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:51] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 02:52:51,401 [INFO] 加载 2 个定时任务
+2026-04-26 02:52:51,401 [INFO] 定时任务调度器已启动
+2026-04-26 02:52:51,402 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:51] "GET /api/dashboard/scheduler HTTP/1.1" 200 -
+2026-04-26 02:52:51,406 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:51] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 02:52:51,408 [INFO] EventStore 初始化完成，路径: events.db
+2026-04-26 02:52:51,411 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:51] "GET /api/dashboard/events?limit=1 HTTP/1.1" 200 -
+2026-04-26 02:52:51,424 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:51] "GET /api/dashboard/skills HTTP/1.1" 200 -
+2026-04-26 02:52:51,428 [INFO] EventStore 初始化完成，路径: events.db
+2026-04-26 02:52:51,428 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:51] "GET /api/dashboard/events?limit=9999 HTTP/1.1" 200 -
+2026-04-26 02:52:51,431 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:51] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 02:52:51,454 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:51] "GET /api/dashboard/skills HTTP/1.1" 200 -
+2026-04-26 02:52:51,457 [INFO] 加载 2 个定时任务
+2026-04-26 02:52:51,457 [INFO] 定时任务调度器已启动
+2026-04-26 02:52:51,458 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:51] "GET /api/dashboard/scheduler HTTP/1.1" 200 -
+2026-04-26 02:52:51,802 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:51] "[36mGET /dashboard/ HTTP/1.1[0m" 304 -
+2026-04-26 02:52:51,810 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:51] "[36mGET /dashboard/static/vue.global.js HTTP/1.1[0m" 304 -
+2026-04-26 02:52:51,811 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:51] "[36mGET /dashboard/static/style.css HTTP/1.1[0m" 304 -
+2026-04-26 02:52:51,811 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:51] "[36mGET /dashboard/static/vue-router.global.js HTTP/1.1[0m" 304 -
+2026-04-26 02:52:51,813 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:51] "[36mGET /dashboard/static/app.js HTTP/1.1[0m" 304 -
+2026-04-26 02:52:51,821 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:51] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 02:52:51,828 [INFO] 加载 2 个定时任务
+2026-04-26 02:52:51,828 [INFO] 定时任务调度器已启动
+2026-04-26 02:52:51,828 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:51] "GET /api/dashboard/scheduler HTTP/1.1" 200 -
+2026-04-26 02:52:51,832 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:51] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 02:52:51,834 [INFO] EventStore 初始化完成，路径: events.db
+2026-04-26 02:52:51,837 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:51] "GET /api/dashboard/events?limit=1 HTTP/1.1" 200 -
+2026-04-26 02:52:51,855 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:51] "GET /api/dashboard/skills HTTP/1.1" 200 -
+2026-04-26 02:52:51,858 [INFO] EventStore 初始化完成，路径: events.db
+2026-04-26 02:52:51,859 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:51] "GET /api/dashboard/events?limit=9999 HTTP/1.1" 200 -
+2026-04-26 02:52:51,862 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:51] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 02:52:51,884 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:51] "GET /api/dashboard/skills HTTP/1.1" 200 -
+2026-04-26 02:52:51,887 [INFO] 加载 2 个定时任务
+2026-04-26 02:52:51,888 [INFO] 定时任务调度器已启动
+2026-04-26 02:52:51,888 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:51] "GET /api/dashboard/scheduler HTTP/1.1" 200 -
+2026-04-26 02:52:52,039 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:52] "[36mGET /dashboard/ HTTP/1.1[0m" 304 -
+2026-04-26 02:52:52,047 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:52] "[36mGET /dashboard/static/style.css HTTP/1.1[0m" 304 -
+2026-04-26 02:52:52,049 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:52] "[36mGET /dashboard/static/vue-router.global.js HTTP/1.1[0m" 304 -
+2026-04-26 02:52:52,049 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:52] "[36mGET /dashboard/static/vue.global.js HTTP/1.1[0m" 304 -
+2026-04-26 02:52:52,050 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:52] "[36mGET /dashboard/static/app.js HTTP/1.1[0m" 304 -
+2026-04-26 02:52:52,058 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:52] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 02:52:52,065 [INFO] 加载 2 个定时任务
+2026-04-26 02:52:52,066 [INFO] 定时任务调度器已启动
+2026-04-26 02:52:52,066 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:52] "GET /api/dashboard/scheduler HTTP/1.1" 200 -
+2026-04-26 02:52:52,068 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:52] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 02:52:52,071 [INFO] EventStore 初始化完成，路径: events.db
+2026-04-26 02:52:52,076 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:52] "GET /api/dashboard/events?limit=1 HTTP/1.1" 200 -
+2026-04-26 02:52:52,095 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:52] "GET /api/dashboard/skills HTTP/1.1" 200 -
+2026-04-26 02:52:52,098 [INFO] EventStore 初始化完成，路径: events.db
+2026-04-26 02:52:52,099 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:52] "GET /api/dashboard/events?limit=9999 HTTP/1.1" 200 -
+2026-04-26 02:52:52,102 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:52] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 02:52:52,123 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:52] "GET /api/dashboard/skills HTTP/1.1" 200 -
+2026-04-26 02:52:52,126 [INFO] 加载 2 个定时任务
+2026-04-26 02:52:52,127 [INFO] 定时任务调度器已启动
+2026-04-26 02:52:52,127 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:52] "GET /api/dashboard/scheduler HTTP/1.1" 200 -
+2026-04-26 02:52:52,255 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:52] "[36mGET /dashboard/ HTTP/1.1[0m" 304 -
+2026-04-26 02:52:52,264 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:52] "[36mGET /dashboard/static/style.css HTTP/1.1[0m" 304 -
+2026-04-26 02:52:52,265 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:52] "[36mGET /dashboard/static/vue.global.js HTTP/1.1[0m" 304 -
+2026-04-26 02:52:52,266 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:52] "[36mGET /dashboard/static/vue-router.global.js HTTP/1.1[0m" 304 -
+2026-04-26 02:52:52,266 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:52] "[36mGET /dashboard/static/app.js HTTP/1.1[0m" 304 -
+2026-04-26 02:52:52,274 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:52] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 02:52:52,281 [INFO] 加载 2 个定时任务
+2026-04-26 02:52:52,281 [INFO] 定时任务调度器已启动
+2026-04-26 02:52:52,282 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:52] "GET /api/dashboard/scheduler HTTP/1.1" 200 -
+2026-04-26 02:52:52,282 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:52] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 02:52:52,285 [INFO] EventStore 初始化完成，路径: events.db
+2026-04-26 02:52:52,289 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:52] "GET /api/dashboard/events?limit=1 HTTP/1.1" 200 -
+2026-04-26 02:52:52,305 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:52] "GET /api/dashboard/skills HTTP/1.1" 200 -
+2026-04-26 02:52:52,309 [INFO] EventStore 初始化完成，路径: events.db
+2026-04-26 02:52:52,310 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:52] "GET /api/dashboard/events?limit=9999 HTTP/1.1" 200 -
+2026-04-26 02:52:52,313 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:52] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 02:52:52,335 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:52] "GET /api/dashboard/skills HTTP/1.1" 200 -
+2026-04-26 02:52:52,338 [INFO] 加载 2 个定时任务
+2026-04-26 02:52:52,339 [INFO] 定时任务调度器已启动
+2026-04-26 02:52:52,339 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:52] "GET /api/dashboard/scheduler HTTP/1.1" 200 -
+2026-04-26 02:52:52,444 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:52] "[36mGET /dashboard/ HTTP/1.1[0m" 304 -
+2026-04-26 02:52:52,452 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:52] "[36mGET /dashboard/static/style.css HTTP/1.1[0m" 304 -
+2026-04-26 02:52:52,454 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:52] "[36mGET /dashboard/static/vue.global.js HTTP/1.1[0m" 304 -
+2026-04-26 02:52:52,455 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:52] "[36mGET /dashboard/static/vue-router.global.js HTTP/1.1[0m" 304 -
+2026-04-26 02:52:52,455 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:52] "[36mGET /dashboard/static/app.js HTTP/1.1[0m" 304 -
+2026-04-26 02:52:52,463 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:52] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 02:52:52,470 [INFO] 加载 2 个定时任务
+2026-04-26 02:52:52,471 [INFO] 定时任务调度器已启动
+2026-04-26 02:52:52,471 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:52] "GET /api/dashboard/scheduler HTTP/1.1" 200 -
+2026-04-26 02:52:52,474 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:52] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 02:52:52,475 [INFO] EventStore 初始化完成，路径: events.db
+2026-04-26 02:52:52,477 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:52] "GET /api/dashboard/events?limit=1 HTTP/1.1" 200 -
+2026-04-26 02:52:52,495 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:52] "GET /api/dashboard/skills HTTP/1.1" 200 -
+2026-04-26 02:52:52,498 [INFO] EventStore 初始化完成，路径: events.db
+2026-04-26 02:52:52,499 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:52] "GET /api/dashboard/events?limit=9999 HTTP/1.1" 200 -
+2026-04-26 02:52:52,502 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:52] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 02:52:52,524 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:52] "GET /api/dashboard/skills HTTP/1.1" 200 -
+2026-04-26 02:52:52,527 [INFO] 加载 2 个定时任务
+2026-04-26 02:52:52,527 [INFO] 定时任务调度器已启动
+2026-04-26 02:52:52,527 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:52] "GET /api/dashboard/scheduler HTTP/1.1" 200 -
+2026-04-26 02:52:52,647 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:52] "[36mGET /dashboard/ HTTP/1.1[0m" 304 -
+2026-04-26 02:52:52,656 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:52] "[36mGET /dashboard/static/vue.global.js HTTP/1.1[0m" 304 -
+2026-04-26 02:52:52,656 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:52] "[36mGET /dashboard/static/style.css HTTP/1.1[0m" 304 -
+2026-04-26 02:52:52,658 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:52] "[36mGET /dashboard/static/vue-router.global.js HTTP/1.1[0m" 304 -
+2026-04-26 02:52:52,659 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:52] "[36mGET /dashboard/static/app.js HTTP/1.1[0m" 304 -
+2026-04-26 02:52:52,667 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:52] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 02:52:52,674 [INFO] 加载 2 个定时任务
+2026-04-26 02:52:52,674 [INFO] 定时任务调度器已启动
+2026-04-26 02:52:52,676 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:52] "GET /api/dashboard/scheduler HTTP/1.1" 200 -
+2026-04-26 02:52:52,676 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:52] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 02:52:52,679 [INFO] EventStore 初始化完成，路径: events.db
+2026-04-26 02:52:52,683 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:52] "GET /api/dashboard/events?limit=1 HTTP/1.1" 200 -
+2026-04-26 02:52:52,697 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:52] "GET /api/dashboard/skills HTTP/1.1" 200 -
+2026-04-26 02:52:52,700 [INFO] EventStore 初始化完成，路径: events.db
+2026-04-26 02:52:52,701 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:52] "GET /api/dashboard/events?limit=9999 HTTP/1.1" 200 -
+2026-04-26 02:52:52,704 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:52] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 02:52:52,727 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:52] "GET /api/dashboard/skills HTTP/1.1" 200 -
+2026-04-26 02:52:52,730 [INFO] 加载 2 个定时任务
+2026-04-26 02:52:52,730 [INFO] 定时任务调度器已启动
+2026-04-26 02:52:52,731 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:52] "GET /api/dashboard/scheduler HTTP/1.1" 200 -
+2026-04-26 02:52:52,849 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:52] "[36mGET /dashboard/ HTTP/1.1[0m" 304 -
+2026-04-26 02:52:52,858 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:52] "[36mGET /dashboard/static/vue.global.js HTTP/1.1[0m" 304 -
+2026-04-26 02:52:52,859 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:52] "[36mGET /dashboard/static/vue-router.global.js HTTP/1.1[0m" 304 -
+2026-04-26 02:52:52,859 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:52] "[36mGET /dashboard/static/style.css HTTP/1.1[0m" 304 -
+2026-04-26 02:52:52,860 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:52] "[36mGET /dashboard/static/app.js HTTP/1.1[0m" 304 -
+2026-04-26 02:52:52,870 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:52] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 02:52:52,877 [INFO] 加载 2 个定时任务
+2026-04-26 02:52:52,878 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:52] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 02:52:52,878 [INFO] 定时任务调度器已启动
+2026-04-26 02:52:52,880 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:52] "GET /api/dashboard/scheduler HTTP/1.1" 200 -
+2026-04-26 02:52:52,883 [INFO] EventStore 初始化完成，路径: events.db
+2026-04-26 02:52:52,887 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:52] "GET /api/dashboard/events?limit=1 HTTP/1.1" 200 -
+2026-04-26 02:52:52,903 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:52] "GET /api/dashboard/skills HTTP/1.1" 200 -
+2026-04-26 02:52:52,906 [INFO] EventStore 初始化完成，路径: events.db
+2026-04-26 02:52:52,907 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:52] "GET /api/dashboard/events?limit=9999 HTTP/1.1" 200 -
+2026-04-26 02:52:52,910 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:52] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 02:52:52,933 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:52] "GET /api/dashboard/skills HTTP/1.1" 200 -
+2026-04-26 02:52:52,936 [INFO] 加载 2 个定时任务
+2026-04-26 02:52:52,937 [INFO] 定时任务调度器已启动
+2026-04-26 02:52:52,937 [INFO] 127.0.0.1 - - [26/Apr/2026 02:52:52] "GET /api/dashboard/scheduler HTTP/1.1" 200 -
+2026-04-26 02:56:28,332 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:28] "GET /api/dashboard/skills HTTP/1.1" 200 -
+2026-04-26 02:56:29,631 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:29] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 02:56:30,383 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:30] "GET /api/dashboard/skills HTTP/1.1" 200 -
+2026-04-26 02:56:31,041 [INFO] 加载 2 个定时任务
+2026-04-26 02:56:31,043 [INFO] 定时任务调度器已启动
+2026-04-26 02:56:31,043 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:31] "GET /api/dashboard/scheduler HTTP/1.1" 200 -
+2026-04-26 02:56:31,046 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:31] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 02:56:31,048 [INFO] EventStore 初始化完成，路径: events.db
+2026-04-26 02:56:31,051 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:31] "GET /api/dashboard/events?limit=1 HTTP/1.1" 200 -
+2026-04-26 02:56:31,066 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:31] "GET /api/dashboard/skills HTTP/1.1" 200 -
+2026-04-26 02:56:31,069 [INFO] EventStore 初始化完成，路径: events.db
+2026-04-26 02:56:31,070 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:31] "GET /api/dashboard/events?limit=9999 HTTP/1.1" 200 -
+2026-04-26 02:56:31,073 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:31] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 02:56:31,094 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:31] "GET /api/dashboard/skills HTTP/1.1" 200 -
+2026-04-26 02:56:31,097 [INFO] 加载 2 个定时任务
+2026-04-26 02:56:31,097 [INFO] 定时任务调度器已启动
+2026-04-26 02:56:31,097 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:31] "GET /api/dashboard/scheduler HTTP/1.1" 200 -
+2026-04-26 02:56:32,229 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:32] "GET /api/dashboard/skills HTTP/1.1" 200 -
+2026-04-26 02:56:32,706 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:32] "GET /api/dashboard/service-rules HTTP/1.1" 200 -
+2026-04-26 02:56:32,719 [INFO] EventStore 初始化完成，路径: events.db
+2026-04-26 02:56:32,720 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:32] "GET /api/dashboard/events HTTP/1.1" 200 -
+2026-04-26 02:56:33,159 [INFO] 加载 2 个定时任务
+2026-04-26 02:56:33,160 [INFO] 定时任务调度器已启动
+2026-04-26 02:56:33,160 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:33] "GET /api/dashboard/scheduler HTTP/1.1" 200 -
+2026-04-26 02:56:33,998 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:33] "GET /api/dashboard/service-rules HTTP/1.1" 200 -
+2026-04-26 02:56:34,012 [INFO] EventStore 初始化完成，路径: events.db
+2026-04-26 02:56:34,013 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:34] "GET /api/dashboard/events HTTP/1.1" 200 -
+2026-04-26 02:56:35,052 [INFO] 加载 2 个定时任务
+2026-04-26 02:56:35,053 [INFO] 定时任务调度器已启动
+2026-04-26 02:56:35,053 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:35] "GET /api/dashboard/scheduler HTTP/1.1" 200 -
+2026-04-26 02:56:35,686 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:35] "GET /api/dashboard/resources HTTP/1.1" 200 -
+2026-04-26 02:56:36,482 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:36] "GET /api/dashboard/config HTTP/1.1" 200 -
+2026-04-26 02:56:36,486 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:36] "GET /api/dashboard/mappings HTTP/1.1" 200 -
+2026-04-26 02:56:36,489 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:36] "GET /api/dashboard/service-rules HTTP/1.1" 200 -
+2026-04-26 02:56:40,634 [INFO] 加载 2 个定时任务
+2026-04-26 02:56:40,635 [INFO] 定时任务调度器已启动
+2026-04-26 02:56:40,635 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:40] "GET /api/dashboard/scheduler HTTP/1.1" 200 -
+2026-04-26 02:56:40,638 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:40] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 02:56:40,640 [INFO] EventStore 初始化完成，路径: events.db
+2026-04-26 02:56:40,643 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:40] "GET /api/dashboard/events?limit=1 HTTP/1.1" 200 -
+2026-04-26 02:56:40,659 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:40] "GET /api/dashboard/skills HTTP/1.1" 200 -
+2026-04-26 02:56:40,662 [INFO] EventStore 初始化完成，路径: events.db
+2026-04-26 02:56:40,663 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:40] "GET /api/dashboard/events?limit=9999 HTTP/1.1" 200 -
+2026-04-26 02:56:40,666 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:40] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 02:56:40,687 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:40] "GET /api/dashboard/skills HTTP/1.1" 200 -
+2026-04-26 02:56:40,690 [INFO] 加载 2 个定时任务
+2026-04-26 02:56:40,691 [INFO] 定时任务调度器已启动
+2026-04-26 02:56:40,691 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:40] "GET /api/dashboard/scheduler HTTP/1.1" 200 -
+2026-04-26 02:56:42,644 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:42] "[36mGET /dashboard/ HTTP/1.1[0m" 304 -
+2026-04-26 02:56:42,653 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:42] "[36mGET /dashboard/static/vue.global.js HTTP/1.1[0m" 304 -
+2026-04-26 02:56:42,653 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:42] "[36mGET /dashboard/static/style.css HTTP/1.1[0m" 304 -
+2026-04-26 02:56:42,654 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:42] "[36mGET /dashboard/static/vue-router.global.js HTTP/1.1[0m" 304 -
+2026-04-26 02:56:42,654 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:42] "[36mGET /dashboard/static/app.js HTTP/1.1[0m" 304 -
+2026-04-26 02:56:42,664 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:42] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 02:56:42,675 [INFO] 加载 2 个定时任务
+2026-04-26 02:56:42,676 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:42] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 02:56:42,678 [INFO] 定时任务调度器已启动
+2026-04-26 02:56:42,678 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:42] "GET /api/dashboard/scheduler HTTP/1.1" 200 -
+2026-04-26 02:56:42,684 [INFO] EventStore 初始化完成，路径: events.db
+2026-04-26 02:56:42,689 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:42] "GET /api/dashboard/events?limit=1 HTTP/1.1" 200 -
+2026-04-26 02:56:42,699 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:42] "GET /api/dashboard/skills HTTP/1.1" 200 -
+2026-04-26 02:56:42,702 [INFO] EventStore 初始化完成，路径: events.db
+2026-04-26 02:56:42,702 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:42] "GET /api/dashboard/events?limit=9999 HTTP/1.1" 200 -
+2026-04-26 02:56:42,705 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:42] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 02:56:42,727 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:42] "GET /api/dashboard/skills HTTP/1.1" 200 -
+2026-04-26 02:56:42,729 [INFO] 加载 2 个定时任务
+2026-04-26 02:56:42,730 [INFO] 定时任务调度器已启动
+2026-04-26 02:56:42,730 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:42] "GET /api/dashboard/scheduler HTTP/1.1" 200 -
+2026-04-26 02:56:43,360 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:43] "[36mGET /dashboard/ HTTP/1.1[0m" 304 -
+2026-04-26 02:56:43,367 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:43] "[36mGET /dashboard/static/style.css HTTP/1.1[0m" 304 -
+2026-04-26 02:56:43,369 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:43] "[36mGET /dashboard/static/vue-router.global.js HTTP/1.1[0m" 304 -
+2026-04-26 02:56:43,369 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:43] "[36mGET /dashboard/static/vue.global.js HTTP/1.1[0m" 304 -
+2026-04-26 02:56:43,370 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:43] "[36mGET /dashboard/static/app.js HTTP/1.1[0m" 304 -
+2026-04-26 02:56:43,381 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:43] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 02:56:43,388 [INFO] 加载 2 个定时任务
+2026-04-26 02:56:43,389 [INFO] 定时任务调度器已启动
+2026-04-26 02:56:43,389 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:43] "GET /api/dashboard/scheduler HTTP/1.1" 200 -
+2026-04-26 02:56:43,391 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:43] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 02:56:43,393 [INFO] EventStore 初始化完成，路径: events.db
+2026-04-26 02:56:43,397 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:43] "GET /api/dashboard/events?limit=1 HTTP/1.1" 200 -
+2026-04-26 02:56:43,413 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:43] "GET /api/dashboard/skills HTTP/1.1" 200 -
+2026-04-26 02:56:43,416 [INFO] EventStore 初始化完成，路径: events.db
+2026-04-26 02:56:43,417 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:43] "GET /api/dashboard/events?limit=9999 HTTP/1.1" 200 -
+2026-04-26 02:56:43,420 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:43] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 02:56:43,447 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:43] "GET /api/dashboard/skills HTTP/1.1" 200 -
+2026-04-26 02:56:43,450 [INFO] 加载 2 个定时任务
+2026-04-26 02:56:43,451 [INFO] 定时任务调度器已启动
+2026-04-26 02:56:43,451 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:43] "GET /api/dashboard/scheduler HTTP/1.1" 200 -
+2026-04-26 02:56:43,576 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:43] "[36mGET /dashboard/ HTTP/1.1[0m" 304 -
+2026-04-26 02:56:43,583 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:43] "[36mGET /dashboard/static/style.css HTTP/1.1[0m" 304 -
+2026-04-26 02:56:43,584 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:43] "[36mGET /dashboard/static/vue.global.js HTTP/1.1[0m" 304 -
+2026-04-26 02:56:43,586 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:43] "[36mGET /dashboard/static/vue-router.global.js HTTP/1.1[0m" 304 -
+2026-04-26 02:56:43,586 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:43] "[36mGET /dashboard/static/app.js HTTP/1.1[0m" 304 -
+2026-04-26 02:56:43,594 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:43] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 02:56:43,602 [INFO] 加载 2 个定时任务
+2026-04-26 02:56:43,604 [INFO] 定时任务调度器已启动
+2026-04-26 02:56:43,605 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:43] "GET /api/dashboard/scheduler HTTP/1.1" 200 -
+2026-04-26 02:56:43,605 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:43] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 02:56:43,611 [INFO] EventStore 初始化完成，路径: events.db
+2026-04-26 02:56:43,616 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:43] "GET /api/dashboard/events?limit=1 HTTP/1.1" 200 -
+2026-04-26 02:56:43,629 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:43] "GET /api/dashboard/skills HTTP/1.1" 200 -
+2026-04-26 02:56:43,632 [INFO] EventStore 初始化完成，路径: events.db
+2026-04-26 02:56:43,633 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:43] "GET /api/dashboard/events?limit=9999 HTTP/1.1" 200 -
+2026-04-26 02:56:43,636 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:43] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 02:56:43,657 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:43] "GET /api/dashboard/skills HTTP/1.1" 200 -
+2026-04-26 02:56:43,660 [INFO] 加载 2 个定时任务
+2026-04-26 02:56:43,661 [INFO] 定时任务调度器已启动
+2026-04-26 02:56:43,661 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:43] "GET /api/dashboard/scheduler HTTP/1.1" 200 -
+2026-04-26 02:56:43,853 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:43] "[36mGET /dashboard/ HTTP/1.1[0m" 304 -
+2026-04-26 02:56:43,861 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:43] "[36mGET /dashboard/static/style.css HTTP/1.1[0m" 304 -
+2026-04-26 02:56:43,862 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:43] "[36mGET /dashboard/static/vue.global.js HTTP/1.1[0m" 304 -
+2026-04-26 02:56:43,862 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:43] "[36mGET /dashboard/static/vue-router.global.js HTTP/1.1[0m" 304 -
+2026-04-26 02:56:43,863 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:43] "[36mGET /dashboard/static/app.js HTTP/1.1[0m" 304 -
+2026-04-26 02:56:43,872 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:43] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 02:56:43,881 [INFO] 加载 2 个定时任务
+2026-04-26 02:56:43,881 [INFO] 定时任务调度器已启动
+2026-04-26 02:56:43,882 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:43] "GET /api/dashboard/scheduler HTTP/1.1" 200 -
+2026-04-26 02:56:43,884 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:43] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 02:56:43,884 [INFO] EventStore 初始化完成，路径: events.db
+2026-04-26 02:56:43,887 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:43] "GET /api/dashboard/events?limit=1 HTTP/1.1" 200 -
+2026-04-26 02:56:43,905 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:43] "GET /api/dashboard/skills HTTP/1.1" 200 -
+2026-04-26 02:56:43,908 [INFO] EventStore 初始化完成，路径: events.db
+2026-04-26 02:56:43,909 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:43] "GET /api/dashboard/events?limit=9999 HTTP/1.1" 200 -
+2026-04-26 02:56:43,912 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:43] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 02:56:43,934 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:43] "GET /api/dashboard/skills HTTP/1.1" 200 -
+2026-04-26 02:56:43,937 [INFO] 加载 2 个定时任务
+2026-04-26 02:56:43,937 [INFO] 定时任务调度器已启动
+2026-04-26 02:56:43,938 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:43] "GET /api/dashboard/scheduler HTTP/1.1" 200 -
+2026-04-26 02:56:44,031 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:44] "[36mGET /dashboard/ HTTP/1.1[0m" 304 -
+2026-04-26 02:56:44,039 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:44] "[36mGET /dashboard/static/style.css HTTP/1.1[0m" 304 -
+2026-04-26 02:56:44,040 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:44] "[36mGET /dashboard/static/vue.global.js HTTP/1.1[0m" 304 -
+2026-04-26 02:56:44,041 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:44] "[36mGET /dashboard/static/vue-router.global.js HTTP/1.1[0m" 304 -
+2026-04-26 02:56:44,042 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:44] "[36mGET /dashboard/static/app.js HTTP/1.1[0m" 304 -
+2026-04-26 02:56:44,050 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:44] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 02:56:44,059 [INFO] 加载 2 个定时任务
+2026-04-26 02:56:44,059 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:44] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 02:56:44,060 [INFO] 定时任务调度器已启动
+2026-04-26 02:56:44,060 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:44] "GET /api/dashboard/scheduler HTTP/1.1" 200 -
+2026-04-26 02:56:44,064 [INFO] EventStore 初始化完成，路径: events.db
+2026-04-26 02:56:44,067 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:44] "GET /api/dashboard/events?limit=1 HTTP/1.1" 200 -
+2026-04-26 02:56:44,084 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:44] "GET /api/dashboard/skills HTTP/1.1" 200 -
+2026-04-26 02:56:44,087 [INFO] EventStore 初始化完成，路径: events.db
+2026-04-26 02:56:44,088 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:44] "GET /api/dashboard/events?limit=9999 HTTP/1.1" 200 -
+2026-04-26 02:56:44,091 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:44] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 02:56:44,115 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:44] "GET /api/dashboard/skills HTTP/1.1" 200 -
+2026-04-26 02:56:44,119 [INFO] 加载 2 个定时任务
+2026-04-26 02:56:44,119 [INFO] 定时任务调度器已启动
+2026-04-26 02:56:44,119 [INFO] 127.0.0.1 - - [26/Apr/2026 02:56:44] "GET /api/dashboard/scheduler HTTP/1.1" 200 -
+2026-04-26 02:59:27,089 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:27] "[36mGET /dashboard/ HTTP/1.1[0m" 304 -
+2026-04-26 02:59:27,098 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:27] "GET /dashboard/static/style.css HTTP/1.1" 200 -
+2026-04-26 02:59:27,099 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:27] "[36mGET /dashboard/static/vue.global.js HTTP/1.1[0m" 304 -
+2026-04-26 02:59:27,101 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:27] "[36mGET /dashboard/static/vue-router.global.js HTTP/1.1[0m" 304 -
+2026-04-26 02:59:27,102 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:27] "[36mGET /dashboard/static/app.js HTTP/1.1[0m" 304 -
+2026-04-26 02:59:27,110 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:27] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 02:59:27,121 [INFO] 加载 2 个定时任务
+2026-04-26 02:59:27,121 [INFO] 定时任务调度器已启动
+2026-04-26 02:59:27,122 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:27] "GET /api/dashboard/scheduler HTTP/1.1" 200 -
+2026-04-26 02:59:27,124 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:27] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 02:59:27,126 [INFO] EventStore 初始化完成，路径: events.db
+2026-04-26 02:59:27,130 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:27] "GET /api/dashboard/events?limit=1 HTTP/1.1" 200 -
+2026-04-26 02:59:27,149 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:27] "GET /api/dashboard/skills HTTP/1.1" 200 -
+2026-04-26 02:59:27,153 [INFO] EventStore 初始化完成，路径: events.db
+2026-04-26 02:59:27,153 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:27] "GET /api/dashboard/events?limit=9999 HTTP/1.1" 200 -
+2026-04-26 02:59:27,156 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:27] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 02:59:27,178 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:27] "GET /api/dashboard/skills HTTP/1.1" 200 -
+2026-04-26 02:59:27,181 [INFO] 加载 2 个定时任务
+2026-04-26 02:59:27,181 [INFO] 定时任务调度器已启动
+2026-04-26 02:59:27,181 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:27] "GET /api/dashboard/scheduler HTTP/1.1" 200 -
+2026-04-26 02:59:29,562 [INFO] 加载 2 个定时任务
+2026-04-26 02:59:29,562 [INFO] 定时任务调度器已启动
+2026-04-26 02:59:29,562 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:29] "GET /api/dashboard/scheduler HTTP/1.1" 200 -
+2026-04-26 02:59:29,805 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:29] "GET /api/dashboard/resources HTTP/1.1" 200 -
+2026-04-26 02:59:30,733 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:30] "GET /api/dashboard/service-rules HTTP/1.1" 200 -
+2026-04-26 02:59:30,747 [INFO] EventStore 初始化完成，路径: events.db
+2026-04-26 02:59:30,748 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:30] "GET /api/dashboard/events HTTP/1.1" 200 -
+2026-04-26 02:59:31,920 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:31] "GET /api/dashboard/skills HTTP/1.1" 200 -
+2026-04-26 02:59:33,053 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:33] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 02:59:35,801 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:35] "GET /api/dashboard/service-rules HTTP/1.1" 200 -
+2026-04-26 02:59:35,807 [INFO] EventStore 初始化完成，路径: events.db
+2026-04-26 02:59:35,808 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:35] "GET /api/dashboard/events HTTP/1.1" 200 -
+2026-04-26 02:59:37,096 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:37] "GET /api/dashboard/resources HTTP/1.1" 200 -
+2026-04-26 02:59:38,494 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:38] "[36mGET /dashboard/ HTTP/1.1[0m" 304 -
+2026-04-26 02:59:38,505 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:38] "[36mGET /dashboard/static/vue-router.global.js HTTP/1.1[0m" 304 -
+2026-04-26 02:59:38,506 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:38] "[36mGET /dashboard/static/vue.global.js HTTP/1.1[0m" 304 -
+2026-04-26 02:59:38,507 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:38] "[36mGET /dashboard/static/style.css HTTP/1.1[0m" 304 -
+2026-04-26 02:59:38,508 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:38] "[36mGET /dashboard/static/app.js HTTP/1.1[0m" 304 -
+2026-04-26 02:59:38,517 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:38] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 02:59:38,526 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:38] "GET /api/dashboard/resources HTTP/1.1" 200 -
+2026-04-26 02:59:39,639 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:39] "[36mGET /dashboard/ HTTP/1.1[0m" 304 -
+2026-04-26 02:59:39,650 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:39] "[36mGET /dashboard/static/style.css HTTP/1.1[0m" 304 -
+2026-04-26 02:59:39,651 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:39] "[36mGET /dashboard/static/vue.global.js HTTP/1.1[0m" 304 -
+2026-04-26 02:59:39,652 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:39] "[36mGET /dashboard/static/vue-router.global.js HTTP/1.1[0m" 304 -
+2026-04-26 02:59:39,653 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:39] "[36mGET /dashboard/static/app.js HTTP/1.1[0m" 304 -
+2026-04-26 02:59:39,660 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:39] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 02:59:39,668 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:39] "GET /api/dashboard/resources HTTP/1.1" 200 -
+2026-04-26 02:59:40,979 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:40] "[36mGET /dashboard/ HTTP/1.1[0m" 304 -
+2026-04-26 02:59:40,988 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:40] "[36mGET /dashboard/static/vue.global.js HTTP/1.1[0m" 304 -
+2026-04-26 02:59:40,988 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:40] "[36mGET /dashboard/static/style.css HTTP/1.1[0m" 304 -
+2026-04-26 02:59:40,992 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:40] "[36mGET /dashboard/static/app.js HTTP/1.1[0m" 304 -
+2026-04-26 02:59:40,992 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:40] "[36mGET /dashboard/static/vue-router.global.js HTTP/1.1[0m" 304 -
+2026-04-26 02:59:41,000 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:41] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 02:59:41,010 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:41] "GET /api/dashboard/resources HTTP/1.1" 200 -
+2026-04-26 02:59:41,774 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:41] "[36mGET /dashboard/ HTTP/1.1[0m" 304 -
+2026-04-26 02:59:41,785 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:41] "[36mGET /dashboard/static/style.css HTTP/1.1[0m" 304 -
+2026-04-26 02:59:41,786 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:41] "[36mGET /dashboard/static/vue.global.js HTTP/1.1[0m" 304 -
+2026-04-26 02:59:41,787 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:41] "[36mGET /dashboard/static/vue-router.global.js HTTP/1.1[0m" 304 -
+2026-04-26 02:59:41,788 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:41] "[36mGET /dashboard/static/app.js HTTP/1.1[0m" 304 -
+2026-04-26 02:59:41,796 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:41] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 02:59:41,804 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:41] "GET /api/dashboard/resources HTTP/1.1" 200 -
+2026-04-26 02:59:43,184 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:43] "[36mGET /dashboard/ HTTP/1.1[0m" 304 -
+2026-04-26 02:59:43,192 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:43] "[36mGET /dashboard/static/style.css HTTP/1.1[0m" 304 -
+2026-04-26 02:59:43,193 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:43] "[36mGET /dashboard/static/vue.global.js HTTP/1.1[0m" 304 -
+2026-04-26 02:59:43,195 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:43] "[36mGET /dashboard/static/vue-router.global.js HTTP/1.1[0m" 304 -
+2026-04-26 02:59:43,196 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:43] "[36mGET /dashboard/static/app.js HTTP/1.1[0m" 304 -
+2026-04-26 02:59:43,204 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:43] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 02:59:43,212 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:43] "GET /api/dashboard/resources HTTP/1.1" 200 -
+2026-04-26 02:59:43,739 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:43] "[36mGET /dashboard/ HTTP/1.1[0m" 304 -
+2026-04-26 02:59:43,746 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:43] "[36mGET /dashboard/static/style.css HTTP/1.1[0m" 304 -
+2026-04-26 02:59:43,749 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:43] "[36mGET /dashboard/static/vue.global.js HTTP/1.1[0m" 304 -
+2026-04-26 02:59:43,749 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:43] "[36mGET /dashboard/static/vue-router.global.js HTTP/1.1[0m" 304 -
+2026-04-26 02:59:43,750 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:43] "[36mGET /dashboard/static/app.js HTTP/1.1[0m" 304 -
+2026-04-26 02:59:43,757 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:43] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 02:59:43,766 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:43] "GET /api/dashboard/resources HTTP/1.1" 200 -
+2026-04-26 02:59:43,996 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:43] "[36mGET /dashboard/ HTTP/1.1[0m" 304 -
+2026-04-26 02:59:44,005 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:44] "[36mGET /dashboard/static/style.css HTTP/1.1[0m" 304 -
+2026-04-26 02:59:44,006 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:44] "[36mGET /dashboard/static/vue.global.js HTTP/1.1[0m" 304 -
+2026-04-26 02:59:44,007 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:44] "[36mGET /dashboard/static/app.js HTTP/1.1[0m" 304 -
+2026-04-26 02:59:44,007 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:44] "[36mGET /dashboard/static/vue-router.global.js HTTP/1.1[0m" 304 -
+2026-04-26 02:59:44,017 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:44] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 02:59:44,026 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:44] "GET /api/dashboard/resources HTTP/1.1" 200 -
+2026-04-26 02:59:44,204 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:44] "[36mGET /dashboard/ HTTP/1.1[0m" 304 -
+2026-04-26 02:59:44,211 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:44] "[36mGET /dashboard/static/style.css HTTP/1.1[0m" 304 -
+2026-04-26 02:59:44,213 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:44] "[36mGET /dashboard/static/vue-router.global.js HTTP/1.1[0m" 304 -
+2026-04-26 02:59:44,214 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:44] "[36mGET /dashboard/static/vue.global.js HTTP/1.1[0m" 304 -
+2026-04-26 02:59:44,215 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:44] "[36mGET /dashboard/static/app.js HTTP/1.1[0m" 304 -
+2026-04-26 02:59:44,224 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:44] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 02:59:44,234 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:44] "GET /api/dashboard/resources HTTP/1.1" 200 -
+2026-04-26 02:59:53,274 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:53] "GET /api/dashboard/resources?type=ec2 HTTP/1.1" 200 -
+2026-04-26 02:59:54,486 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:54] "[36mGET /dashboard/ HTTP/1.1[0m" 304 -
+2026-04-26 02:59:54,494 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:54] "[36mGET /dashboard/static/style.css HTTP/1.1[0m" 304 -
+2026-04-26 02:59:54,495 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:54] "[36mGET /dashboard/static/vue.global.js HTTP/1.1[0m" 304 -
+2026-04-26 02:59:54,495 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:54] "[36mGET /dashboard/static/vue-router.global.js HTTP/1.1[0m" 304 -
+2026-04-26 02:59:54,496 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:54] "[36mGET /dashboard/static/app.js HTTP/1.1[0m" 304 -
+2026-04-26 02:59:54,504 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:54] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 02:59:54,513 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:54] "GET /api/dashboard/resources HTTP/1.1" 200 -
+2026-04-26 02:59:55,229 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:55] "[36mGET /dashboard/ HTTP/1.1[0m" 304 -
+2026-04-26 02:59:55,237 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:55] "[36mGET /dashboard/static/style.css HTTP/1.1[0m" 304 -
+2026-04-26 02:59:55,238 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:55] "[36mGET /dashboard/static/vue.global.js HTTP/1.1[0m" 304 -
+2026-04-26 02:59:55,239 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:55] "[36mGET /dashboard/static/vue-router.global.js HTTP/1.1[0m" 304 -
+2026-04-26 02:59:55,240 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:55] "[36mGET /dashboard/static/app.js HTTP/1.1[0m" 304 -
+2026-04-26 02:59:55,249 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:55] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 02:59:55,260 [INFO] 127.0.0.1 - - [26/Apr/2026 02:59:55] "GET /api/dashboard/resources HTTP/1.1" 200 -
+2026-04-26 08:30:12,324 [INFO] 127.0.0.1 - - [26/Apr/2026 08:30:12] "[36mGET /dashboard/ HTTP/1.1[0m" 304 -
+2026-04-26 08:30:12,333 [INFO] 127.0.0.1 - - [26/Apr/2026 08:30:12] "GET /dashboard/static/style.css HTTP/1.1" 200 -
+2026-04-26 08:30:12,336 [INFO] 127.0.0.1 - - [26/Apr/2026 08:30:12] "[36mGET /dashboard/static/vue.global.js HTTP/1.1[0m" 304 -
+2026-04-26 08:30:12,339 [INFO] 127.0.0.1 - - [26/Apr/2026 08:30:12] "[36mGET /dashboard/static/vue-router.global.js HTTP/1.1[0m" 304 -
+2026-04-26 08:30:12,340 [INFO] 127.0.0.1 - - [26/Apr/2026 08:30:12] "GET /dashboard/static/app.js HTTP/1.1" 200 -
+2026-04-26 08:30:12,375 [INFO] 127.0.0.1 - - [26/Apr/2026 08:30:12] "[31m[1mGET /api/dashboard/agents HTTP/1.1[0m" 401 -
+2026-04-26 08:30:12,423 [INFO] 127.0.0.1 - - [26/Apr/2026 08:30:12] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-04-26 08:30:13,662 [INFO] 127.0.0.1 - - [26/Apr/2026 08:30:13] "POST /api/dashboard/auth HTTP/1.1" 200 -
+2026-04-26 08:30:13,676 [INFO] 加载 2 个定时任务
+2026-04-26 08:30:13,677 [INFO] 定时任务调度器已启动
+2026-04-26 08:30:13,677 [INFO] 127.0.0.1 - - [26/Apr/2026 08:30:13] "GET /api/dashboard/scheduler HTTP/1.1" 200 -
+2026-04-26 08:30:13,681 [INFO] 127.0.0.1 - - [26/Apr/2026 08:30:13] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 08:30:13,684 [INFO] EventStore 初始化完成，路径: events.db
+2026-04-26 08:30:13,688 [INFO] 127.0.0.1 - - [26/Apr/2026 08:30:13] "GET /api/dashboard/events?limit=1 HTTP/1.1" 200 -
+2026-04-26 08:30:13,705 [INFO] 127.0.0.1 - - [26/Apr/2026 08:30:13] "GET /api/dashboard/skills HTTP/1.1" 200 -
+2026-04-26 08:30:13,709 [INFO] EventStore 初始化完成，路径: events.db
+2026-04-26 08:30:13,709 [INFO] 127.0.0.1 - - [26/Apr/2026 08:30:13] "GET /api/dashboard/events?limit=9999 HTTP/1.1" 200 -
+2026-04-26 08:30:13,712 [INFO] 127.0.0.1 - - [26/Apr/2026 08:30:13] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 08:30:13,735 [INFO] 127.0.0.1 - - [26/Apr/2026 08:30:13] "GET /api/dashboard/skills HTTP/1.1" 200 -
+2026-04-26 08:30:13,737 [INFO] 加载 2 个定时任务
+2026-04-26 08:30:13,738 [INFO] 定时任务调度器已启动
+2026-04-26 08:30:13,738 [INFO] 127.0.0.1 - - [26/Apr/2026 08:30:13] "GET /api/dashboard/scheduler HTTP/1.1" 200 -
+2026-04-26 08:30:22,528 [INFO] 127.0.0.1 - - [26/Apr/2026 08:30:22] "GET /api/dashboard/resources HTTP/1.1" 200 -
+2026-04-26 08:31:03,240 [INFO] 127.0.0.1 - - [26/Apr/2026 08:31:03] "GET /api/dashboard/resources?refresh=1 HTTP/1.1" 200 -
+2026-04-26 08:33:38,373 [INFO] 127.0.0.1 - - [26/Apr/2026 08:33:38] "GET /api/dashboard/resources?refresh=1 HTTP/1.1" 200 -
+2026-04-26 08:37:00,465 [INFO] 127.0.0.1 - - [26/Apr/2026 08:37:00] "[33mGET /api/dashboard/resources/ec2:cn-north-1:i-0995feca654198825/history?range=24h HTTP/1.1[0m" 404 -
+2026-04-26 08:37:04,327 [INFO] 127.0.0.1 - - [26/Apr/2026 08:37:04] "[33mGET /api/dashboard/resources/ec2:cn-north-1:i-0995feca654198825/history?range=7d HTTP/1.1[0m" 404 -
+2026-04-26 08:37:05,249 [INFO] 127.0.0.1 - - [26/Apr/2026 08:37:05] "[33mGET /api/dashboard/resources/ec2:cn-north-1:i-0995feca654198825/history?range=30d HTTP/1.1[0m" 404 -
+2026-04-26 08:37:05,938 [INFO] 127.0.0.1 - - [26/Apr/2026 08:37:05] "[33mGET /api/dashboard/resources/ec2:cn-north-1:i-0995feca654198825/history?range=180d HTTP/1.1[0m" 404 -
+2026-04-26 08:37:12,757 [INFO] 127.0.0.1 - - [26/Apr/2026 08:37:12] "[33mGET /api/dashboard/resources/ec2:cn-northwest-1:i-0b39e60ab69a7c3f7/history?range=180d HTTP/1.1[0m" 404 -
+2026-04-26 08:37:14,070 [INFO] 127.0.0.1 - - [26/Apr/2026 08:37:14] "[33mGET /api/dashboard/resources/ec2:cn-northwest-1:i-0b39e60ab69a7c3f7/history?range=24h HTTP/1.1[0m" 404 -
+2026-04-26 08:37:14,760 [INFO] 127.0.0.1 - - [26/Apr/2026 08:37:14] "[33mGET /api/dashboard/resources/ec2:cn-northwest-1:i-0b39e60ab69a7c3f7/history?range=7d HTTP/1.1[0m" 404 -
+2026-04-26 08:37:15,360 [INFO] 127.0.0.1 - - [26/Apr/2026 08:37:15] "[33mGET /api/dashboard/resources/ec2:cn-northwest-1:i-0b39e60ab69a7c3f7/history?range=30d HTTP/1.1[0m" 404 -
+2026-04-26 08:37:15,892 [INFO] 127.0.0.1 - - [26/Apr/2026 08:37:15] "[33mGET /api/dashboard/resources/ec2:cn-northwest-1:i-0b39e60ab69a7c3f7/history?range=180d HTTP/1.1[0m" 404 -
+2026-04-26 08:37:17,414 [INFO] 127.0.0.1 - - [26/Apr/2026 08:37:17] "[33mGET /api/dashboard/resources/ec2:cn-northwest-1:i-0b39e60ab69a7c3f7/history?range=24h HTTP/1.1[0m" 404 -
+2026-04-26 08:51:49,878 [INFO] 127.0.0.1 - - [26/Apr/2026 08:51:49] "[36mGET /dashboard/ HTTP/1.1[0m" 304 -
+2026-04-26 08:51:49,886 [INFO] 127.0.0.1 - - [26/Apr/2026 08:51:49] "[36mGET /dashboard/static/style.css HTTP/1.1[0m" 304 -
+2026-04-26 08:51:49,887 [INFO] 127.0.0.1 - - [26/Apr/2026 08:51:49] "[36mGET /dashboard/static/vue.global.js HTTP/1.1[0m" 304 -
+2026-04-26 08:51:49,888 [INFO] 127.0.0.1 - - [26/Apr/2026 08:51:49] "[36mGET /dashboard/static/vue-router.global.js HTTP/1.1[0m" 304 -
+2026-04-26 08:51:49,889 [INFO] 127.0.0.1 - - [26/Apr/2026 08:51:49] "GET /dashboard/static/app.js HTTP/1.1" 200 -
+2026-04-26 08:51:49,904 [INFO] 127.0.0.1 - - [26/Apr/2026 08:51:49] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 08:51:52,215 [INFO] 127.0.0.1 - - [26/Apr/2026 08:51:52] "GET /api/dashboard/resources HTTP/1.1" 200 -
+2026-04-26 08:51:55,843 [INFO] 127.0.0.1 - - [26/Apr/2026 08:51:55] "[36mGET /dashboard/ HTTP/1.1[0m" 304 -
+2026-04-26 08:51:55,851 [INFO] 127.0.0.1 - - [26/Apr/2026 08:51:55] "[36mGET /dashboard/static/vue.global.js HTTP/1.1[0m" 304 -
+2026-04-26 08:51:55,852 [INFO] 127.0.0.1 - - [26/Apr/2026 08:51:55] "[36mGET /dashboard/static/style.css HTTP/1.1[0m" 304 -
+2026-04-26 08:51:55,853 [INFO] 127.0.0.1 - - [26/Apr/2026 08:51:55] "[36mGET /dashboard/static/app.js HTTP/1.1[0m" 304 -
+2026-04-26 08:51:55,854 [INFO] 127.0.0.1 - - [26/Apr/2026 08:51:55] "[36mGET /dashboard/static/vue-router.global.js HTTP/1.1[0m" 304 -
+2026-04-26 08:51:55,864 [INFO] 127.0.0.1 - - [26/Apr/2026 08:51:55] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 08:51:55,875 [INFO] 127.0.0.1 - - [26/Apr/2026 08:51:55] "GET /api/dashboard/resources HTTP/1.1" 200 -
+2026-04-26 08:52:02,790 [INFO] 127.0.0.1 - - [26/Apr/2026 08:52:02] "POST /api/dashboard/logout HTTP/1.1" 200 -
+2026-04-26 08:52:07,295 [INFO] 127.0.0.1 - - [26/Apr/2026 08:52:07] "[36mGET /dashboard/ HTTP/1.1[0m" 304 -
+2026-04-26 08:52:07,303 [INFO] 127.0.0.1 - - [26/Apr/2026 08:52:07] "[36mGET /dashboard/static/style.css HTTP/1.1[0m" 304 -
+2026-04-26 08:52:07,304 [INFO] 127.0.0.1 - - [26/Apr/2026 08:52:07] "[36mGET /dashboard/static/vue.global.js HTTP/1.1[0m" 304 -
+2026-04-26 08:52:07,306 [INFO] 127.0.0.1 - - [26/Apr/2026 08:52:07] "[36mGET /dashboard/static/vue-router.global.js HTTP/1.1[0m" 304 -
+2026-04-26 08:52:07,306 [INFO] 127.0.0.1 - - [26/Apr/2026 08:52:07] "[36mGET /dashboard/static/app.js HTTP/1.1[0m" 304 -
+2026-04-26 08:52:07,314 [INFO] 127.0.0.1 - - [26/Apr/2026 08:52:07] "[31m[1mGET /api/dashboard/agents HTTP/1.1[0m" 401 -
+2026-04-26 08:52:08,759 [INFO] 127.0.0.1 - - [26/Apr/2026 08:52:08] "POST /api/dashboard/auth HTTP/1.1" 200 -
+2026-04-26 08:52:08,768 [INFO] 加载 2 个定时任务
+2026-04-26 08:52:08,768 [INFO] 定时任务调度器已启动
+2026-04-26 08:52:08,769 [INFO] 127.0.0.1 - - [26/Apr/2026 08:52:08] "GET /api/dashboard/scheduler HTTP/1.1" 200 -
+2026-04-26 08:52:08,774 [INFO] 127.0.0.1 - - [26/Apr/2026 08:52:08] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 08:52:08,775 [INFO] EventStore 初始化完成，路径: events.db
+2026-04-26 08:52:08,778 [INFO] 127.0.0.1 - - [26/Apr/2026 08:52:08] "GET /api/dashboard/events?limit=1 HTTP/1.1" 200 -
+2026-04-26 08:52:08,793 [INFO] 127.0.0.1 - - [26/Apr/2026 08:52:08] "GET /api/dashboard/skills HTTP/1.1" 200 -
+2026-04-26 08:52:08,796 [INFO] EventStore 初始化完成，路径: events.db
+2026-04-26 08:52:08,797 [INFO] 127.0.0.1 - - [26/Apr/2026 08:52:08] "GET /api/dashboard/events?limit=9999 HTTP/1.1" 200 -
+2026-04-26 08:52:08,799 [INFO] 127.0.0.1 - - [26/Apr/2026 08:52:08] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 08:52:08,823 [INFO] 127.0.0.1 - - [26/Apr/2026 08:52:08] "GET /api/dashboard/skills HTTP/1.1" 200 -
+2026-04-26 08:52:08,826 [INFO] 加载 2 个定时任务
+2026-04-26 08:52:08,826 [INFO] 定时任务调度器已启动
+2026-04-26 08:52:08,826 [INFO] 127.0.0.1 - - [26/Apr/2026 08:52:08] "GET /api/dashboard/scheduler HTTP/1.1" 200 -
+2026-04-26 08:52:11,085 [INFO] 127.0.0.1 - - [26/Apr/2026 08:52:11] "GET /api/dashboard/resources HTTP/1.1" 200 -
+2026-04-26 08:52:20,196 [INFO] 127.0.0.1 - - [26/Apr/2026 08:52:20] "[33mGET /api/dashboard/resources/ec2:cn-northwest-1:i-0b39e60ab69a7c3f7/history?range=24h HTTP/1.1[0m" 404 -
+2026-04-26 08:52:22,026 [INFO] 127.0.0.1 - - [26/Apr/2026 08:52:22] "[33mGET /api/dashboard/resources/ec2:cn-northwest-1:i-0b39e60ab69a7c3f7/history?range=7d HTTP/1.1[0m" 404 -
+2026-04-26 08:52:22,859 [INFO] 127.0.0.1 - - [26/Apr/2026 08:52:22] "[33mGET /api/dashboard/resources/ec2:cn-northwest-1:i-0b39e60ab69a7c3f7/history?range=30d HTTP/1.1[0m" 404 -
+2026-04-26 08:52:23,428 [INFO] 127.0.0.1 - - [26/Apr/2026 08:52:23] "[33mGET /api/dashboard/resources/ec2:cn-northwest-1:i-0b39e60ab69a7c3f7/history?range=180d HTTP/1.1[0m" 404 -
+2026-04-26 09:03:30,109 [INFO] 127.0.0.1 - - [26/Apr/2026 09:03:30] "[36mGET /dashboard/ HTTP/1.1[0m" 304 -
+2026-04-26 09:03:30,118 [INFO] 127.0.0.1 - - [26/Apr/2026 09:03:30] "[36mGET /dashboard/static/vue.global.js HTTP/1.1[0m" 304 -
+2026-04-26 09:03:30,119 [INFO] 127.0.0.1 - - [26/Apr/2026 09:03:30] "[36mGET /dashboard/static/vue-router.global.js HTTP/1.1[0m" 304 -
+2026-04-26 09:03:30,122 [INFO] 127.0.0.1 - - [26/Apr/2026 09:03:30] "[36mGET /dashboard/static/style.css HTTP/1.1[0m" 304 -
+2026-04-26 09:03:30,123 [INFO] 127.0.0.1 - - [26/Apr/2026 09:03:30] "[36mGET /dashboard/static/app.js HTTP/1.1[0m" 304 -
+2026-04-26 09:03:30,133 [INFO] 127.0.0.1 - - [26/Apr/2026 09:03:30] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 09:03:32,346 [INFO] 127.0.0.1 - - [26/Apr/2026 09:03:32] "GET /api/dashboard/resources HTTP/1.1" 200 -
+2026-04-26 09:03:39,983 [INFO] 127.0.0.1 - - [26/Apr/2026 09:03:39] "[33mGET /api/dashboard/resources/ec2:cn-northwest-1:i-0b39e60ab69a7c3f7/history?range=24h HTTP/1.1[0m" 404 -
+2026-04-26 09:03:42,001 [INFO] 127.0.0.1 - - [26/Apr/2026 09:03:42] "[33mGET /api/dashboard/resources/ec2:cn-northwest-1:i-0b39e60ab69a7c3f7/history?range=7d HTTP/1.1[0m" 404 -
+2026-04-26 11:58:40,774 [INFO] 127.0.0.1 - - [26/Apr/2026 11:58:40] "[36mGET /dashboard/ HTTP/1.1[0m" 304 -
+2026-04-26 11:58:40,784 [INFO] 127.0.0.1 - - [26/Apr/2026 11:58:40] "[36mGET /dashboard/static/style.css HTTP/1.1[0m" 304 -
+2026-04-26 11:58:40,786 [INFO] 127.0.0.1 - - [26/Apr/2026 11:58:40] "[36mGET /dashboard/static/vue-router.global.js HTTP/1.1[0m" 304 -
+2026-04-26 11:58:40,789 [INFO] 127.0.0.1 - - [26/Apr/2026 11:58:40] "[36mGET /dashboard/static/vue.global.js HTTP/1.1[0m" 304 -
+2026-04-26 11:58:40,789 [INFO] 127.0.0.1 - - [26/Apr/2026 11:58:40] "[36mGET /dashboard/static/app.js HTTP/1.1[0m" 304 -
+2026-04-26 11:58:40,829 [INFO] 127.0.0.1 - - [26/Apr/2026 11:58:40] "[31m[1mGET /api/dashboard/agents HTTP/1.1[0m" 401 -
+2026-04-26 11:58:40,850 [INFO] 127.0.0.1 - - [26/Apr/2026 11:58:40] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-04-26 11:58:42,607 [INFO] 127.0.0.1 - - [26/Apr/2026 11:58:42] "POST /api/dashboard/auth HTTP/1.1" 200 -
+2026-04-26 11:58:42,622 [INFO] 加载 2 个定时任务
+2026-04-26 11:58:42,623 [INFO] 127.0.0.1 - - [26/Apr/2026 11:58:42] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 11:58:42,623 [INFO] 定时任务调度器已启动
+2026-04-26 11:58:42,623 [INFO] 127.0.0.1 - - [26/Apr/2026 11:58:42] "GET /api/dashboard/scheduler HTTP/1.1" 200 -
+2026-04-26 11:58:42,626 [INFO] EventStore 初始化完成，路径: events.db
+2026-04-26 11:58:42,632 [INFO] 127.0.0.1 - - [26/Apr/2026 11:58:42] "GET /api/dashboard/events?limit=1 HTTP/1.1" 200 -
+2026-04-26 11:58:42,648 [INFO] 127.0.0.1 - - [26/Apr/2026 11:58:42] "GET /api/dashboard/skills HTTP/1.1" 200 -
+2026-04-26 11:58:42,652 [INFO] EventStore 初始化完成，路径: events.db
+2026-04-26 11:58:42,653 [INFO] 127.0.0.1 - - [26/Apr/2026 11:58:42] "GET /api/dashboard/events?limit=9999 HTTP/1.1" 200 -
+2026-04-26 11:58:42,656 [INFO] 127.0.0.1 - - [26/Apr/2026 11:58:42] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 11:58:42,677 [INFO] 127.0.0.1 - - [26/Apr/2026 11:58:42] "GET /api/dashboard/skills HTTP/1.1" 200 -
+2026-04-26 11:58:42,680 [INFO] 加载 2 个定时任务
+2026-04-26 11:58:42,680 [INFO] 定时任务调度器已启动
+2026-04-26 11:58:42,680 [INFO] 127.0.0.1 - - [26/Apr/2026 11:58:42] "GET /api/dashboard/scheduler HTTP/1.1" 200 -
+2026-04-26 11:58:47,665 [INFO] 127.0.0.1 - - [26/Apr/2026 11:58:47] "GET /api/dashboard/resources HTTP/1.1" 200 -
+2026-04-26 11:58:50,512 [INFO] 127.0.0.1 - - [26/Apr/2026 11:58:50] "POST /api/dashboard/resources/pins HTTP/1.1" 200 -
+2026-04-26 11:58:51,968 [INFO] 127.0.0.1 - - [26/Apr/2026 11:58:51] "POST /api/dashboard/resources/pins HTTP/1.1" 200 -
+2026-04-26 11:58:54,779 [INFO] 127.0.0.1 - - [26/Apr/2026 11:58:54] "[33mGET /api/dashboard/resources/ec2:cn-northwest-1:i-0b39e60ab69a7c3f7/history?range=24h HTTP/1.1[0m" 404 -
+2026-04-26 11:58:56,452 [INFO] 127.0.0.1 - - [26/Apr/2026 11:58:56] "[33mGET /api/dashboard/resources/ec2:cn-northwest-1:i-0b39e60ab69a7c3f7/history?range=7d HTTP/1.1[0m" 404 -
+2026-04-26 11:58:57,017 [INFO] 127.0.0.1 - - [26/Apr/2026 11:58:57] "[36mGET /dashboard/ HTTP/1.1[0m" 304 -
+2026-04-26 11:58:57,026 [INFO] 127.0.0.1 - - [26/Apr/2026 11:58:57] "[36mGET /dashboard/static/vue.global.js HTTP/1.1[0m" 304 -
+2026-04-26 11:58:57,027 [INFO] 127.0.0.1 - - [26/Apr/2026 11:58:57] "[36mGET /dashboard/static/style.css HTTP/1.1[0m" 304 -
+2026-04-26 11:58:57,028 [INFO] 127.0.0.1 - - [26/Apr/2026 11:58:57] "[36mGET /dashboard/static/vue-router.global.js HTTP/1.1[0m" 304 -
+2026-04-26 11:58:57,029 [INFO] 127.0.0.1 - - [26/Apr/2026 11:58:57] "[36mGET /dashboard/static/app.js HTTP/1.1[0m" 304 -
+2026-04-26 11:58:57,041 [INFO] 127.0.0.1 - - [26/Apr/2026 11:58:57] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 11:58:57,054 [INFO] 127.0.0.1 - - [26/Apr/2026 11:58:57] "GET /api/dashboard/resources HTTP/1.1" 200 -
+2026-04-26 11:58:57,397 [INFO] 127.0.0.1 - - [26/Apr/2026 11:58:57] "[36mGET /dashboard/ HTTP/1.1[0m" 304 -
+2026-04-26 11:58:57,404 [INFO] 127.0.0.1 - - [26/Apr/2026 11:58:57] "[36mGET /dashboard/static/style.css HTTP/1.1[0m" 304 -
+2026-04-26 11:58:57,406 [INFO] 127.0.0.1 - - [26/Apr/2026 11:58:57] "[36mGET /dashboard/static/vue.global.js HTTP/1.1[0m" 304 -
+2026-04-26 11:58:57,407 [INFO] 127.0.0.1 - - [26/Apr/2026 11:58:57] "[36mGET /dashboard/static/vue-router.global.js HTTP/1.1[0m" 304 -
+2026-04-26 11:58:57,408 [INFO] 127.0.0.1 - - [26/Apr/2026 11:58:57] "[36mGET /dashboard/static/app.js HTTP/1.1[0m" 304 -
+2026-04-26 11:58:57,416 [INFO] 127.0.0.1 - - [26/Apr/2026 11:58:57] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 11:58:57,427 [INFO] 127.0.0.1 - - [26/Apr/2026 11:58:57] "GET /api/dashboard/resources HTTP/1.1" 200 -
+2026-04-26 11:59:01,094 [INFO] 127.0.0.1 - - [26/Apr/2026 11:59:01] "[33mGET /api/dashboard/resources/ec2:cn-northwest-1:i-0b39e60ab69a7c3f7/history?range=24h HTTP/1.1[0m" 404 -
+2026-04-26 11:59:02,820 [INFO] 127.0.0.1 - - [26/Apr/2026 11:59:02] "[33mGET /api/dashboard/resources/ec2:cn-northwest-1:i-0b39e60ab69a7c3f7/history?range=7d HTTP/1.1[0m" 404 -
+2026-04-26 11:59:03,412 [INFO] 127.0.0.1 - - [26/Apr/2026 11:59:03] "[33mGET /api/dashboard/resources/ec2:cn-northwest-1:i-0b39e60ab69a7c3f7/history?range=30d HTTP/1.1[0m" 404 -
+2026-04-26 11:59:03,943 [INFO] 127.0.0.1 - - [26/Apr/2026 11:59:03] "[33mGET /api/dashboard/resources/ec2:cn-northwest-1:i-0b39e60ab69a7c3f7/history?range=180d HTTP/1.1[0m" 404 -
+2026-04-26 11:59:04,858 [INFO] 127.0.0.1 - - [26/Apr/2026 11:59:04] "[33mGET /api/dashboard/resources/ec2:cn-northwest-1:i-0b39e60ab69a7c3f7/history?range=24h HTTP/1.1[0m" 404 -
+2026-04-26 11:59:05,309 [INFO] 127.0.0.1 - - [26/Apr/2026 11:59:05] "[33mGET /api/dashboard/resources/ec2:cn-northwest-1:i-0b39e60ab69a7c3f7/history?range=7d HTTP/1.1[0m" 404 -
+2026-04-26 11:59:05,797 [INFO] 127.0.0.1 - - [26/Apr/2026 11:59:05] "[33mGET /api/dashboard/resources/ec2:cn-northwest-1:i-0b39e60ab69a7c3f7/history?range=30d HTTP/1.1[0m" 404 -
+2026-04-26 11:59:06,719 [INFO] 127.0.0.1 - - [26/Apr/2026 11:59:06] "[33mGET /api/dashboard/resources/ec2:cn-northwest-1:i-0b39e60ab69a7c3f7/history?range=180d HTTP/1.1[0m" 404 -
+2026-04-26 11:59:57,420 [INFO] 127.0.0.1 - - [26/Apr/2026 11:59:57] "[33mGET /api/dashboard/resources/ec2:cn-northwest-1:i-0b39e60ab69a7c3f7/history?range=7d HTTP/1.1[0m" 404 -
+2026-04-26 11:59:59,415 [INFO] 127.0.0.1 - - [26/Apr/2026 11:59:59] "[33mGET /api/dashboard/resources/ec2:cn-northwest-1:i-0b39e60ab69a7c3f7/history?range=30d HTTP/1.1[0m" 404 -
+2026-04-26 12:00:00,930 [INFO] 127.0.0.1 - - [26/Apr/2026 12:00:00] "[33mGET /api/dashboard/resources/ec2:cn-northwest-1:i-0b39e60ab69a7c3f7/history?range=24h HTTP/1.1[0m" 404 -
+2026-04-26 12:00:02,205 [INFO] 127.0.0.1 - - [26/Apr/2026 12:00:02] "[33mGET /api/dashboard/resources/ec2:cn-northwest-1:i-0b39e60ab69a7c3f7/history?range=7d HTTP/1.1[0m" 404 -
+2026-04-26 12:00:02,913 [INFO] 127.0.0.1 - - [26/Apr/2026 12:00:02] "[33mGET /api/dashboard/resources/ec2:cn-northwest-1:i-0b39e60ab69a7c3f7/history?range=30d HTTP/1.1[0m" 404 -
+2026-04-26 12:00:03,756 [INFO] 127.0.0.1 - - [26/Apr/2026 12:00:03] "[33mGET /api/dashboard/resources/ec2:cn-northwest-1:i-0b39e60ab69a7c3f7/history?range=180d HTTP/1.1[0m" 404 -
+2026-04-26 12:00:15,630 [INFO] 127.0.0.1 - - [26/Apr/2026 12:00:15] "[36mGET /dashboard/ HTTP/1.1[0m" 304 -
+2026-04-26 12:00:15,638 [INFO] 127.0.0.1 - - [26/Apr/2026 12:00:15] "[36mGET /dashboard/static/style.css HTTP/1.1[0m" 304 -
+2026-04-26 12:00:15,639 [INFO] 127.0.0.1 - - [26/Apr/2026 12:00:15] "[36mGET /dashboard/static/vue.global.js HTTP/1.1[0m" 304 -
+2026-04-26 12:00:15,641 [INFO] 127.0.0.1 - - [26/Apr/2026 12:00:15] "[36mGET /dashboard/static/vue-router.global.js HTTP/1.1[0m" 304 -
+2026-04-26 12:00:15,642 [INFO] 127.0.0.1 - - [26/Apr/2026 12:00:15] "[36mGET /dashboard/static/app.js HTTP/1.1[0m" 304 -
+2026-04-26 12:00:15,650 [INFO] 127.0.0.1 - - [26/Apr/2026 12:00:15] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 12:00:15,662 [INFO] 127.0.0.1 - - [26/Apr/2026 12:00:15] "GET /api/dashboard/resources HTTP/1.1" 200 -
+2026-04-26 12:00:20,693 [INFO] 127.0.0.1 - - [26/Apr/2026 12:00:20] "POST /api/dashboard/logout HTTP/1.1" 200 -
+2026-04-26 12:00:22,932 [INFO] 127.0.0.1 - - [26/Apr/2026 12:00:22] "[36mGET /dashboard/ HTTP/1.1[0m" 304 -
+2026-04-26 12:00:22,940 [INFO] 127.0.0.1 - - [26/Apr/2026 12:00:22] "[36mGET /dashboard/static/style.css HTTP/1.1[0m" 304 -
+2026-04-26 12:00:22,941 [INFO] 127.0.0.1 - - [26/Apr/2026 12:00:22] "[36mGET /dashboard/static/vue.global.js HTTP/1.1[0m" 304 -
+2026-04-26 12:00:22,943 [INFO] 127.0.0.1 - - [26/Apr/2026 12:00:22] "[36mGET /dashboard/static/vue-router.global.js HTTP/1.1[0m" 304 -
+2026-04-26 12:00:22,943 [INFO] 127.0.0.1 - - [26/Apr/2026 12:00:22] "[36mGET /dashboard/static/app.js HTTP/1.1[0m" 304 -
+2026-04-26 12:00:22,951 [INFO] 127.0.0.1 - - [26/Apr/2026 12:00:22] "[31m[1mGET /api/dashboard/agents HTTP/1.1[0m" 401 -
+2026-04-26 12:00:24,406 [INFO] 127.0.0.1 - - [26/Apr/2026 12:00:24] "POST /api/dashboard/auth HTTP/1.1" 200 -
+2026-04-26 12:00:24,418 [INFO] 加载 2 个定时任务
+2026-04-26 12:00:24,419 [INFO] 定时任务调度器已启动
+2026-04-26 12:00:24,421 [INFO] 127.0.0.1 - - [26/Apr/2026 12:00:24] "GET /api/dashboard/scheduler HTTP/1.1" 200 -
+2026-04-26 12:00:24,424 [INFO] 127.0.0.1 - - [26/Apr/2026 12:00:24] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 12:00:24,424 [INFO] EventStore 初始化完成，路径: events.db
+2026-04-26 12:00:24,428 [INFO] 127.0.0.1 - - [26/Apr/2026 12:00:24] "GET /api/dashboard/events?limit=1 HTTP/1.1" 200 -
+2026-04-26 12:00:24,444 [INFO] 127.0.0.1 - - [26/Apr/2026 12:00:24] "GET /api/dashboard/skills HTTP/1.1" 200 -
+2026-04-26 12:00:24,447 [INFO] EventStore 初始化完成，路径: events.db
+2026-04-26 12:00:24,448 [INFO] 127.0.0.1 - - [26/Apr/2026 12:00:24] "GET /api/dashboard/events?limit=9999 HTTP/1.1" 200 -
+2026-04-26 12:00:24,451 [INFO] 127.0.0.1 - - [26/Apr/2026 12:00:24] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 12:00:24,473 [INFO] 127.0.0.1 - - [26/Apr/2026 12:00:24] "GET /api/dashboard/skills HTTP/1.1" 200 -
+2026-04-26 12:00:24,476 [INFO] 加载 2 个定时任务
+2026-04-26 12:00:24,476 [INFO] 定时任务调度器已启动
+2026-04-26 12:00:24,477 [INFO] 127.0.0.1 - - [26/Apr/2026 12:00:24] "GET /api/dashboard/scheduler HTTP/1.1" 200 -
+2026-04-26 12:00:26,459 [INFO] 127.0.0.1 - - [26/Apr/2026 12:00:26] "GET /api/dashboard/resources HTTP/1.1" 200 -
+2026-04-26 12:00:30,712 [INFO] 127.0.0.1 - - [26/Apr/2026 12:00:30] "[33mGET /api/dashboard/resources/ec2:cn-northwest-1:i-0b39e60ab69a7c3f7/history?range=24h HTTP/1.1[0m" 404 -
+2026-04-26 12:00:32,483 [INFO] 127.0.0.1 - - [26/Apr/2026 12:00:32] "[33mGET /api/dashboard/resources/ec2:cn-northwest-1:i-0b39e60ab69a7c3f7/history?range=7d HTTP/1.1[0m" 404 -
+2026-04-26 12:00:33,053 [INFO] 127.0.0.1 - - [26/Apr/2026 12:00:33] "[33mGET /api/dashboard/resources/ec2:cn-northwest-1:i-0b39e60ab69a7c3f7/history?range=30d HTTP/1.1[0m" 404 -
+2026-04-26 12:00:34,080 [INFO] 127.0.0.1 - - [26/Apr/2026 12:00:34] "[33mGET /api/dashboard/resources/ec2:cn-northwest-1:i-0b39e60ab69a7c3f7/history?range=180d HTTP/1.1[0m" 404 -
+2026-04-26 12:30:15,037 [INFO] 127.0.0.1 - - [26/Apr/2026 12:30:15] "[36mGET /dashboard/ HTTP/1.1[0m" 304 -
+2026-04-26 12:30:15,047 [INFO] 127.0.0.1 - - [26/Apr/2026 12:30:15] "[36mGET /dashboard/static/style.css HTTP/1.1[0m" 304 -
+2026-04-26 12:30:15,047 [INFO] 127.0.0.1 - - [26/Apr/2026 12:30:15] "[36mGET /dashboard/static/vue.global.js HTTP/1.1[0m" 304 -
+2026-04-26 12:30:15,049 [INFO] 127.0.0.1 - - [26/Apr/2026 12:30:15] "[36mGET /dashboard/static/vue-router.global.js HTTP/1.1[0m" 304 -
+2026-04-26 12:30:15,050 [INFO] 127.0.0.1 - - [26/Apr/2026 12:30:15] "[36mGET /dashboard/static/app.js HTTP/1.1[0m" 304 -
+2026-04-26 12:30:15,060 [INFO] 127.0.0.1 - - [26/Apr/2026 12:30:15] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 12:30:17,172 [INFO] 127.0.0.1 - - [26/Apr/2026 12:30:17] "POST /api/dashboard/logout HTTP/1.1" 200 -
+2026-04-26 12:30:17,721 [INFO] 127.0.0.1 - - [26/Apr/2026 12:30:17] "GET /api/dashboard/resources HTTP/1.1" 200 -
+2026-04-26 12:30:22,301 [INFO] 127.0.0.1 - - [26/Apr/2026 12:30:22] "[36mGET /dashboard/ HTTP/1.1[0m" 304 -
+2026-04-26 12:30:22,307 [INFO] 127.0.0.1 - - [26/Apr/2026 12:30:22] "[36mGET /dashboard/static/style.css HTTP/1.1[0m" 304 -
+2026-04-26 12:30:22,308 [INFO] 127.0.0.1 - - [26/Apr/2026 12:30:22] "[36mGET /dashboard/static/vue.global.js HTTP/1.1[0m" 304 -
+2026-04-26 12:30:22,310 [INFO] 127.0.0.1 - - [26/Apr/2026 12:30:22] "[36mGET /dashboard/static/vue-router.global.js HTTP/1.1[0m" 304 -
+2026-04-26 12:30:22,311 [INFO] 127.0.0.1 - - [26/Apr/2026 12:30:22] "[36mGET /dashboard/static/app.js HTTP/1.1[0m" 304 -
+2026-04-26 12:30:22,319 [INFO] 127.0.0.1 - - [26/Apr/2026 12:30:22] "[31m[1mGET /api/dashboard/agents HTTP/1.1[0m" 401 -
+2026-04-26 12:30:23,630 [INFO] 127.0.0.1 - - [26/Apr/2026 12:30:23] "POST /api/dashboard/auth HTTP/1.1" 200 -
+2026-04-26 12:30:23,639 [INFO] 加载 2 个定时任务
+2026-04-26 12:30:23,639 [INFO] 定时任务调度器已启动
+2026-04-26 12:30:23,639 [INFO] 127.0.0.1 - - [26/Apr/2026 12:30:23] "GET /api/dashboard/scheduler HTTP/1.1" 200 -
+2026-04-26 12:30:23,642 [INFO] 127.0.0.1 - - [26/Apr/2026 12:30:23] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 12:30:23,642 [INFO] EventStore 初始化完成，路径: events.db
+2026-04-26 12:30:23,643 [INFO] 127.0.0.1 - - [26/Apr/2026 12:30:23] "GET /api/dashboard/events?limit=1 HTTP/1.1" 200 -
+2026-04-26 12:30:23,663 [INFO] 127.0.0.1 - - [26/Apr/2026 12:30:23] "GET /api/dashboard/skills HTTP/1.1" 200 -
+2026-04-26 12:30:23,666 [INFO] EventStore 初始化完成，路径: events.db
+2026-04-26 12:30:23,667 [INFO] 127.0.0.1 - - [26/Apr/2026 12:30:23] "GET /api/dashboard/events?limit=9999 HTTP/1.1" 200 -
+2026-04-26 12:30:23,670 [INFO] 127.0.0.1 - - [26/Apr/2026 12:30:23] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 12:30:23,691 [INFO] 127.0.0.1 - - [26/Apr/2026 12:30:23] "GET /api/dashboard/skills HTTP/1.1" 200 -
+2026-04-26 12:30:23,694 [INFO] 加载 2 个定时任务
+2026-04-26 12:30:23,694 [INFO] 定时任务调度器已启动
+2026-04-26 12:30:23,694 [INFO] 127.0.0.1 - - [26/Apr/2026 12:30:23] "GET /api/dashboard/scheduler HTTP/1.1" 200 -
+2026-04-26 12:30:25,310 [INFO] 127.0.0.1 - - [26/Apr/2026 12:30:25] "GET /api/dashboard/resources HTTP/1.1" 200 -
+2026-04-26 12:30:28,670 [INFO] 127.0.0.1 - - [26/Apr/2026 12:30:28] "[33mGET /api/dashboard/resources/ec2:cn-northwest-1:i-0b39e60ab69a7c3f7/history?range=24h HTTP/1.1[0m" 404 -
+2026-04-26 12:30:30,432 [INFO] 127.0.0.1 - - [26/Apr/2026 12:30:30] "[33mGET /api/dashboard/resources/ec2:cn-northwest-1:i-0b39e60ab69a7c3f7/history?range=7d HTTP/1.1[0m" 404 -
+2026-04-26 12:30:31,070 [INFO] 127.0.0.1 - - [26/Apr/2026 12:30:31] "[33mGET /api/dashboard/resources/ec2:cn-northwest-1:i-0b39e60ab69a7c3f7/history?range=30d HTTP/1.1[0m" 404 -
+2026-04-26 12:30:31,603 [INFO] 127.0.0.1 - - [26/Apr/2026 12:30:31] "[33mGET /api/dashboard/resources/ec2:cn-northwest-1:i-0b39e60ab69a7c3f7/history?range=180d HTTP/1.1[0m" 404 -
+2026-04-26 12:30:32,111 [INFO] 127.0.0.1 - - [26/Apr/2026 12:30:32] "[36mGET /dashboard/ HTTP/1.1[0m" 304 -
+2026-04-26 12:30:32,120 [INFO] 127.0.0.1 - - [26/Apr/2026 12:30:32] "[36mGET /dashboard/static/vue.global.js HTTP/1.1[0m" 304 -
+2026-04-26 12:30:32,121 [INFO] 127.0.0.1 - - [26/Apr/2026 12:30:32] "[36mGET /dashboard/static/style.css HTTP/1.1[0m" 304 -
+2026-04-26 12:30:32,121 [INFO] 127.0.0.1 - - [26/Apr/2026 12:30:32] "[36mGET /dashboard/static/vue-router.global.js HTTP/1.1[0m" 304 -
+2026-04-26 12:30:32,122 [INFO] 127.0.0.1 - - [26/Apr/2026 12:30:32] "[36mGET /dashboard/static/app.js HTTP/1.1[0m" 304 -
+2026-04-26 12:30:32,133 [INFO] 127.0.0.1 - - [26/Apr/2026 12:30:32] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 12:30:32,144 [INFO] 127.0.0.1 - - [26/Apr/2026 12:30:32] "GET /api/dashboard/resources HTTP/1.1" 200 -
+2026-04-26 12:30:36,455 [INFO] 127.0.0.1 - - [26/Apr/2026 12:30:36] "[33mGET /api/dashboard/resources/ec2:cn-northwest-1:i-0b39e60ab69a7c3f7/history?range=24h HTTP/1.1[0m" 404 -
+2026-04-26 12:30:37,617 [INFO] 127.0.0.1 - - [26/Apr/2026 12:30:37] "[33mGET /api/dashboard/resources/ec2:cn-northwest-1:i-0b39e60ab69a7c3f7/history?range=7d HTTP/1.1[0m" 404 -
+2026-04-26 12:30:38,157 [INFO] 127.0.0.1 - - [26/Apr/2026 12:30:38] "[33mGET /api/dashboard/resources/ec2:cn-northwest-1:i-0b39e60ab69a7c3f7/history?range=30d HTTP/1.1[0m" 404 -
+2026-04-26 12:30:38,653 [INFO] 127.0.0.1 - - [26/Apr/2026 12:30:38] "[33mGET /api/dashboard/resources/ec2:cn-northwest-1:i-0b39e60ab69a7c3f7/history?range=180d HTTP/1.1[0m" 404 -
+2026-04-26 12:30:39,672 [INFO] 127.0.0.1 - - [26/Apr/2026 12:30:39] "[33mGET /api/dashboard/resources/ec2:cn-northwest-1:i-0b39e60ab69a7c3f7/history?range=24h HTTP/1.1[0m" 404 -
+2026-04-26 12:30:40,160 [INFO] 127.0.0.1 - - [26/Apr/2026 12:30:40] "[33mGET /api/dashboard/resources/ec2:cn-northwest-1:i-0b39e60ab69a7c3f7/history?range=7d HTTP/1.1[0m" 404 -
+2026-04-26 12:30:40,633 [INFO] 127.0.0.1 - - [26/Apr/2026 12:30:40] "[33mGET /api/dashboard/resources/ec2:cn-northwest-1:i-0b39e60ab69a7c3f7/history?range=30d HTTP/1.1[0m" 404 -
+2026-04-26 12:30:41,120 [INFO] 127.0.0.1 - - [26/Apr/2026 12:30:41] "[33mGET /api/dashboard/resources/ec2:cn-northwest-1:i-0b39e60ab69a7c3f7/history?range=180d HTTP/1.1[0m" 404 -
+2026-04-26 12:31:32,862 [INFO] 127.0.0.1 - - [26/Apr/2026 12:31:32] "[36mGET /dashboard/ HTTP/1.1[0m" 304 -
+2026-04-26 12:31:32,871 [INFO] 127.0.0.1 - - [26/Apr/2026 12:31:32] "[36mGET /dashboard/static/vue.global.js HTTP/1.1[0m" 304 -
+2026-04-26 12:31:32,873 [INFO] 127.0.0.1 - - [26/Apr/2026 12:31:32] "[36mGET /dashboard/static/style.css HTTP/1.1[0m" 304 -
+2026-04-26 12:31:32,873 [INFO] 127.0.0.1 - - [26/Apr/2026 12:31:32] "[36mGET /dashboard/static/app.js HTTP/1.1[0m" 304 -
+2026-04-26 12:31:32,873 [INFO] 127.0.0.1 - - [26/Apr/2026 12:31:32] "[36mGET /dashboard/static/vue-router.global.js HTTP/1.1[0m" 304 -
+2026-04-26 12:31:32,884 [INFO] 127.0.0.1 - - [26/Apr/2026 12:31:32] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 12:31:32,896 [INFO] 127.0.0.1 - - [26/Apr/2026 12:31:32] "GET /api/dashboard/resources HTTP/1.1" 200 -
+2026-04-26 12:31:33,508 [INFO] 127.0.0.1 - - [26/Apr/2026 12:31:33] "[36mGET /dashboard/ HTTP/1.1[0m" 304 -
+2026-04-26 12:31:33,516 [INFO] 127.0.0.1 - - [26/Apr/2026 12:31:33] "[36mGET /dashboard/static/vue.global.js HTTP/1.1[0m" 304 -
+2026-04-26 12:31:33,520 [INFO] 127.0.0.1 - - [26/Apr/2026 12:31:33] "[36mGET /dashboard/static/vue-router.global.js HTTP/1.1[0m" 304 -
+2026-04-26 12:31:33,521 [INFO] 127.0.0.1 - - [26/Apr/2026 12:31:33] "[36mGET /dashboard/static/app.js HTTP/1.1[0m" 304 -
+2026-04-26 12:31:33,521 [INFO] 127.0.0.1 - - [26/Apr/2026 12:31:33] "[36mGET /dashboard/static/style.css HTTP/1.1[0m" 304 -
+2026-04-26 12:31:33,531 [INFO] 127.0.0.1 - - [26/Apr/2026 12:31:33] "GET /api/dashboard/agents HTTP/1.1" 200 -
+2026-04-26 12:31:33,543 [INFO] 127.0.0.1 - - [26/Apr/2026 12:31:33] "GET /api/dashboard/resources HTTP/1.1" 200 -
+2026-04-26 12:31:35,907 [INFO] 127.0.0.1 - - [26/Apr/2026 12:31:35] "[33mGET /api/dashboard/resources/ec2:cn-northwest-1:i-0b39e60ab69a7c3f7/history?range=24h HTTP/1.1[0m" 404 -
+2026-04-26 12:31:37,797 [INFO] 127.0.0.1 - - [26/Apr/2026 12:31:37] "[33mGET /api/dashboard/resources/ec2:cn-northwest-1:i-0b39e60ab69a7c3f7/history?range=7d HTTP/1.1[0m" 404 -
+2026-04-26 12:31:38,330 [INFO] 127.0.0.1 - - [26/Apr/2026 12:31:38] "[33mGET /api/dashboard/resources/ec2:cn-northwest-1:i-0b39e60ab69a7c3f7/history?range=30d HTTP/1.1[0m" 404 -
+2026-04-26 12:31:38,991 [INFO] 127.0.0.1 - - [26/Apr/2026 12:31:38] "[33mGET /api/dashboard/resources/ec2:cn-northwest-1:i-0b39e60ab69a7c3f7/history?range=180d HTTP/1.1[0m" 404 -
+🚀 启动 kiro-devops gateway（飞书 + 微信 + Webhook）
+2026-04-28 11:02:29,810 [INFO] 加载 19 个 session 映射
+2026-04-28 11:02:29,811 [INFO] 加载 2 个定时任务
+2026-04-28 11:02:29,819 [INFO] 定时任务调度器已启动
+2026-04-28 11:02:29,821 [INFO] ✅ 飞书适配器已启动
+2026-04-28 11:02:29,821 [INFO] 🚀 飞书适配器启动（WebSocket）
+2026-04-28 11:02:29,822 [INFO] 已从本地文件加载微信 token
+2026-04-28 11:02:29,822 [INFO] 🚀 微信适配器启动（iLink 长轮询）
+2026-04-28 11:02:29,822 [INFO] ✅ 微信适配器已启动
+ * Serving Flask app 'kiro-ec2-webhook'
+2026-04-28 11:02:29,826 [INFO] 🌐 Webhook HTTP 监听 0.0.0.0:8080
+2026-04-28 11:02:29,826 [INFO] 🚀 kiro-devops gateway 启动完成
+ * Debug mode: off
+Address already in use
+Port 8080 is in use by another program. Either identify and stop that program, or start the server with a different port.
+[Lark] [2026-04-28 11:02:30,156] [INFO] connected to wss://msg-frontier.feishu.cn/ws/v2?fpid=493&aid=552564&device_id=7633763808133631170&access_key=b713af199072a7c3bfc676287f98122b&service_id=33554678&ticket=76da848e-3c02-420b-b0de-9bde183c998e [conn_id=7633763808133631170]
+2026-04-28 11:02:30,156 [INFO] connected to wss://msg-frontier.feishu.cn/ws/v2?fpid=493&aid=552564&device_id=7633763808133631170&access_key=b713af199072a7c3bfc676287f98122b&service_id=33554678&ticket=76da848e-3c02-420b-b0de-9bde183c998e [conn_id=7633763808133631170]
+已终止
+🚀 启动 kiro-devops gateway（飞书 + 微信 + Webhook）
+2026-04-28 11:03:40,349 [INFO] 加载 19 个 session 映射
+2026-04-28 11:03:40,349 [INFO] 加载 2 个定时任务
+2026-04-28 11:03:40,357 [INFO] 定时任务调度器已启动
+2026-04-28 11:03:40,360 [INFO] ✅ 飞书适配器已启动
+2026-04-28 11:03:40,360 [INFO] 🚀 飞书适配器启动（WebSocket）
+2026-04-28 11:03:40,360 [INFO] 已从本地文件加载微信 token
+2026-04-28 11:03:40,361 [INFO] 🚀 微信适配器启动（iLink 长轮询）
+2026-04-28 11:03:40,361 [INFO] ✅ 微信适配器已启动
+2026-04-28 11:03:40,364 [INFO] 🌐 Webhook HTTP 监听 0.0.0.0:8080
+ * Serving Flask app 'kiro-ec2-webhook'
+2026-04-28 11:03:40,364 [INFO] 🚀 kiro-devops gateway 启动完成
+ * Debug mode: off
+2026-04-28 11:03:40,369 [INFO] [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:8080
+ * Running on http://172.31.28.116:8080
+2026-04-28 11:03:40,369 [INFO] [33mPress CTRL+C to quit[0m
+[Lark] [2026-04-28 11:03:40,802] [INFO] connected to wss://msg-frontier.feishu.cn/ws/v2?fpid=493&aid=552564&device_id=7633764090750438624&access_key=494f6006737a5dbc454863322c1c02fa&service_id=33554678&ticket=57930f5d-cf81-4ff2-9db2-8185937a8980 [conn_id=7633764090750438624]
+2026-04-28 11:03:40,802 [INFO] connected to wss://msg-frontier.feishu.cn/ws/v2?fpid=493&aid=552564&device_id=7633764090750438624&access_key=494f6006737a5dbc454863322c1c02fa&service_id=33554678&ticket=57930f5d-cf81-4ff2-9db2-8185937a8980 [conn_id=7633764090750438624]
+./start.sh: 第 20 行： 3876563 已杀死               python3 gateway.py

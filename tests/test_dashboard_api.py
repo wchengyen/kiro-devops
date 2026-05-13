@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Tests for dashboard API routes."""
 
+import subprocess
+
 import pytest
 from flask import Flask
 
@@ -139,8 +141,6 @@ def test_post_mappings(auth_client, monkeypatch, tmp_path):
 
 def test_get_models(auth_client, monkeypatch):
     """Test /models returns structure even if kiro-cli is mocked."""
-    import subprocess
-
     def mock_run(*args, **kwargs):
         class R:
             returncode = 0
@@ -151,14 +151,12 @@ def test_get_models(auth_client, monkeypatch):
     resp = auth_client.get("/api/dashboard/models")
     assert resp.status_code == 200
     data = resp.json
-    assert "models" in data
+    assert data["models"] == [{"model_id": "test-model"}]
     assert data["default_model"] == "test-model"
 
 
 def test_get_models_fallback_on_error(auth_client, monkeypatch):
     """Test /models returns empty list when kiro-cli fails."""
-    import subprocess
-
     def mock_run(*args, **kwargs):
         class R:
             returncode = 1
@@ -167,6 +165,8 @@ def test_get_models_fallback_on_error(auth_client, monkeypatch):
 
     monkeypatch.setattr(subprocess, "run", mock_run)
     resp = auth_client.get("/api/dashboard/models")
-    assert resp.status_code in (200, 500)
+    assert resp.status_code == 500
     data = resp.json
-    assert "models" in data
+    assert data["models"] == []
+    assert data["default_model"] is None
+    assert data["error"] == "kiro-cli failed"
