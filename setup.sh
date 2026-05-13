@@ -283,6 +283,72 @@ setup_kiro() {
         update_env_var "KIRO_AGENT" "$agent"
     fi
 
+    # ----- Model 选择 -----
+    local models_json
+    models_json=$(kiro-cli chat --list-models --format json 2>/dev/null || echo "")
+
+    if [ -n "$models_json" ]; then
+        local model_list default_id
+        model_list=$(echo "$models_json" | python3 -c "
+import sys, json
+d = json.load(sys.stdin)
+for m in d.get('models', []):
+    print(m['model_id'])
+")
+        default_id=$(echo "$models_json" | python3 -c "import sys, json; print(json.load(sys.stdin).get('default_model', ''))")
+
+        echo ""
+        echo "可用模型列表："
+        echo "  0) 系统默认 (${default_id})"
+        local idx=1
+        local map=""
+        while IFS= read -r mid; do
+            echo "  ${idx}) ${mid}"
+            map="${map}${idx}:${mid}\n"
+            idx=$((idx + 1))
+        done <<< "$model_list"
+
+        # DEFAULT_MODEL
+        local current_default choice selected
+        current_default=$(get_env_var "DEFAULT_MODEL" "")
+        read -p "选择默认聊天模型 [当前: ${current_default:-系统默认}]: " choice
+        if [ -z "$choice" ]; then
+            : # 保留当前值
+        elif [ "$choice" = "0" ]; then
+            update_env_var "DEFAULT_MODEL" ""
+        else
+            selected=$(echo -e "$map" | grep "^${choice}:" | cut -d: -f2)
+            if [ -n "$selected" ]; then
+                update_env_var "DEFAULT_MODEL" "$selected"
+            else
+                warn "无效选项，保留当前值"
+            fi
+        fi
+
+        # BACKGROUND_MODEL
+        local current_bg
+        current_bg=$(get_env_var "BACKGROUND_MODEL" "")
+        read -p "选择后台任务模型 [当前: ${current_bg:-系统默认}]: " choice
+        if [ -z "$choice" ]; then
+            :
+        elif [ "$choice" = "0" ]; then
+            update_env_var "BACKGROUND_MODEL" ""
+        else
+            selected=$(echo -e "$map" | grep "^${choice}:" | cut -d: -f2)
+            if [ -n "$selected" ]; then
+                update_env_var "BACKGROUND_MODEL" "$selected"
+            else
+                warn "无效选项，保留当前值"
+            fi
+        fi
+    else
+        warn "无法获取模型列表，kiro-cli 可能未安装或网络不可用"
+        read -p "手动输入默认聊天模型（留空使用系统默认）: " default_model
+        [ -n "$default_model" ] && update_env_var "DEFAULT_MODEL" "$default_model"
+        read -p "手动输入后台任务模型（留空使用系统默认）: " bg_model
+        [ -n "$bg_model" ] && update_env_var "BACKGROUND_MODEL" "$bg_model"
+    fi
+
     success "Kiro CLI 配置完成"
 }
 
