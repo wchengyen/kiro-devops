@@ -52,6 +52,7 @@ def has_decision_signal(text: str) -> bool:
 class KiroExecutor:
     def __init__(self, agent: str = ""):
         self._agent = agent
+        self._default_model = os.environ.get("DEFAULT_MODEL", "").strip()
         self._running: dict[str, dict] = {}  # user_id -> task info
         self._lock = threading.Lock()
 
@@ -95,6 +96,8 @@ class KiroExecutor:
             cmd.append("--resume")
         if self._agent:
             cmd += ["--agent", self._agent]
+        if self._default_model:
+            cmd += ["--model", self._default_model]
         cmd.append(prompt)
 
         log.info(f"执行 kiro: session={session_id or 'new'}, prompt={prompt[:60]}...")
