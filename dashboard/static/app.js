@@ -458,7 +458,7 @@ const EventsPage = {
       <div class="info-cards">
         <div class="info-card">
           <h4>🚨 分级响应标准</h4>
-          <p><span class="badge badge-critical">critical</span> <span class="badge badge-high">high</span> → 自动触发 Kiro <code>ec2-alert-analyzer</code> 分析 + 飞书主动推送</p>
+          <p><span class="badge badge-critical">critical</span> <span class="badge badge-high">high</span> → 依照 Alert Policy 设定，自动触发对应 Kiro Agent + Skill 分析，结果主动推送</p>
           <p><span class="badge badge-medium">medium</span> <span class="badge badge-low">low</span> → 仅入库，不触发自动分析</p>
         </div>
         <div class="info-card">

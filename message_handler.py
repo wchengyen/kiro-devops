@@ -7,6 +7,7 @@ import re
 import shutil
 import subprocess
 import threading
+import time
 
 from adapters.base import IncomingMessage, OutgoingPayload
 from adapters.feishu import extract_file_paths
@@ -43,6 +44,10 @@ else:
 
 memory = MemoryLayer() if ENABLE_MEMORY else None
 event_store = EventStore() if ENABLE_MEMORY else None
+
+# ---- 群消息告警去重缓存 ----
+_group_alert_dedup: dict[tuple[str, str], float] = {}
+_GROUP_ALERT_DEDUP_SEC = 300  # 5 分钟窗口
 
 
 # ---- 结构化告警解析规则 ----
@@ -182,6 +187,40 @@ class MessageHandler:
             "_raw_labels": labels,
         }
 
+    def _ingest_group_alert(self, record: dict, incoming: IncomingMessage) -> None:
+        """后台线程：将群消息告警入库 EventStore。"""
+        if not event_store:
+            return
+        # 去重检查
+        dedup_key = (incoming.group_id or "unknown", record.get("title", ""))
+        now = time.time()
+        last = _group_alert_dedup.get(dedup_key, 0)
+        if now - last < _GROUP_ALERT_DEDUP_SEC:
+            log.info(f"群告警去重(5min): {dedup_key}")
+            return
+        _group_alert_dedup[dedup_key] = now
+
+        try:
+            from event_ingest import ingest_to_store
+            store_record = {
+                "event_id": f"group-{incoming.platform}-{incoming.message_id}",
+                "user_id": incoming.unified_user_id,
+                "title": record["title"],
+                "description": record.get("description", ""),
+                "event_type": record.get("event_type", "指标异常"),
+                "entities": record.get("entities", []),
+                "source": record.get("source", "prometheus"),
+                "severity": record.get("severity", "medium"),
+                "timestamp": record.get("timestamp"),
+            }
+            result = ingest_to_store(event_store, store_record)
+            if result["ok"]:
+                log.info(f"群告警已入库: {store_record['title'][:40]} event_id={result['event_id']}")
+            else:
+                log.warning(f"群告警入库失败: {result.get('error')}")
+        except Exception:
+            log.exception("群告警入库异常")
+
     def _trigger_group_alert_analysis(self, incoming: IncomingMessage, record: dict) -> None:
         """后台线程：分析群消息中的告警并原群回复。"""
         def _write_log(line: str) -> None:
@@ -230,16 +269,24 @@ class MessageHandler:
 
         # === 群消息结构化告警检测 ===
         # 无论是否 @ 机器人，群消息都可能包含告警。
-        # 若识别为告警且级别满足自动分析条件，则触发分析并原群回复。
-        # 若识别为告警但级别不够，静默忽略（不进入普通对话，避免误响应）。
+        # 若识别为告警：先入库 EventStore，再根据级别决定是否触发分析。
+        # 若识别为告警但级别不够：已入库，静默忽略（不进入普通对话，避免误响应）。
         # 若非告警，继续原有流程。
         if incoming.chat_type == "group" and _GROUP_ALERT_LISTEN_ENABLED and text:
             alert_record = self._parse_structured_alert(text)
             if alert_record:
+                # 1) 先入库（异步，不阻塞）
+                threading.Thread(
+                    target=self._ingest_group_alert,
+                    args=(alert_record, incoming),
+                    daemon=True,
+                    name=f"kiro-group-ingest-{alert_record['title'][:20]}",
+                ).start()
+
                 auto_severities = os.environ.get("ALERT_AUTO_ANALYZE_SEVERITY", "high,critical").split(",")
                 should_analyze = alert_record.get("severity", "") in auto_severities
                 if should_analyze:
-                    # 文件诊断日志（独立于 Python logging）
+                    # 2) 高级别告警：触发分析并原群回复
                     try:
                         with open("/tmp/kiro_group_alert.log", "a", encoding="utf-8") as f:
                             from datetime import datetime
@@ -254,8 +301,8 @@ class MessageHandler:
                     ).start()
                     self._reply(incoming, f"🚨 检测到告警 [{alert_record['title']}]，分析中 (v20260523)，请稍候...")
                     return
-                # 级别不够自动分析：静默忽略，不进入普通对话
-                log.info(f"群告警级别 {alert_record.get('severity')} 不满足自动分析条件，忽略: {alert_record['title']}")
+                # 低级别告警：已入库，静默忽略，不进入普通对话
+                log.info(f"群告警级别 {alert_record.get('severity')} 不满足自动分析条件，仅入库: {alert_record['title']}")
                 return
 
         # 群聊中未 @ 机器人则忽略（普通对话）

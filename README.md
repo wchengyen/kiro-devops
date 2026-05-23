@@ -372,7 +372,7 @@ Alertmanager 直接推送的 JSON（含 `alerts` 字段）会被**自动识别�
 
 ## 🚨 EC2 告警自动分析（Webhook + Kiro Skill）
 
-接收 Prometheus/CloudWatch 等监控系统的 EC2 告警，自动触发 Kiro `ec2-alert-analyzer` skill 进行根因分析，并将结果主动推送到配置的目标平台（飞书/微信）。
+接收 Prometheus/CloudWatch 等监控系统的 EC2 告警，依照 Alert Policy 匹配规则自动路由到对应的 Kiro Agent + Skill 进行根因分析，并将结果主动推送到配置的目标平台（飞书/微信）。
 
 > **新增：飞书群消息告警监听**
 > 

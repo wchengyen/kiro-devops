@@ -6,6 +6,7 @@ import logging
 import os
 import re
 import shutil
+import signal
 import subprocess
 
 from alert_matcher import ConfigReloader
@@ -94,14 +95,22 @@ def run_alert_analysis(record: dict) -> tuple[str, str]:
     cmd.append(alert_payload)
 
     try:
-        result = subprocess.run(
-            cmd, capture_output=True, text=True,
-            timeout=timeout,
+        # start_new_session=True 讓 kiro-cli 在新進程組運行，
+        # timeout 時可用 os.killpg() 殺掉整個進程樹（包括 kiro-cli-chat 和子 shell）
+        proc = subprocess.Popen(
+            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
             cwd=os.path.expanduser("~"), env={**os.environ, "NO_COLOR": "1"},
+            start_new_session=True,
         )
-        analysis = strip_ansi(result.stdout.strip() or result.stderr.strip() or "Kiro 未返回分析结果")
+        stdout, stderr = proc.communicate(timeout=timeout)
+        analysis = strip_ansi(stdout.strip() or stderr.strip() or "Kiro 未返回分析结果")
     except subprocess.TimeoutExpired:
-        analysis = f"⏰ Kiro {agent} 分析超时"
+        try:
+            os.killpg(os.getpgid(proc.pid), signal.SIGKILL)
+            proc.wait()
+        except Exception:
+            pass
+        analysis = f"⏰ Kiro {agent} 分析超时（{timeout}s）"
     except Exception as e:
         analysis = f"❌ Kiro 调用失败: {e}"
         log.exception("Kiro 分析失败")
