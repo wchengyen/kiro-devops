@@ -38,6 +38,7 @@
 | ⏰ **定时任务** | 自然语言配置周期性任务，`/schedule` 命令管理 |
 | 📝 **事件录入** | `/event` 手动录入 + Webhook 外部系统推送 |
 | 🚨 **EC2 告警分析** | Prometheus/CloudWatch 告警自动触发 Kiro Skill 分析并推送飞书/微信 |
+| 📢 **群消息告警监听** | 飞书群内结构化告警消息（无需 @ 机器人）自动识别并触发 Kiro 分析，结果原群回复 |
 | 🖥️ **Web Dashboard** | Vue 3 SPA 管理 Agents、Skills、Events、Scheduler、Config，令牌认证 |
 
 ---
@@ -373,6 +374,22 @@ Alertmanager 直接推送的 JSON（含 `alerts` 字段）会被**自动识别�
 
 接收 Prometheus/CloudWatch 等监控系统的 EC2 告警，自动触发 Kiro `ec2-alert-analyzer` skill 进行根因分析，并将结果主动推送到配置的目标平台（飞书/微信）。
 
+> **新增：飞书群消息告警监听**
+> 
+> 除 Webhook 推送外，Bot 现在支持**直接在飞书群内监听结构化告警消息**，无需 @ 机器人即可触发自动分析，分析结果直接回复到原群。
+> 
+> **支持格式：**
+> - 中文键值对：`告警名称：xxx`、`告警级别：critical`、`命名空间：content`
+> - 英文键值对：`alertname: xxx`、`severity: high`、`namespace: kube-system`
+> - JSON 格式：`{"title":"xxx","severity":"critical","namespace":"content"}`
+> 
+> **启用方式：** `.env` 中设置 `GROUP_ALERT_LISTEN_ENABLED=true`
+> 
+> **行为规则：**
+> - 普通群聊消息：仍需 @ 机器人才会响应（`GROUP_AT_ONLY=true` 默认）
+> - 结构化告警消息：无需 @，自动检测 `high` / `critical` 级别并触发分析
+> - 低级别告警（`medium` / `low`）：静默忽略，避免打扰群聊
+
 ### 架构流程
 
 ```
@@ -419,9 +436,13 @@ WEBHOOK_PORT=8080
 WEBHOOK_HOST=127.0.0.1          # 127.0.0.1=仅本机, 0.0.0.0=全网卡
 WEBHOOK_TOKEN=change-me-secret  # 外部系统（Prometheus Alertmanager / CloudWatch Lambda / Jenkins 等）调用 Webhook 时的 Bearer Token 鉴权，不是聊天用户用的
 
+# === 群消息告警监听（飞书）===
+GROUP_ALERT_LISTEN_ENABLED=true             # 是否监听群消息中的结构化告警
+GROUP_AT_ONLY=true                          # 普通聊天是否只响应 @ 机器人的消息
+
 # === 主动告警推送 ===
 ALERT_NOTIFY_USER_ID=ou_xxxxxxxxxxxxxxxx    # Feishu open_id
-ALERT_AUTO_ANALYZE_SEVERITY=high,critical   # 哪些级别触发自动分析
+ALERT_AUTO_ANALYZE_SEVERITY=high,critical   # 哪些级别触发自动分析（同时适用于 Webhook 和群消息）
 ALERT_ANALYZE_TIMEOUT=300                   # Kiro 分析超时（秒）
 ```
 

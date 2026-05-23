@@ -120,8 +120,14 @@ class FeishuAdapter(PlatformAdapter):
         is_at = bool(data.event.message.mentions)
 
         # 群聊中未 @ 机器人则忽略
-        if is_group and not is_at:
+        # 例外：当开启群告警监听时，消息会传给 MessageHandler 做结构化检测，
+        #       由 MessageHandler 根据 is_at_me 决定是否进入普通对话
+        _GROUP_ALERT_LISTEN_ENABLED = os.environ.get("GROUP_ALERT_LISTEN_ENABLED", "false").lower() in ("true", "1", "yes")
+        if is_group and not is_at and not _GROUP_ALERT_LISTEN_ENABLED:
             return
+
+        group_id = getattr(message, "chat_id", None) or ""
+        sender_name = getattr(data.event.sender, "name", None) or user_id
 
         incoming = IncomingMessage(
             platform="feishu",
@@ -131,7 +137,10 @@ class FeishuAdapter(PlatformAdapter):
             text=user_text,
             chat_type="group" if is_group else "private",
             is_at_me=is_at,
-            raw={"message": message, "data": data}
+            raw={"message": message, "data": data},
+            group_id=group_id or None,
+            group_name=group_id or None,
+            sender_name=sender_name or None,
         )
         self.on_message(incoming)
 

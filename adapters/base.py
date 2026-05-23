@@ -17,6 +17,9 @@ class IncomingMessage:
     raw: dict = field(default_factory=dict)
     images: list[str] = field(default_factory=list)
     files: list[str] = field(default_factory=list)
+    group_id: str | None = None
+    group_name: str | None = None
+    sender_name: str | None = None
 
 
 @dataclass

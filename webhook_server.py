@@ -3,19 +3,13 @@
 import json
 import logging
 import os
-import re
-import shutil
-import subprocess
 import threading
 import time
 
 from flask import Flask, request, jsonify
 
 from dashboard import dashboard_bp
-from alert_matcher import AlertMatcher, ConfigReloader
-from dashboard.config_store import ConfigStore
-
-config_reloader = ConfigReloader(ConfigStore())
+from alert_analysis import run_alert_analysis
 
 log = logging.getLogger("webhook-server")
 webhook_app = Flask("kiro-ec2-webhook")
@@ -54,36 +48,6 @@ def _is_duplicate_alert(record: dict) -> bool:
         return True
     _alert_window_cache[alert_key] = now
     return False
-
-
-def strip_ansi(text: str) -> str:
-    """去除 ANSI 转义码和终端控制字符"""
-    text = re.sub(r'\x1b\[[0-9;]*[a-zA-Z?]', '', text)
-    text = re.sub(r'\x1b\].*?\x07', '', text)
-    # 去掉 kiro 的启动横幅（ASCII art logo + trust warning + credits）
-    lines = text.split('\n')
-    clean = []
-    for line in lines:
-        stripped = line.strip()
-        if 'All tools are now trusted' in stripped or 'understand the risks' in stripped:
-            continue
-        if 'Learn more at' in stripped and 'kiro.dev' in stripped:
-            continue
-        if 'Credits:' in stripped and 'Time:' in stripped:
-            continue
-        if '/model' in stripped and 'to change' in stripped:
-            continue
-        if '/prompts' in stripped or 'Did you know' in stripped:
-            continue
-        # 跳过 ASCII art（连续的特殊 Unicode 块字符行）
-        if stripped and all(c in '⠀⢀⣴⣶⣦⡀⣾⠁⠈⠙⣿⡆⢰⠋⢸⣇⡿⢻⣧⠹⣷⡄⠘⣆⠻⠿⠟⣠⡁⢹⣼⠇⠸⣄⢁⣤⠉⡇⠃⠂⠐⠒⠲⠶⠤⠖⠛⠏⠗⠞⠝⠜⠚⠘⠙⠑⠊⠉⠋⠌⠍⠎⠏⡏⡇⡆⡅⡄⡃⡂⡁⡀⢿⣿⣽⣻⣺⣹⣸⣷⣵⣳⣲⣱⣰⣯⣮⣭⣬⣫⣪⣩⣨⣧⣥⣤⣣⣢⣡⣠⣟⣞⣝⣜⣛⣚⣙⣘⣗⣖⣕⣔⣓⣒⣑⣐⣏⣎⣍⣌⣋⣊⣉⣈⣇⣆⣅⣄⣃⣂╭╮╰╯│─' for c in stripped):
-            continue
-        clean.append(line)
-    # 去掉首尾空行
-    text = '\n'.join(clean).strip()
-    # 压缩连续空行
-    text = re.sub(r'\n{3,}', '\n\n', text)
-    return text
 
 
 def _parse_alertmanager(payload: dict) -> dict:

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """平台无关的消息业务处理核心."""
+import json
 import logging
 import os
 import re
@@ -9,6 +10,7 @@ import threading
 
 from adapters.base import IncomingMessage, OutgoingPayload
 from adapters.feishu import extract_file_paths
+from alert_analysis import run_alert_analysis
 from kiro_executor import KiroExecutor, has_decision_signal
 from platform_dispatcher import PlatformDispatcher
 from scheduler import Scheduler
@@ -25,18 +27,43 @@ kiro_bin = shutil.which("kiro-cli") or "/home/ubuntu/.local/bin/kiro-cli"
 KIRO_TIMEOUT = int(os.environ.get("KIRO_TIMEOUT", "120"))
 KIRO_AGENT = os.environ.get("KIRO_AGENT", "").strip()
 ENABLE_MEMORY = os.environ.get("ENABLE_MEMORY", "false").lower() in ("true", "1", "yes")
+_GROUP_ALERT_LISTEN_ENABLED = os.environ.get("GROUP_ALERT_LISTEN_ENABLED", "false").lower() in ("true", "1", "yes")
 
 if ENABLE_MEMORY:
     try:
         from memory import MemoryLayer
         from event_store import EventStore
-        from event_ingest import parse_manual_command, ingest_to_store
+        from event_ingest import parse_manual_command, ingest_to_store, extract_entities_from_text
     except ImportError as _e:
         log.warning(f"记忆依赖未安装: {_e}")
         ENABLE_MEMORY = False
+        extract_entities_from_text = None
+else:
+    extract_entities_from_text = None
 
 memory = MemoryLayer() if ENABLE_MEMORY else None
 event_store = EventStore() if ENABLE_MEMORY else None
+
+
+# ---- 结构化告警解析规则 ----
+_ALERT_KEY_PATTERNS = [
+    (r'告警名称[：:]\s*(\S+)', 'alertname'),
+    (r'alertname[：:]\s*(\S+)', 'alertname'),
+    (r'告警级别[：:]\s*(\S+)', 'severity'),
+    (r'severity[：:]\s*(\S+)', 'severity'),
+    (r'级别[：:]\s*(\S+)', 'severity'),
+    (r'命名空间[：:]\s*(\S+)', 'namespace'),
+    (r'namespace[：:]\s*(\S+)', 'namespace'),
+    (r'pod[：:]\s*(\S+)', 'pod'),
+    (r'实例[：:]\s*(\S+)', 'instance'),
+    (r'instance[：:]\s*(\S+)', 'instance'),
+    (r'来源[：:]\s*(\S+)', 'source'),
+    (r'source[：:]\s*(\S+)', 'source'),
+    (r'描述[：:]\s*(.+)', 'description'),
+    (r'description[：:]\s*(.+)', 'description'),
+    (r'标题[：:]\s*(.+)', 'title'),
+    (r'title[：:]\s*(.+)', 'title'),
+]
 
 
 class MessageHandler:
@@ -81,6 +108,105 @@ class MessageHandler:
         except Exception as e:
             return f"❌ Kiro 调用失败: {e}"
 
+    def _parse_structured_alert(self, text: str) -> dict | None:
+        """从群消息文本中解析结构化告警（Prometheus / 中文键值对 / JSON）。
+
+        只有当提取到 title 和 severity 时才认为是告警。
+        """
+        text = text.strip()
+        if not text:
+            return None
+
+        # 尝试 JSON 解析
+        try:
+            data = json.loads(text)
+            if isinstance(data, dict) and ("title" in data or "alertname" in data):
+                record = {
+                    "title": data.get("title", data.get("alertname", "")),
+                    "severity": data.get("severity", "medium"),
+                    "source": data.get("source", "prometheus"),
+                    "description": data.get("description", ""),
+                    "event_type": data.get("event_type", "指标异常"),
+                    "entities": data.get("entities", []),
+                    "_raw_labels": data.get("labels", {}),
+                }
+                if record["title"]:
+                    return record
+        except (json.JSONDecodeError, ValueError):
+            pass
+
+        # 正则提取键值对
+        result: dict[str, str] = {}
+        for pattern, key in _ALERT_KEY_PATTERNS:
+            match = re.search(pattern, text, re.IGNORECASE)
+            if match:
+                result[key] = match.group(1).strip()
+
+        if not result:
+            return None
+
+        # 构造 title
+        alertname = result.get("alertname", "")
+        title = result.get("title", "")
+        if not title and alertname:
+            title = alertname
+        if not title:
+            return None
+
+        # severity 标准化
+        severity = result.get("severity", "medium").lower()
+        valid_severities = {"critical", "high", "warning", "warn", "medium", "low", "info"}
+        if severity not in valid_severities:
+            cn_map = {"紧急": "critical", "严重": "high", "警告": "warning", "一般": "medium", "低": "low", "信息": "info"}
+            severity = cn_map.get(severity, "medium")
+
+        # 提取 entities
+        entities = []
+        for k in ("instance", "pod"):
+            if k in result:
+                entities.append(result[k])
+
+        # 构造 labels
+        labels = {}
+        for k in ("namespace", "pod", "instance"):
+            if k in result:
+                labels[k] = result[k]
+
+        return {
+            "title": title,
+            "severity": severity,
+            "source": result.get("source", "prometheus"),
+            "description": result.get("description", ""),
+            "event_type": "指标异常",
+            "entities": entities or (extract_entities_from_text(text) if extract_entities_from_text else []),
+            "_raw_labels": labels,
+        }
+
+    def _trigger_group_alert_analysis(self, incoming: IncomingMessage, record: dict) -> None:
+        """后台线程：分析群消息中的告警并原群回复。"""
+        def _write_log(line: str) -> None:
+            try:
+                with open("/tmp/kiro_group_alert.log", "a", encoding="utf-8") as f:
+                    from datetime import datetime
+                    f.write(f"{datetime.now().isoformat()} {line}\n")
+            except Exception:
+                pass
+
+        _write_log(f"[START] title={record.get('title')} severity={record.get('severity')} platform={incoming.platform} msg_id={incoming.message_id}")
+        try:
+            message, _agent = run_alert_analysis(record)
+            _write_log(f"[ANALYSIS_DONE] len={len(message)} agent={_agent}")
+            self._reply(incoming, message)
+            _write_log(f"[REPLY_OK] msg_id={incoming.message_id}")
+        except Exception as e:
+            log.exception("群告警分析失败")
+            _write_log(f"[ERROR] {type(e).__name__}: {e}")
+            try:
+                self._reply(incoming, f"❌ 告警分析失败: {e}")
+                _write_log(f"[ERROR_REPLY_OK] msg_id={incoming.message_id}")
+            except Exception as e2:
+                _write_log(f"[ERROR_REPLY_FAILED] {type(e2).__name__}: {e2}")
+
     def handle(self, incoming: IncomingMessage) -> None:
         """所有平台消息的统一入口."""
         user_id = incoming.unified_user_id
@@ -101,6 +227,40 @@ class MessageHandler:
         if text and (incoming.images or incoming.files or has_raw_image or has_raw_file):
             # 忽略媒体，仅处理文字
             text = text.strip()
+
+        # === 群消息结构化告警检测 ===
+        # 无论是否 @ 机器人，群消息都可能包含告警。
+        # 若识别为告警且级别满足自动分析条件，则触发分析并原群回复。
+        # 若识别为告警但级别不够，静默忽略（不进入普通对话，避免误响应）。
+        # 若非告警，继续原有流程。
+        if incoming.chat_type == "group" and _GROUP_ALERT_LISTEN_ENABLED and text:
+            alert_record = self._parse_structured_alert(text)
+            if alert_record:
+                auto_severities = os.environ.get("ALERT_AUTO_ANALYZE_SEVERITY", "high,critical").split(",")
+                should_analyze = alert_record.get("severity", "") in auto_severities
+                if should_analyze:
+                    # 文件诊断日志（独立于 Python logging）
+                    try:
+                        with open("/tmp/kiro_group_alert.log", "a", encoding="utf-8") as f:
+                            from datetime import datetime
+                            f.write(f"{datetime.now().isoformat()} [HANDLE] start thread title={alert_record['title']} msg_id={incoming.message_id}\n")
+                    except Exception:
+                        pass
+                    threading.Thread(
+                        target=self._trigger_group_alert_analysis,
+                        args=(incoming, alert_record),
+                        daemon=True,
+                        name=f"kiro-group-alert-{alert_record['title'][:20]}",
+                    ).start()
+                    self._reply(incoming, f"🚨 检测到告警 [{alert_record['title']}]，分析中 (v20260523)，请稍候...")
+                    return
+                # 级别不够自动分析：静默忽略，不进入普通对话
+                log.info(f"群告警级别 {alert_record.get('severity')} 不满足自动分析条件，忽略: {alert_record['title']}")
+                return
+
+        # 群聊中未 @ 机器人则忽略（普通对话）
+        if incoming.chat_type == "group" and not incoming.is_at_me:
+            return
 
         if text.startswith("/schedule"):
             args = text[len("/schedule"):].strip()
