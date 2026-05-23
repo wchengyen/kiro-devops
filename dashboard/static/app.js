@@ -26,8 +26,6 @@ async function api(path, opts = {}) {
 }
 
 /* ---------- Visual Helpers ---------- */
-const AGENT_EMOJIS = ['🤖', '🕵️', '🧙‍♂️', '👨‍💻', '👩‍🔬', '🦸', '🧑‍🚀', '🧑‍⚕️', '🧑‍🌾', '🧑‍🔬'];
-
 function simpleHash(str) {
   let h = 0;
   for (let i = 0; i < str.length; i++) {
@@ -37,13 +35,22 @@ function simpleHash(str) {
   return Math.abs(h);
 }
 
-function agentEmoji(name) {
-  return AGENT_EMOJIS[simpleHash(name) % AGENT_EMOJIS.length];
+function agentInitials(name) {
+  const parts = name.split(/[-_\s]+/);
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[1][0]).toUpperCase();
+  }
+  return name.slice(0, 2).toUpperCase();
 }
 
 function agentColor(name) {
   const h = simpleHash(name) % 360;
-  return `hsl(${h}, 70%, 60%)`;
+  return `hsl(${h}, 65%, 55%)`;
+}
+
+function agentBgColor(name) {
+  const h = simpleHash(name) % 360;
+  return `hsl(${h}, 65%, 95%)`;
 }
 
 function agentTitle(toolsCount) {
@@ -55,7 +62,7 @@ function agentTitle(toolsCount) {
 
 function skillColor(name) {
   const h = simpleHash(name) % 360;
-  return `hsl(${h}, 65%, 55%)`;
+  return `hsl(${h}, 60%, 50%)`;
 }
 
 /* ---------- Layout ---------- */
@@ -152,10 +159,10 @@ const OverviewPage = {
     <div>
       <h2 class="page-title">总览</h2>
       <div class="cards">
-        <div class="card card-accent-blue"><h3>📊 Events</h3><div class="num">{{ counts.events }}</div></div>
-        <div class="card card-accent-green"><h3>⏰ Active Jobs</h3><div class="num">{{ counts.jobs }}</div></div>
-        <div class="card card-accent-purple"><h3>🧑‍🚀 Agents</h3><div class="num">{{ counts.agents }}</div></div>
-        <div class="card card-accent-orange"><h3>📚 Skills</h3><div class="num">{{ counts.skills }}</div></div>
+        <div class="card card-accent-blue" style="animation-delay:0.05s"><h3>Events</h3><div class="num">{{ counts.events }}</div></div>
+        <div class="card card-accent-green" style="animation-delay:0.10s"><h3>Active Jobs</h3><div class="num">{{ counts.jobs }}</div></div>
+        <div class="card card-accent-purple" style="animation-delay:0.15s"><h3>Agents</h3><div class="num">{{ counts.agents }}</div></div>
+        <div class="card card-accent-orange" style="animation-delay:0.20s"><h3>Skills</h3><div class="num">{{ counts.skills }}</div></div>
       </div>
     </div>
   `,
@@ -169,8 +176,7 @@ const OverviewPage = {
           api("/skills"),
           api("/scheduler"),
         ]);
-        counts.events = ev.events?.length ?? 0; // approximate; real count not exposed, use first page
-        // Better: count via length if small, else keep 0. Let's try to get total by fetching with large limit
+        counts.events = ev.events?.length ?? 0;
       } catch {}
       try {
         const evAll = await api("/events?limit=9999");
@@ -199,10 +205,10 @@ const AgentsPage = {
     <div>
       <h2 class="page-title">Agents</h2>
       <div class="card-grid">
-        <div class="card-item persona-card" v-for="a in agents" :key="a.name" :style="{ borderColor: agentColor(a.name) }">
+        <div class="card-item persona-card animate-fade-in" v-for="(a, idx) in agents" :key="a.name" :style="{ borderColor: agentColor(a.name), animationDelay: (idx * 0.05) + 's' }">
           <div class="persona-header">
-            <div class="persona-avatar" :style="{ borderColor: agentColor(a.name), background: agentColor(a.name) + '18' }">
-              <span class="persona-emoji">{{ agentEmoji(a.name) }}</span>
+            <div class="persona-avatar" :style="{ background: agentColor(a.name) }">
+              <span>{{ agentInitials(a.name) }}</span>
             </div>
             <div class="persona-info">
               <h4>{{ a.name }}</h4>
@@ -331,7 +337,7 @@ const AgentsPage = {
       await loadAgents();
     });
 
-    return { agents, allSkills, manageModal, openManageModal, closeManageModal, unlinkSkill, linkSkill, availableSkills, agentEmoji, agentColor, agentTitle };
+    return { agents, allSkills, manageModal, openManageModal, closeManageModal, unlinkSkill, linkSkill, availableSkills, agentInitials, agentColor, agentTitle };
   }
 };
 
@@ -344,10 +350,10 @@ const SkillsPage = {
         <button @click="openModal()">新建 Skill</button>
       </div>
       <div class="card-grid">
-        <div class="card-item book-card" v-for="s in skills" :key="s.name" :style="{ borderLeftColor: skillColor(s.name) }">
+        <div class="card-item book-card animate-fade-in" v-for="(s, idx) in skills" :key="s.name" :style="{ borderLeftColor: skillColor(s.name), animationDelay: (idx * 0.05) + 's' }">
           <div class="book-spine" :style="{ background: skillColor(s.name) }"></div>
           <div class="book-content">
-            <h4>📖 {{ s.name }}</h4>
+            <h4>{{ s.name }}</h4>
             <p class="book-desc">{{ s.description || "无描述" }}</p>
             <div class="book-triggers">
               <span v-for="t in (s.triggers || [])" :key="t" class="bookmark-tag">{{ t }}</span>
@@ -457,12 +463,12 @@ const EventsPage = {
       <!-- 说明卡片 -->
       <div class="info-cards">
         <div class="info-card">
-          <h4>🚨 分级响应标准</h4>
+          <h4>分级响应标准</h4>
           <p><span class="badge badge-critical">critical</span> <span class="badge badge-high">high</span> → 依照 Alert Policy 设定，自动触发对应 Kiro Agent + Skill 分析，结果主动推送</p>
           <p><span class="badge badge-medium">medium</span> <span class="badge badge-low">low</span> → 仅入库，不触发自动分析</p>
         </div>
         <div class="info-card">
-          <h4>🏷️ Event Type 判断</h4>
+          <h4>Event Type 判断</h4>
           <p><b>Webhook 推送</b>：由外部系统（Prometheus / Jenkins / CloudWatch 等）在 payload 中 <code>event_type</code> 字段指定</p>
           <p><b>手动录入</b>：<code>/event 类型=xxx</code> 指定；未指定时默认为「手动记录」</p>
         </div>
@@ -801,7 +807,7 @@ const ResourcesPage = {
       <h2 class="page-title">Resources</h2>
       <div class="cost-score-help" @click="showHelp = !showHelp">
         <div class="cost-score-help-title">
-          <span>📊 成本评分说明</span>
+          <span>成本评分说明</span>
           <span>{{ showHelp ? '▲' : '▼' }}</span>
         </div>
         <div v-if="showHelp" class="cost-score-help-body">
@@ -812,13 +818,13 @@ const ResourcesPage = {
             <span>其中 k=1.0（cpu≤80%，线性扣分）；k=1.5（cpu&gt;80%，过载额外惩罚）</span>
           </div>
           <div class="cost-grades">
-            <span class="cost-grade-help" style="background:#22c55e">A</span> 90~100 优秀
-            <span class="cost-grade-help" style="background:#14b8a6">B</span> 70~89 良好
-            <span class="cost-grade-help" style="background:#eab308">C</span> 50~69 一般
-            <span class="cost-grade-help" style="background:#f97316">D</span> 30~49 较差
-            <span class="cost-grade-help" style="background:#ef4444">F</span> 0~29 极差
+            <span class="cost-grade-help" style="background:#346538">A</span> 90~100 优秀
+            <span class="cost-grade-help" style="background:#1F6C9F">B</span> 70~89 良好
+            <span class="cost-grade-help" style="background:#956400">C</span> 50~69 一般
+            <span class="cost-grade-help" style="background:#b45309">D</span> 30~49 较差
+            <span class="cost-grade-help" style="background:#9F2F2D">F</span> 0~29 极差
           </div>
-          <p class="cost-hint">💡 分数越低代表资源浪费越严重，建议降配；分数过高（&gt;90 且 CPU&gt;90%）则存在过载风险，建议升配。</p>
+          <p class="cost-hint">分数越低代表资源浪费越严重，建议降配；分数过高（&gt;90 且 CPU&gt;90%）则存在过载风险，建议升配。</p>
         </div>
       </div>
       <div class="provider-tabs" v-if="Object.keys(enabledProviders).length > 1">
@@ -853,7 +859,7 @@ const ResourcesPage = {
         <table>
           <thead>
             <tr>
-              <th style="width:40px">⭐</th>
+              <th style="width:40px"></th>
               <th>Name</th>
               <th style="width:110px">成本评分</th>
               <th>Type</th>
@@ -908,7 +914,7 @@ const ResourcesPage = {
                         <div style="font-size:12px;color:#64748b">7天平均CPU {{ r.stats_7d && r.stats_7d.avg != null ? r.stats_7d.avg + '%' : '-' }} → 目标 80%</div>
                       </div>
                     </div>
-                    <div style="font-size:13px;color:#374151;margin-bottom:8px">💡 {{ r.cost_advice }}</div>
+                    <div style="font-size:13px;color:#374151;margin-bottom:8px">{{ r.cost_advice }}</div>
                     <div v-if="r.cost_breakdown" style="display:flex;gap:16px;font-size:12px;color:#64748b">
                       <span>月成本: <b style="color:#374151">\${{ r.cost_breakdown.monthly }}</b></span>
                       <span>有效成本: <b style="color:#22c55e">\${{ r.cost_breakdown.effective }}</b></span>
@@ -922,7 +928,7 @@ const ResourcesPage = {
                       :class="{ active: historyRange === rng }"
                       @click="historyRange = rng; loadHistory(r.id, rng)"
                       style="padding:4px 12px;border:1px solid #cbd5e1;border-radius:4px;background:#fff;cursor:pointer"
-                      :style="historyRange === rng ? 'background:#3b82f6;color:#fff;border-color:#3b82f6' : ''"
+                      :style="historyRange === rng ? 'background:#111111;color:#fff;border-color:#111111' : ''"
                     >{{ rng }}</button>
                   </div>
                   <div v-if="historyLoading" style="color:#64748b">加载中...</div>
@@ -940,8 +946,8 @@ const ResourcesPage = {
                     </div>
                   </div>
                 </div>
-              </td>
-            </tr>
+                </td>
+              </tr>
             </template>
             <tr v-if="filteredResources.length === 0"><td colspan="13" class="empty">暂无数据</td></tr>
           </tbody>
@@ -1029,7 +1035,7 @@ const ResourcesPage = {
       });
     }
     function sparklineColor(type) {
-      return { ec2: "#3b82f6", rds: "#8b5cf6", eks: "#f59e0b", cvm: "#3b82f6", lighthouse: "#8b5cf6" }[type] || "#94a3b8";
+      return { ec2: "#0ea5e9", rds: "#8b5cf6", eks: "#f59e0b", cvm: "#0ea5e9", lighthouse: "#8b5cf6" }[type] || "#94a3b8";
     }
     function sparklineSvg(points, color) {
       if (!points || points.length < 2) return '<span style="color:#cbd5e1">-</span>';
@@ -1168,9 +1174,9 @@ const ConfigPage = {
         <div class="toolbar">
           <button @click="addMapping">添加规则</button>
           <button class="secondary" @click="saveMappings">保存规则</button>
-          <button class="secondary" @click="reloadConfig">🔄 Reload Agent</button>
+          <button class="secondary" @click="reloadConfig">Reload Agent</button>
         </div>
-        <div v-for="(m, i) in mappings" :key="i" class="info-card mapping-card" :class="{ disabled: !m.enabled }">
+        <div v-for="(m, i) in mappings" :key="i" class="info-card mapping-card animate-fade-in" :class="{ disabled: !m.enabled }" :style="{ animationDelay: (i * 0.04) + 's' }">
           <div class="mapping-header">
             <span class="mapping-index">{{ i + 1 }}</span>
             <input v-model="m.name" placeholder="规则名称" class="mapping-name" />
@@ -1180,7 +1186,7 @@ const ConfigPage = {
               @click="m.enabled = !m.enabled"
               style="cursor:pointer"
             >
-              {{ m.enabled ? '● 启用' : '○ 停用' }}
+              {{ m.enabled ? '启用' : '停用' }}
             </span>
             <button @click="moveMapping(i, -1)" :disabled="i === 0">↑</button>
             <button @click="moveMapping(i, 1)" :disabled="i === mappings.length - 1">↓</button>
@@ -1296,7 +1302,6 @@ const ConfigPage = {
       try {
         const a = await api("/agents");
         agents.value = a.agents || [];
-        // Load each agent's skills in parallel
         const skillPromises = agents.value.map(async agent => {
           try {
             const sk = await api("/agents/" + encodeURIComponent(agent.name) + "/skills");
@@ -1314,7 +1319,6 @@ const ConfigPage = {
     }
     function normalizeMappings(raw) {
       return (raw || []).map((m, idx) => {
-        // Backward compat: old flat format {source, service, severity, agent, skill}
         if (m.match === undefined && m.action === undefined) {
           const labels = {};
           if (m.service) labels.service = m.service;
