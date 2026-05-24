@@ -154,7 +154,7 @@ def _trigger_analysis(handler, record: dict):
 
     agent = action.get("agent", "ec2-alert-analyzer")
     tools = action.get("tools", ["execute_bash"])
-    timeout = action.get("timeout", 60)
+    timeout = action.get("timeout", 90)
     instruction = action.get("instruction")
     if not instruction:
         instruction = "请分析此告警的根因，查询相关指标数据，给出结构化的诊断报告。"

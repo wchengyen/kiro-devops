@@ -28,7 +28,7 @@
       "action": {
         "agent": "eks-alert-analyzer",
         "tools": [],
-        "timeout": 60,
+        "timeout": 90,
         "instruction": null
       }
     }
