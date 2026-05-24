@@ -3,13 +3,15 @@
 import json
 import logging
 import os
+import shutil
+import subprocess
 import threading
 import time
 
 from flask import Flask, request, jsonify
 
 from dashboard import dashboard_bp
-from alert_analysis import run_alert_analysis
+from alert_analysis import run_alert_analysis, config_reloader, strip_ansi
 
 log = logging.getLogger("webhook-server")
 webhook_app = Flask("kiro-ec2-webhook")
@@ -152,7 +154,7 @@ def _trigger_analysis(handler, record: dict):
 
     agent = action.get("agent", "ec2-alert-analyzer")
     tools = action.get("tools", ["execute_bash"])
-    timeout = action.get("timeout", 300)
+    timeout = action.get("timeout", 60)
     instruction = action.get("instruction")
     if not instruction:
         instruction = "请分析此告警的根因，查询相关指标数据，给出结构化的诊断报告。"
