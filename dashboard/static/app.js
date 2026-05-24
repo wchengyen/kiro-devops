@@ -75,7 +75,7 @@ const AppLayout = {
       <div class="sidebar" v-if="!isLogin">
         <div class="brand">Kiro Dashboard</div>
         <nav>
-          <router-link to="/">总览</router-link>
+          <router-link to="/">Overview</router-link>
           <router-link to="/agents">Agents</router-link>
           <router-link to="/skills">Skills</router-link>
           <router-link to="/events">Events</router-link>
@@ -157,7 +157,7 @@ const LoginPage = {
 const OverviewPage = {
   template: `
     <div>
-      <h2 class="page-title">总览</h2>
+      <h2 class="page-title">Overview</h2>
       <div class="cards">
         <div class="card card-accent-blue" style="animation-delay:0.05s"><h3>Events</h3><div class="num">{{ counts.events }}</div></div>
         <div class="card card-accent-green" style="animation-delay:0.10s"><h3>Active Jobs</h3><div class="num">{{ counts.jobs }}</div></div>
