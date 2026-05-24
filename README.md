@@ -10,6 +10,8 @@
 
 [English Version](README_EN.md) | 中文版
 
+📖 [DeepWiki AI 文档](https://deepwiki.com/wchengyen/kiro-devops)
+
 在**飞书（Lark）**或**微信（iLink Bot）**中发消息，自动调用 [Kiro CLI](https://kiro.dev) 处理并回复结果。
 
 **无需公网 IP、无需端口开放、无需 nginx 反向代理。**
