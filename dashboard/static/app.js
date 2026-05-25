@@ -1478,6 +1478,7 @@ const ResourceTreePage = {
     const scanStatus = ref("");
     let cy = null;
     let pollInterval = null;
+    let isPolling = false;
 
     const fetchConfig = async () => {
       try {
@@ -1533,9 +1534,6 @@ const ResourceTreePage = {
               sourceOrigin: e.source_origin,
             },
           });
-        }
-        if (cy) {
-          cy.destroy();
         }
         cy = cytoscape({
           container: cyContainer.value,
@@ -1615,11 +1613,11 @@ const ResourceTreePage = {
           cy.nodes().forEach(n => {
             positions[n.id()] = { x: n.position().x, y: n.position().y };
           });
-          api("/resource-tree/positions", { method: "PUT", body: { positions } }).catch(() => {});
+          api("/resource-tree/positions", { method: "PUT", body: { positions } }).catch(() => { scanStatus.value = "位置保存失敗"; });
         });
         let shiftSource = null;
         cy.on("tapstart", "node", (evt) => {
-          if (window.event && window.event.shiftKey) {
+          if (evt.originalEvent && evt.originalEvent.shiftKey) {
             shiftSource = evt.target;
           }
         });
@@ -1631,8 +1629,9 @@ const ResourceTreePage = {
               shiftSource = null;
               return;
             }
+            const trimmed = relType.trim();
             const map = { "1": "contains", "2": "attached_to", "3": "depends_on" };
-            const finalType = map[relType] || relType;
+            const finalType = map[trimmed] || trimmed;
             api("/resource-tree/relations", {
               method: "POST",
               body: {
@@ -1640,7 +1639,7 @@ const ResourceTreePage = {
                 target_id: target.id(),
                 relation_type: finalType,
               },
-            }).then(() => loadGraph()).catch(() => {});
+            }).then(() => loadGraph()).catch(() => { scanStatus.value = "關聯創建失敗"; });
           }
           shiftSource = null;
         });
@@ -1654,7 +1653,7 @@ const ResourceTreePage = {
           if (confirm("確定刪除此關聯？")) {
             api(`/resource-tree/relations/${edge.id()}`, { method: "DELETE" })
               .then(() => loadGraph())
-              .catch(() => {});
+              .catch(() => { scanStatus.value = "關聯刪除失敗"; });
           }
         });
       } catch (e) {
@@ -1687,23 +1686,28 @@ const ResourceTreePage = {
         }
         const jobId = data.job_id;
         pollInterval = setInterval(async () => {
+          if (isPolling) return;
+          isPolling = true;
           try {
             const status = await api(`/resource-tree/scan/${jobId}`);
             if (status.status === "done") {
               clearInterval(pollInterval);
               pollInterval = null;
+              isPolling = false;
               scanning.value = false;
               scanStatus.value = `完成，發現 ${status.count} 條關聯`;
               await loadGraph();
             } else if (status.status === "failed") {
               clearInterval(pollInterval);
               pollInterval = null;
+              isPolling = false;
               scanning.value = false;
               scanStatus.value = "掃描失敗: " + (status.error || "");
             }
           } catch (e) {
             clearInterval(pollInterval);
             pollInterval = null;
+            isPolling = false;
             scanning.value = false;
             scanStatus.value = "輪詢失敗";
           }
@@ -1722,6 +1726,7 @@ const ResourceTreePage = {
     onUnmounted(() => {
       if (cy) cy.destroy();
       if (pollInterval) clearInterval(pollInterval);
+      isPolling = false;
     });
 
     return {
