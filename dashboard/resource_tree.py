@@ -1,9 +1,13 @@
 import json
+import logging
 import os
 
 import boto3
+from botocore.exceptions import ClientError
 from typing import Any
 from dashboard.providers.base import Resource
+
+logger = logging.getLogger(__name__)
 
 
 class ResourceTreeBuilder:
@@ -127,17 +131,22 @@ class AWSResourceScanner:
                 for ng_name in nodegroups:
                     ng = eks.describe_nodegroup(clusterName=cluster_name, nodegroupName=ng_name)["nodegroup"]
                     for asg_info in ng.get("resources", {}).get("autoScalingGroups", []):
-                        asg_detail = asg.describe_auto_scaling_groups(
+                        asg_groups = asg.describe_auto_scaling_groups(
                             AutoScalingGroupNames=[asg_info["name"]]
-                        )["AutoScalingGroups"][0]
+                        )["AutoScalingGroups"]
+                        if not asg_groups:
+                            continue
+                        asg_detail = asg_groups[0]
                         for instance in asg_detail.get("Instances", []):
                             relations.append({
                                 "source_id": f"aws:eks:{region}:{cluster_name}",
                                 "target_id": f"aws:ec2:{region}:{instance['InstanceId']}",
                                 "relation_type": "contains",
                             })
-        except Exception:
-            pass
+        except ClientError as e:
+            logger.warning(f"Scan failed for EKS in {region}: {e}")
+        except Exception as e:
+            logger.warning(f"Scan failed for EKS in {region}: {e}")
         return relations
 
     def _scan_elb_targets(self, region: str) -> list[dict]:
@@ -146,8 +155,10 @@ class AWSResourceScanner:
             elbv2 = boto3.client("elbv2", region_name=region)
             lbs = elbv2.describe_load_balancers()["LoadBalancers"]
             for lb in lbs:
+                lb_id = lb.get("LoadBalancerName")
+                if not lb_id:
+                    continue
                 lb_arn = lb["LoadBalancerArn"]
-                lb_id = lb_arn.split("/")[-1]
                 tgs = elbv2.describe_target_groups(LoadBalancerArn=lb_arn)["TargetGroups"]
                 for tg in tgs:
                     health = elbv2.describe_target_health(TargetGroupArn=tg["TargetGroupArn"])["TargetHealthDescriptions"]
@@ -159,8 +170,10 @@ class AWSResourceScanner:
                                 "target_id": f"aws:ec2:{region}:{target_id}",
                                 "relation_type": "attached_to",
                             })
-        except Exception:
-            pass
+        except ClientError as e:
+            logger.warning(f"Scan failed for ELB in {region}: {e}")
+        except Exception as e:
+            logger.warning(f"Scan failed for ELB in {region}: {e}")
         return relations
 
     def _scan_ec2_network(self, region: str) -> list[dict]:
@@ -179,14 +192,16 @@ class AWSResourceScanner:
                             "target_id": f"aws:subnet:{region}:{subnet_id}",
                             "relation_type": "belongs_to",
                         })
-                    if vpc_id:
-                        relations.append({
-                            "source_id": f"aws:subnet:{region}:{subnet_id}",
-                            "target_id": f"aws:vpc:{region}:{vpc_id}",
-                            "relation_type": "belongs_to",
-                        })
-        except Exception:
-            pass
+                        if vpc_id:
+                            relations.append({
+                                "source_id": f"aws:subnet:{region}:{subnet_id}",
+                                "target_id": f"aws:vpc:{region}:{vpc_id}",
+                                "relation_type": "belongs_to",
+                            })
+        except ClientError as e:
+            logger.warning(f"Scan failed for EC2 in {region}: {e}")
+        except Exception as e:
+            logger.warning(f"Scan failed for EC2 in {region}: {e}")
         return relations
 
     def _scan_rds_network(self, region: str) -> list[dict]:
@@ -196,7 +211,7 @@ class AWSResourceScanner:
             dbs = rds.describe_db_instances()["DBInstances"]
             for db in dbs:
                 db_id = db["DBInstanceIdentifier"]
-                subnet_group = db.get("DBSubnetGroup", {})
+                subnet_group = db.get("DBSubnetGroup") or {}
                 vpc_id = subnet_group.get("VpcId")
                 if vpc_id:
                     relations.append({
@@ -211,6 +226,8 @@ class AWSResourceScanner:
                         "target_id": f"aws:subnet:{region}:{subnet_id}",
                         "relation_type": "belongs_to",
                     })
-        except Exception:
-            pass
+        except ClientError as e:
+            logger.warning(f"Scan failed for RDS in {region}: {e}")
+        except Exception as e:
+            logger.warning(f"Scan failed for RDS in {region}: {e}")
         return relations

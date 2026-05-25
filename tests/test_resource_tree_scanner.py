@@ -70,30 +70,61 @@ def _mock_boto_client(service, region_name=None):
 def test_scan_eks_ec2(mock_boto3):
     mock_boto3.client.side_effect = _mock_boto_client
     scanner = AWSResourceScanner()
-    relations = scanner.scan(["cn-north-1"])
+    relations = scanner._scan_eks_ec2("cn-north-1")
 
-    eks_ec2 = [r for r in relations if r["relation_type"] == "contains" and "eks" in r["source_id"]]
-    assert len(eks_ec2) == 1
-    assert eks_ec2[0]["source_id"] == "aws:eks:cn-north-1:cluster-1"
-    assert eks_ec2[0]["target_id"] == "aws:ec2:cn-north-1:i-123"
+    assert len(relations) == 1
+    assert relations[0]["source_id"] == "aws:eks:cn-north-1:cluster-1"
+    assert relations[0]["target_id"] == "aws:ec2:cn-north-1:i-123"
+    assert relations[0]["relation_type"] == "contains"
 
 
 @patch("dashboard.resource_tree.boto3")
 def test_scan_elb_ec2(mock_boto3):
     mock_boto3.client.side_effect = _mock_boto_client
     scanner = AWSResourceScanner()
-    relations = scanner.scan(["cn-north-1"])
+    relations = scanner._scan_elb_targets("cn-north-1")
 
-    elb_ec2 = [r for r in relations if r["relation_type"] == "attached_to"]
-    assert len(elb_ec2) >= 1
-    assert elb_ec2[0]["target_id"] == "aws:ec2:cn-north-1:i-123"
+    assert len(relations) == 1
+    assert relations[0]["source_id"] == "aws:elb:cn-north-1:lb-1"
+    assert relations[0]["target_id"] == "aws:ec2:cn-north-1:i-123"
+    assert relations[0]["relation_type"] == "attached_to"
 
 
 @patch("dashboard.resource_tree.boto3")
 def test_scan_ec2_network(mock_boto3):
     mock_boto3.client.side_effect = _mock_boto_client
     scanner = AWSResourceScanner()
-    relations = scanner.scan(["cn-north-1"])
+    relations = scanner._scan_ec2_network("cn-north-1")
 
     subnet_edges = [r for r in relations if "subnet" in r["target_id"]]
-    assert len(subnet_edges) >= 1
+    vpc_edges = [r for r in relations if "vpc" in r["target_id"]]
+
+    assert len(subnet_edges) == 1
+    assert subnet_edges[0]["source_id"] == "aws:ec2:cn-north-1:i-123"
+    assert subnet_edges[0]["target_id"] == "aws:subnet:cn-north-1:subnet-1"
+    assert subnet_edges[0]["relation_type"] == "belongs_to"
+
+    assert len(vpc_edges) == 1
+    assert vpc_edges[0]["source_id"] == "aws:subnet:cn-north-1:subnet-1"
+    assert vpc_edges[0]["target_id"] == "aws:vpc:cn-north-1:vpc-1"
+    assert vpc_edges[0]["relation_type"] == "belongs_to"
+
+
+@patch("dashboard.resource_tree.boto3")
+def test_scan_rds_network(mock_boto3):
+    mock_boto3.client.side_effect = _mock_boto_client
+    scanner = AWSResourceScanner()
+    relations = scanner._scan_rds_network("cn-north-1")
+
+    vpc_edges = [r for r in relations if "vpc" in r["target_id"]]
+    subnet_edges = [r for r in relations if "subnet" in r["target_id"]]
+
+    assert len(vpc_edges) == 1
+    assert vpc_edges[0]["source_id"] == "aws:rds:cn-north-1:db-1"
+    assert vpc_edges[0]["target_id"] == "aws:vpc:cn-north-1:vpc-1"
+    assert vpc_edges[0]["relation_type"] == "belongs_to"
+
+    assert len(subnet_edges) == 1
+    assert subnet_edges[0]["source_id"] == "aws:rds:cn-north-1:db-1"
+    assert subnet_edges[0]["target_id"] == "aws:subnet:cn-north-1:subnet-2"
+    assert subnet_edges[0]["relation_type"] == "belongs_to"
