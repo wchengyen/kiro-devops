@@ -1607,8 +1607,14 @@ const ResourceTreePage = {
               style: { "line-color": "#34A853", "line-style": "dashed", "target-arrow-color": "#34A853" },
             },
           ],
-          layout: { name: layoutName.value, fit: true, padding: 20 },
+          layout: { name: "preset", fit: true, padding: 20 },
         });
+        const hasPositions = data.nodes.some(n => n.position);
+        if (hasPositions) {
+          cy.layout({ name: "preset", fit: true, padding: 20 }).run();
+        } else {
+          cy.layout({ name: layoutName.value, fit: true, padding: 20 }).run();
+        }
         cy.on("free", "node", () => {
           const positions = {};
           cy.nodes().forEach(n => {
@@ -1647,8 +1653,8 @@ const ResourceTreePage = {
         cy.on("cxttap", "edge", (evt) => {
           const edge = evt.target;
           const origin = edge.data("sourceOrigin");
-          if (origin === "auto_scan") {
-            alert("自動掃描發現的關聯不可刪除，請使用重新掃描重置。");
+          if (origin === "auto_scan" || origin === "tag_group") {
+            alert("自動掃描或標籤分組產生的關聯不可刪除。");
             return;
           }
           if (confirm("確定刪除此關聯？")) {
@@ -1665,6 +1671,13 @@ const ResourceTreePage = {
     const applyLayout = () => {
       if (!cy) return;
       cy.layout({ name: layoutName.value, fit: true, padding: 20 }).run();
+      setTimeout(() => {
+        const positions = {};
+        cy.nodes().forEach(n => {
+          positions[n.id()] = { x: n.position().x, y: n.position().y };
+        });
+        api("/resource-tree/positions", { method: "PUT", body: { positions } }).catch(() => {});
+      }, 500);
     };
 
     const triggerScan = async () => {

@@ -1,10 +1,7 @@
-import json
 import logging
-import os
 
 import boto3
 from botocore.exceptions import ClientError
-from typing import Any
 from dashboard.providers.base import Resource
 
 logger = logging.getLogger(__name__)
@@ -97,14 +94,6 @@ class ResourceTreeBuilder:
                 })
 
         return {"nodes": nodes, "edges": edges}
-
-
-def _load_config() -> dict:
-    config_path = os.path.join(os.path.dirname(__file__), "..", "dashboard_config.json")
-    if os.path.exists(config_path):
-        with open(config_path) as f:
-            return json.load(f)
-    return {}
 
 
 class AWSResourceScanner:
