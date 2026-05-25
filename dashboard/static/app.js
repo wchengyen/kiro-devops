@@ -1535,6 +1535,7 @@ const ResourceTreePage = {
             },
           });
         }
+        if (cy) cy.destroy();
         cy = cytoscape({
           container: cyContainer.value,
           elements,
