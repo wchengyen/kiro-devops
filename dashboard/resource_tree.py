@@ -23,7 +23,7 @@ class ResourceTreeBuilder:
                 "id": nid,
                 "label": r.name,
                 "type": r.resource_type,
-                "position": pos if pos else None,
+                "position": pos or None,
                 "data": {
                     "provider": r.provider,
                     "region": r.region,
@@ -49,7 +49,7 @@ class ResourceTreeBuilder:
                         "label": f"{tag_key}: {tag_value}",
                         "type": "tag_group",
                         "is_group": True,
-                        "position": positions.get(group_id, None),
+                        "position": positions.get(group_id),
                         "data": {},
                     }
                     node_ids.add(group_id)
@@ -79,7 +79,7 @@ class ResourceTreeBuilder:
             sid = rel["source_id"]
             tid = rel["target_id"]
             # Only add edges where both nodes exist in our graph
-            if sid in node_ids or tid in node_ids:
+            if sid in node_ids and tid in node_ids:
                 edges.append({
                     "id": rel.get("id", f"{sid}->{tid}"),
                     "source": sid,
