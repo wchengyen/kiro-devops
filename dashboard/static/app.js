@@ -1617,6 +1617,46 @@ const ResourceTreePage = {
           });
           api("/resource-tree/positions", { method: "PUT", body: { positions } }).catch(() => {});
         });
+        let shiftSource = null;
+        cy.on("tapstart", "node", (evt) => {
+          if (window.event && window.event.shiftKey) {
+            shiftSource = evt.target;
+          }
+        });
+        cy.on("tapend", "node", (evt) => {
+          if (shiftSource && shiftSource.id() !== evt.target.id()) {
+            const target = evt.target;
+            const relType = prompt("選擇關聯類型:\n1. contains\n2. attached_to\n3. depends_on", "depends_on");
+            if (!relType) {
+              shiftSource = null;
+              return;
+            }
+            const map = { "1": "contains", "2": "attached_to", "3": "depends_on" };
+            const finalType = map[relType] || relType;
+            api("/resource-tree/relations", {
+              method: "POST",
+              body: {
+                source_id: shiftSource.id(),
+                target_id: target.id(),
+                relation_type: finalType,
+              },
+            }).then(() => loadGraph()).catch(() => {});
+          }
+          shiftSource = null;
+        });
+        cy.on("cxttap", "edge", (evt) => {
+          const edge = evt.target;
+          const origin = edge.data("sourceOrigin");
+          if (origin === "auto_scan") {
+            alert("自動掃描發現的關聯不可刪除，請使用重新掃描重置。");
+            return;
+          }
+          if (confirm("確定刪除此關聯？")) {
+            api(`/resource-tree/relations/${edge.id()}`, { method: "DELETE" })
+              .then(() => loadGraph())
+              .catch(() => {});
+          }
+        });
       } catch (e) {
         scanStatus.value = "圖表載入失敗";
       }
@@ -1628,6 +1668,9 @@ const ResourceTreePage = {
     };
 
     const triggerScan = async () => {
+      if (!confirm("重新掃描將清除所有自動發現的關聯並重新查詢 AWS API，手動創建的關聯不會受影響。確定繼續？")) {
+        return;
+      }
       scanning.value = true;
       scanStatus.value = "啟動掃描...";
       try {
