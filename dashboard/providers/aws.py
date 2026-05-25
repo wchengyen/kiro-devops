@@ -43,13 +43,15 @@ class AWSProvider(BaseResourceProvider):
         return config.get("regions", [])
 
     def resource_types(self) -> List[str]:
-        return ["ec2", "rds"]
+        return ["ec2", "rds", "elb"]
 
     def discover_resources(self, region: str, resource_type: Optional[str] = None) -> List[Resource]:
         if resource_type == "ec2":
             return self._discover_ec2(region)
         elif resource_type == "rds":
             return self._discover_rds(region)
+        elif resource_type == "elb":
+            return self._discover_elb(region)
         return []
 
     def _discover_ec2(self, region: str) -> List[Resource]:
@@ -84,6 +86,46 @@ class AWSProvider(BaseResourceProvider):
                         },
                     )
                 )
+        return resources
+
+    def _discover_elb(self, region: str) -> List[Resource]:
+        if boto3 is None:
+            return []
+        client = boto3.client("elbv2", region_name=region)
+        resp = client.describe_load_balancers()
+        resources = []
+        for lb in resp.get("LoadBalancers", []):
+            lb_arn = lb.get("LoadBalancerArn", "")
+            lb_name = lb.get("LoadBalancerName", "")
+            tags = {}
+            if lb_arn:
+                try:
+                    tag_resp = client.describe_tags(ResourceArns=[lb_arn])
+                    for tag_desc in tag_resp.get("TagDescriptions", []):
+                        tags = {tag.get("Key", ""): tag.get("Value", "") for tag in tag_desc.get("Tags", [])}
+                        break
+                except Exception as e:
+                    logger.warning("Failed to list tags for ELB %s: %s", lb_arn, e)
+            name = tags.get("Name", lb_name)
+            resources.append(
+                Resource(
+                    provider="aws",
+                    resource_type="elb",
+                    region=region,
+                    id=lb_name,
+                    name=name or lb_name,
+                    status=lb.get("State", "").lower(),
+                    class_type=lb.get("Type", ""),
+                    os_or_engine="",
+                    tags=tags,
+                    meta={
+                        "type": lb.get("Type", ""),
+                        "scheme": lb.get("Scheme", ""),
+                        "dns_name": lb.get("DNSName", ""),
+                        "region": region,
+                    },
+                )
+            )
         return resources
 
     def _discover_rds(self, region: str) -> List[Resource]:
