@@ -515,6 +515,7 @@ def get_resource_history(resource_id):
         store.close()
 
 _scan_jobs: dict[str, dict] = {}
+_scan_jobs_lock = threading.Lock()
 _DEFAULT_TREE_DB = os.path.join(os.path.dirname(__file__), "..", "memory_db", "resource_tree.db")
 CONFIG_PATH = os.path.join(os.path.dirname(__file__), "..", "dashboard_config.json")
 
@@ -550,7 +551,7 @@ def get_resource_tree_config():
 @dashboard_bp.route("/api/dashboard/resource-tree/config", methods=["POST"])
 @require_auth
 def post_resource_tree_config():
-    body = request.get_json(force=True) or {}
+    body = request.get_json() or {}
     config = _load_dashboard_config()
     tree_config = config.get("resource_tree", {})
     if "group_by_tags" in body:
@@ -570,11 +571,22 @@ def get_resource_tree_graph():
     tree_config = config.get("resource_tree", {})
     group_by_tags = tree_config.get("group_by_tags", [])
 
-    provider = get_provider(provider_name)
+    try:
+        provider = get_provider(provider_name)
+    except ValueError as e:
+        return jsonify({"ok": False, "error": str(e)}), 400
+
     resources = []
     if provider and provider.is_enabled():
         for region in provider.regions():
-            resources.extend(provider.discover_resources(region))
+            for rtype in provider.resource_types():
+                try:
+                    resources.extend(provider.discover_resources(region, rtype))
+                except Exception as e:
+                    import logging
+                    logging.getLogger(__name__).warning(
+                        f"discover_resources failed for {provider_name}/{region}/{rtype}: {e}"
+                    )
 
     store = _get_tree_store()
     relations = store.get_relations(provider=provider_name)
@@ -588,10 +600,19 @@ def get_resource_tree_graph():
 @dashboard_bp.route("/api/dashboard/resource-tree/scan", methods=["POST"])
 @require_auth
 def post_resource_tree_scan():
-    body = request.get_json(force=True) or {}
+    body = request.get_json() or {}
     provider_name = body.get("provider", "aws")
+    if provider_name != "aws":
+        return jsonify({"ok": False, "error": "Auto-scan only supported for AWS"}), 400
+
     job_id = str(uuid.uuid4())
-    _scan_jobs[job_id] = {"status": "running", "count": 0, "error": None}
+    with _scan_jobs_lock:
+        _scan_jobs[job_id] = {"status": "running", "count": 0, "error": None}
+        # Prune old completed jobs, keeping only the most recent 50
+        completed = [jid for jid, j in _scan_jobs.items() if j.get("status") in ("done", "failed")]
+        if len(completed) > 50:
+            for old_jid in sorted(completed)[:len(completed) - 50]:
+                _scan_jobs.pop(old_jid, None)
 
     def _do_scan():
         try:
@@ -613,11 +634,13 @@ def post_resource_tree_scan():
                     source_origin="auto_scan",
                     provider=provider_name,
                 )
-            _scan_jobs[job_id]["status"] = "done"
-            _scan_jobs[job_id]["count"] = len(relations)
+            with _scan_jobs_lock:
+                _scan_jobs[job_id]["status"] = "done"
+                _scan_jobs[job_id]["count"] = len(relations)
         except Exception as e:
-            _scan_jobs[job_id]["status"] = "failed"
-            _scan_jobs[job_id]["error"] = str(e)
+            with _scan_jobs_lock:
+                _scan_jobs[job_id]["status"] = "failed"
+                _scan_jobs[job_id]["error"] = str(e)
 
     threading.Thread(target=_do_scan, daemon=True).start()
     return jsonify({"ok": True, "job_id": job_id})
@@ -626,17 +649,19 @@ def post_resource_tree_scan():
 @dashboard_bp.route("/api/dashboard/resource-tree/scan/<job_id>", methods=["GET"])
 @require_auth
 def get_resource_tree_scan_status(job_id):
-    job = _scan_jobs.get(job_id, {"status": "unknown", "count": 0, "error": None})
+    with _scan_jobs_lock:
+        job = _scan_jobs.get(job_id, {"status": "unknown", "count": 0, "error": None})
     return jsonify({"ok": True, **job})
 
 
 @dashboard_bp.route("/api/dashboard/resource-tree/relations", methods=["POST"])
 @require_auth
 def post_resource_tree_relation():
-    body = request.get_json(force=True) or {}
+    body = request.get_json() or {}
     source_id = body.get("source_id")
     target_id = body.get("target_id")
     relation_type = body.get("relation_type", "depends_on")
+    provider = body.get("provider", "aws")
     if not source_id or not target_id:
         return jsonify({"ok": False, "error": "source_id and target_id required"}), 400
 
@@ -646,6 +671,7 @@ def post_resource_tree_relation():
         target_id=target_id,
         relation_type=relation_type,
         source_origin="manual",
+        provider=provider,
     )
     return jsonify({"ok": True, "id": rid})
 
@@ -667,7 +693,7 @@ def delete_resource_tree_relation(relation_id):
 @dashboard_bp.route("/api/dashboard/resource-tree/positions", methods=["PUT"])
 @require_auth
 def put_resource_tree_positions():
-    body = request.get_json(force=True) or {}
+    body = request.get_json() or {}
     positions = body.get("positions", {})
     store = _get_tree_store()
     store.save_positions(positions)
