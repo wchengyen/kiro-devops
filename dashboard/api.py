@@ -32,6 +32,11 @@ from dashboard.cost_scoring import (
     compute_waste_cost,
     grade_color,
 )
+import uuid
+import threading
+from datetime import datetime, timezone
+from dashboard.resource_tree_store import ResourceTreeStore
+from dashboard.resource_tree import ResourceTreeBuilder, AWSResourceScanner
 
 
 SENSITIVE_KEYS = {"WEBHOOK_TOKEN", "DASHBOARD_TOKEN"}
@@ -508,3 +513,162 @@ def get_resource_history(resource_id):
         return jsonify({"ok": False, "error": str(e)}), 500
     finally:
         store.close()
+
+_scan_jobs: dict[str, dict] = {}
+_DEFAULT_TREE_DB = os.path.join(os.path.dirname(__file__), "..", "memory_db", "resource_tree.db")
+CONFIG_PATH = os.path.join(os.path.dirname(__file__), "..", "dashboard_config.json")
+
+
+def _get_tree_store():
+    return ResourceTreeStore(_DEFAULT_TREE_DB)
+
+
+def _load_dashboard_config():
+    if os.path.exists(CONFIG_PATH):
+        with open(CONFIG_PATH) as f:
+            return json.load(f)
+    return {}
+
+
+def _save_dashboard_config(config):
+    with open(CONFIG_PATH, "w") as f:
+        json.dump(config, f, indent=2)
+
+
+@dashboard_bp.route("/api/dashboard/resource-tree/config", methods=["GET"])
+@require_auth
+def get_resource_tree_config():
+    config = _load_dashboard_config()
+    tree_config = config.get("resource_tree", {
+        "group_by_tags": [],
+        "layout_algorithm": "cose",
+        "default_provider": "aws",
+    })
+    return jsonify({"ok": True, "config": tree_config})
+
+
+@dashboard_bp.route("/api/dashboard/resource-tree/config", methods=["POST"])
+@require_auth
+def post_resource_tree_config():
+    body = request.get_json(force=True) or {}
+    config = _load_dashboard_config()
+    tree_config = config.get("resource_tree", {})
+    if "group_by_tags" in body:
+        tree_config["group_by_tags"] = body["group_by_tags"]
+    if "layout_algorithm" in body:
+        tree_config["layout_algorithm"] = body["layout_algorithm"]
+    config["resource_tree"] = tree_config
+    _save_dashboard_config(config)
+    return jsonify({"ok": True})
+
+
+@dashboard_bp.route("/api/dashboard/resource-tree/graph", methods=["GET"])
+@require_auth
+def get_resource_tree_graph():
+    provider_name = request.args.get("provider", "aws")
+    config = _load_dashboard_config()
+    tree_config = config.get("resource_tree", {})
+    group_by_tags = tree_config.get("group_by_tags", [])
+
+    provider = get_provider(provider_name)
+    resources = []
+    if provider and provider.is_enabled():
+        for region in provider.regions():
+            resources.extend(provider.discover_resources(region))
+
+    store = _get_tree_store()
+    relations = store.get_relations(provider=provider_name)
+    positions = store.get_positions()
+
+    builder = ResourceTreeBuilder()
+    graph = builder.build_graph(resources, relations, group_by_tags, positions)
+    return jsonify({"ok": True, **graph})
+
+
+@dashboard_bp.route("/api/dashboard/resource-tree/scan", methods=["POST"])
+@require_auth
+def post_resource_tree_scan():
+    body = request.get_json(force=True) or {}
+    provider_name = body.get("provider", "aws")
+    job_id = str(uuid.uuid4())
+    _scan_jobs[job_id] = {"status": "running", "count": 0, "error": None}
+
+    def _do_scan():
+        try:
+            config = _load_dashboard_config()
+            regions = config.get("providers", {}).get(provider_name, {}).get("regions", [])
+            if not regions:
+                regions = config.get("regions", [])
+
+            store = _get_tree_store()
+            store.clear_auto_scan_relations(provider_name)
+
+            scanner = AWSResourceScanner()
+            relations = scanner.scan(regions)
+            for rel in relations:
+                store.add_relation(
+                    source_id=rel["source_id"],
+                    target_id=rel["target_id"],
+                    relation_type=rel["relation_type"],
+                    source_origin="auto_scan",
+                    provider=provider_name,
+                )
+            _scan_jobs[job_id]["status"] = "done"
+            _scan_jobs[job_id]["count"] = len(relations)
+        except Exception as e:
+            _scan_jobs[job_id]["status"] = "failed"
+            _scan_jobs[job_id]["error"] = str(e)
+
+    threading.Thread(target=_do_scan, daemon=True).start()
+    return jsonify({"ok": True, "job_id": job_id})
+
+
+@dashboard_bp.route("/api/dashboard/resource-tree/scan/<job_id>", methods=["GET"])
+@require_auth
+def get_resource_tree_scan_status(job_id):
+    job = _scan_jobs.get(job_id, {"status": "unknown", "count": 0, "error": None})
+    return jsonify({"ok": True, **job})
+
+
+@dashboard_bp.route("/api/dashboard/resource-tree/relations", methods=["POST"])
+@require_auth
+def post_resource_tree_relation():
+    body = request.get_json(force=True) or {}
+    source_id = body.get("source_id")
+    target_id = body.get("target_id")
+    relation_type = body.get("relation_type", "depends_on")
+    if not source_id or not target_id:
+        return jsonify({"ok": False, "error": "source_id and target_id required"}), 400
+
+    store = _get_tree_store()
+    rid = store.add_relation(
+        source_id=source_id,
+        target_id=target_id,
+        relation_type=relation_type,
+        source_origin="manual",
+    )
+    return jsonify({"ok": True, "id": rid})
+
+
+@dashboard_bp.route("/api/dashboard/resource-tree/relations/<relation_id>", methods=["DELETE"])
+@require_auth
+def delete_resource_tree_relation(relation_id):
+    store = _get_tree_store()
+    relations = store.get_relations()
+    target = next((r for r in relations if r["id"] == relation_id), None)
+    if not target:
+        return jsonify({"ok": False, "error": "Not found"}), 404
+    if target["source_origin"] == "auto_scan":
+        return jsonify({"ok": False, "error": "Cannot delete auto_scan relation"}), 403
+    store.delete_relation(relation_id)
+    return jsonify({"ok": True})
+
+
+@dashboard_bp.route("/api/dashboard/resource-tree/positions", methods=["PUT"])
+@require_auth
+def put_resource_tree_positions():
+    body = request.get_json(force=True) or {}
+    positions = body.get("positions", {})
+    store = _get_tree_store()
+    store.save_positions(positions)
+    return jsonify({"ok": True})
