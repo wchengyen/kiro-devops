@@ -114,7 +114,7 @@ class AWSProvider(BaseResourceProvider):
                     region=region,
                     id=lb_name,
                     name=name or lb_name,
-                    status=lb.get("State", "").lower(),
+                    status=(lb.get("State", {}) or {}).get("Code", "").lower() if isinstance(lb.get("State"), dict) else str(lb.get("State", "")).lower(),
                     class_type=lb.get("Type", ""),
                     os_or_engine="",
                     tags=tags,
