@@ -83,6 +83,7 @@ const AppLayout = {
           <router-link to="/resources">Resources</router-link>
           <router-link v-if="providers.aws?.enabled" to="/resources/aws" style="padding-left:28px;font-size:13px">AWS</router-link>
           <router-link v-if="providers.tencent?.enabled" to="/resources/tencent" style="padding-left:28px;font-size:13px">Tencent</router-link>
+          <router-link to="/resource-tree">Resource Tree</router-link>
           <router-link to="/config">Config</router-link>
         </nav>
         <div class="logout" @click="logout">退出登录</div>
@@ -1438,6 +1439,244 @@ const ConfigPage = {
   }
 };
 
+/* ---------- Resource Tree Page ---------- */
+const ResourceTreePage = {
+  template: `
+    <div class="page resource-tree-page">
+      <h2>Resource Tree</h2>
+      <div class="toolbar">
+        <div class="tag-group-setting">
+          <label>分組 Key:</label>
+          <input v-model="tagInput" @keyup.enter="saveConfig" placeholder="Project,Environment" />
+          <button @click="saveConfig">套用</button>
+        </div>
+        <div class="layout-setting">
+          <label>布局:</label>
+          <select v-model="layoutName" @change="applyLayout">
+            <option value="cose">cose</option>
+            <option value="circle">circle</option>
+            <option value="grid">grid</option>
+            <option value="breadthfirst">breadthfirst</option>
+          </select>
+        </div>
+        <button @click="triggerScan" :disabled="scanning">
+          {{ scanning ? '掃描中...' : '重新掃描' }}
+        </button>
+        <span style="font-size:12px;color:var(--text-tertiary);margin-left:auto">
+          Shift+拖拽節點創建關聯 | 右鍵邊線刪除
+        </span>
+      </div>
+      <div ref="cyContainer" class="cy-container"></div>
+      <div v-if="scanStatus" class="scan-status">掃描狀態: {{ scanStatus }}</div>
+    </div>
+  `,
+  setup() {
+    const cyContainer = ref(null);
+    const tagInput = ref("Project,Environment");
+    const layoutName = ref("cose");
+    const scanning = ref(false);
+    const scanStatus = ref("");
+    let cy = null;
+
+    const fetchConfig = async () => {
+      try {
+        const data = await api("/resource-tree/config");
+        if (data.ok && data.config) {
+          tagInput.value = (data.config.group_by_tags || []).join(",");
+          layoutName.value = data.config.layout_algorithm || "cose";
+        }
+      } catch (e) {
+        console.warn("Failed to fetch config:", e);
+      }
+    };
+
+    const saveConfig = async () => {
+      const tags = tagInput.value.split(",").map(s => s.trim()).filter(Boolean);
+      try {
+        await api("/resource-tree/config", {
+          method: "POST",
+          body: { group_by_tags: tags, layout_algorithm: layoutName.value },
+        });
+        await loadGraph();
+      } catch (e) {
+        console.warn("Failed to save config:", e);
+      }
+    };
+
+    const loadGraph = async () => {
+      try {
+        const data = await api("/resource-tree/graph?provider=aws");
+        if (!data.ok) return;
+        const elements = [];
+        for (const n of data.nodes) {
+          elements.push({
+            data: {
+              id: n.id,
+              label: n.label,
+              type: n.type,
+              isGroup: n.is_group || false,
+            },
+            ...(n.position ? { position: n.position } : {}),
+          });
+        }
+        for (const e of data.edges) {
+          elements.push({
+            data: {
+              id: e.id || (e.source + "->" + e.target),
+              source: e.source,
+              target: e.target,
+              relationType: e.relation_type,
+              sourceOrigin: e.source_origin,
+            },
+          });
+        }
+        if (cy) {
+          cy.destroy();
+        }
+        cy = cytoscape({
+          container: cyContainer.value,
+          elements,
+          style: [
+            {
+              selector: "node",
+              style: {
+                label: "data(label)",
+                width: 60,
+                height: 60,
+                "background-color": "#4285F4",
+                "text-valign": "center",
+                "text-halign": "center",
+                "font-size": "10px",
+                color: "#fff",
+              },
+            },
+            {
+              selector: "node[isGroup]",
+              style: {
+                "background-opacity": 0.2,
+                "border-width": 2,
+                "border-style": "dashed",
+                "border-color": "#666",
+                "text-valign": "top",
+                color: "#333",
+              },
+            },
+            {
+              selector: 'node[type="eks"]',
+              style: { "background-color": "#FF9900" },
+            },
+            {
+              selector: 'node[type="ec2"]',
+              style: { "background-color": "#232F3E" },
+            },
+            {
+              selector: 'node[type="elb"]',
+              style: { "background-color": "#1E8900" },
+            },
+            {
+              selector: 'node[type="rds"]',
+              style: { "background-color": "#527FFF" },
+            },
+            {
+              selector: 'node[type="vpc"]',
+              style: { "background-color": "#9AA0A6" },
+            },
+            {
+              selector: 'node[type="subnet"]',
+              style: { "background-color": "#9AA0A6", shape: "diamond" },
+            },
+            {
+              selector: "edge",
+              style: {
+                width: 2,
+                "line-color": "#999",
+                "target-arrow-shape": "triangle",
+                "target-arrow-color": "#999",
+                "curve-style": "bezier",
+              },
+            },
+            {
+              selector: 'edge[sourceOrigin="manual"]',
+              style: { "line-color": "#4285F4", "target-arrow-color": "#4285F4" },
+            },
+            {
+              selector: 'edge[sourceOrigin="tag_group"]',
+              style: { "line-color": "#34A853", "line-style": "dashed", "target-arrow-color": "#34A853" },
+            },
+          ],
+          layout: { name: layoutName.value, fit: true, padding: 20 },
+        });
+        cy.on("free", "node", () => {
+          const positions = {};
+          cy.nodes().forEach(n => {
+            positions[n.id()] = { x: n.position().x, y: n.position().y };
+          });
+          api("/resource-tree/positions", { method: "PUT", body: { positions } }).catch(() => {});
+        });
+      } catch (e) {
+        console.warn("Failed to load graph:", e);
+      }
+    };
+
+    const applyLayout = () => {
+      if (!cy) return;
+      cy.layout({ name: layoutName.value, fit: true, padding: 20 }).run();
+    };
+
+    const triggerScan = async () => {
+      scanning.value = true;
+      scanStatus.value = "啟動掃描...";
+      try {
+        const data = await api("/resource-tree/scan", { method: "POST", body: { provider: "aws" } });
+        if (!data.ok) {
+          scanning.value = false;
+          scanStatus.value = "掃描失敗";
+          return;
+        }
+        const jobId = data.job_id;
+        const poll = setInterval(async () => {
+          try {
+            const status = await api(`/resource-tree/scan/${jobId}`);
+            if (status.status === "done") {
+              clearInterval(poll);
+              scanning.value = false;
+              scanStatus.value = `完成，發現 ${status.count} 條關聯`;
+              await loadGraph();
+            } else if (status.status === "failed") {
+              clearInterval(poll);
+              scanning.value = false;
+              scanStatus.value = "掃描失敗: " + (status.error || "");
+            }
+          } catch (e) {
+            clearInterval(poll);
+            scanning.value = false;
+            scanStatus.value = "輪詢失敗";
+          }
+        }, 2000);
+      } catch (e) {
+        scanning.value = false;
+        scanStatus.value = "掃描失敗";
+      }
+    };
+
+    onMounted(() => {
+      fetchConfig();
+      loadGraph();
+    });
+
+    return {
+      cyContainer,
+      tagInput,
+      layoutName,
+      scanning,
+      scanStatus,
+      saveConfig,
+      applyLayout,
+      triggerScan,
+    };
+  },
+};
+
 /* ---------- Router ---------- */
 const routes = [
   { path: "/login", component: LoginPage },
@@ -1449,6 +1688,7 @@ const routes = [
   { path: "/resources", redirect: "/resources/aws" },
   { path: "/resources/:provider(aws|tencent)", component: ResourcesPage, props: true },
   { path: "/config", component: ConfigPage },
+  { path: "/resource-tree", component: ResourceTreePage },
 ];
 
 const router = createRouter({
