@@ -105,11 +105,14 @@ class ResourceTreeStore:
                 conn.execute(
                     """
                     INSERT INTO node_positions (id, node_id, layout_name, x, y, updated_at)
-                    VALUES (?, ?, ?, ?, ?, ?)
+                    VALUES (
+                        COALESCE((SELECT id FROM node_positions WHERE node_id = ? AND layout_name = ?), ?),
+                        ?, ?, ?, ?, ?
+                    )
                     ON CONFLICT(node_id, layout_name) DO UPDATE SET
                         x = excluded.x, y = excluded.y, updated_at = excluded.updated_at
                     """,
-                    (str(uuid.uuid4()), node_id, layout_name, pos["x"], pos["y"], now),
+                    (node_id, layout_name, str(uuid.uuid4()), node_id, layout_name, pos["x"], pos["y"], now),
                 )
 
     def get_positions(self, layout_name: str = "default") -> dict[str, dict]:
