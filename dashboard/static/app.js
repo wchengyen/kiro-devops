@@ -1,4 +1,4 @@
-const { createApp, ref, reactive, onMounted, computed } = Vue;
+const { createApp, ref, reactive, onMounted, onUnmounted, computed } = Vue;
 const { createRouter, createWebHashHistory } = VueRouter;
 
 const BASE = "/api/dashboard";
@@ -1443,7 +1443,7 @@ const ConfigPage = {
 const ResourceTreePage = {
   template: `
     <div class="page resource-tree-page">
-      <h2>Resource Tree</h2>
+      <h2 class="page-title">Resource Tree</h2>
       <div class="toolbar">
         <div class="tag-group-setting">
           <label>分組 Key:</label>
@@ -1477,6 +1477,7 @@ const ResourceTreePage = {
     const scanning = ref(false);
     const scanStatus = ref("");
     let cy = null;
+    let pollInterval = null;
 
     const fetchConfig = async () => {
       try {
@@ -1486,7 +1487,7 @@ const ResourceTreePage = {
           layoutName.value = data.config.layout_algorithm || "cose";
         }
       } catch (e) {
-        console.warn("Failed to fetch config:", e);
+        scanStatus.value = "配置載入失敗";
       }
     };
 
@@ -1499,14 +1500,17 @@ const ResourceTreePage = {
         });
         await loadGraph();
       } catch (e) {
-        console.warn("Failed to save config:", e);
+        scanStatus.value = "配置保存失敗";
       }
     };
 
     const loadGraph = async () => {
       try {
         const data = await api("/resource-tree/graph?provider=aws");
-        if (!data.ok) return;
+        if (!data.ok) {
+          scanStatus.value = "圖表載入失敗";
+          return;
+        }
         const elements = [];
         for (const n of data.nodes) {
           elements.push({
@@ -1614,7 +1618,7 @@ const ResourceTreePage = {
           api("/resource-tree/positions", { method: "PUT", body: { positions } }).catch(() => {});
         });
       } catch (e) {
-        console.warn("Failed to load graph:", e);
+        scanStatus.value = "圖表載入失敗";
       }
     };
 
@@ -1633,22 +1637,30 @@ const ResourceTreePage = {
           scanStatus.value = "掃描失敗";
           return;
         }
+        if (!data.job_id) {
+          scanning.value = false;
+          scanStatus.value = "掃描啟動失敗";
+          return;
+        }
         const jobId = data.job_id;
-        const poll = setInterval(async () => {
+        pollInterval = setInterval(async () => {
           try {
             const status = await api(`/resource-tree/scan/${jobId}`);
             if (status.status === "done") {
-              clearInterval(poll);
+              clearInterval(pollInterval);
+              pollInterval = null;
               scanning.value = false;
               scanStatus.value = `完成，發現 ${status.count} 條關聯`;
               await loadGraph();
             } else if (status.status === "failed") {
-              clearInterval(poll);
+              clearInterval(pollInterval);
+              pollInterval = null;
               scanning.value = false;
               scanStatus.value = "掃描失敗: " + (status.error || "");
             }
           } catch (e) {
-            clearInterval(poll);
+            clearInterval(pollInterval);
+            pollInterval = null;
             scanning.value = false;
             scanStatus.value = "輪詢失敗";
           }
@@ -1662,6 +1674,11 @@ const ResourceTreePage = {
     onMounted(() => {
       fetchConfig();
       loadGraph();
+    });
+
+    onUnmounted(() => {
+      if (cy) cy.destroy();
+      if (pollInterval) clearInterval(pollInterval);
     });
 
     return {

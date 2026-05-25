@@ -1141,7 +1141,7 @@ tr.pinned:hover td { background: rgba(0,0,0,0.025); }
 .resource-tree-page {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 60px);
+  height: 100%;
 }
 
 .resource-tree-page h2 {
