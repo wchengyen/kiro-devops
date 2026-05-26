@@ -80,5 +80,11 @@
       "service": "CloudWatch"
     }
   ],
-  "pinned_resources": []
+  "pinned_resources": [],
+  "resource_tree": {
+    "group_by_tags": [
+      "Project"
+    ],
+    "layout_algorithm": "circle"
+  }
 }

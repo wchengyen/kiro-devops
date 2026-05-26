@@ -1,4 +1,4 @@
-const { createApp, ref, reactive, onMounted, onUnmounted, computed } = Vue;
+const { createApp, ref, reactive, onMounted, computed } = Vue;
 const { createRouter, createWebHashHistory } = VueRouter;
 
 const BASE = "/api/dashboard";
@@ -26,6 +26,8 @@ async function api(path, opts = {}) {
 }
 
 /* ---------- Visual Helpers ---------- */
+const AGENT_EMOJIS = ['🤖', '🕵️', '🧙‍♂️', '👨‍💻', '👩‍🔬', '🦸', '🧑‍🚀', '🧑‍⚕️', '🧑‍🌾', '🧑‍🔬'];
+
 function simpleHash(str) {
   let h = 0;
   for (let i = 0; i < str.length; i++) {
@@ -35,22 +37,13 @@ function simpleHash(str) {
   return Math.abs(h);
 }
 
-function agentInitials(name) {
-  const parts = name.split(/[-_\s]+/);
-  if (parts.length >= 2) {
-    return (parts[0][0] + parts[1][0]).toUpperCase();
-  }
-  return name.slice(0, 2).toUpperCase();
+function agentEmoji(name) {
+  return AGENT_EMOJIS[simpleHash(name) % AGENT_EMOJIS.length];
 }
 
 function agentColor(name) {
   const h = simpleHash(name) % 360;
-  return `hsl(${h}, 65%, 55%)`;
-}
-
-function agentBgColor(name) {
-  const h = simpleHash(name) % 360;
-  return `hsl(${h}, 65%, 95%)`;
+  return `hsl(${h}, 70%, 60%)`;
 }
 
 function agentTitle(toolsCount) {
@@ -62,7 +55,7 @@ function agentTitle(toolsCount) {
 
 function skillColor(name) {
   const h = simpleHash(name) % 360;
-  return `hsl(${h}, 60%, 50%)`;
+  return `hsl(${h}, 65%, 55%)`;
 }
 
 /* ---------- Layout ---------- */
@@ -83,7 +76,6 @@ const AppLayout = {
           <router-link to="/resources">Resources</router-link>
           <router-link v-if="providers.aws?.enabled" to="/resources/aws" style="padding-left:28px;font-size:13px">AWS</router-link>
           <router-link v-if="providers.tencent?.enabled" to="/resources/tencent" style="padding-left:28px;font-size:13px">Tencent</router-link>
-          <router-link to="/resource-tree">Resource Tree</router-link>
           <router-link to="/config">Config</router-link>
         </nav>
         <div class="logout" @click="logout">退出登录</div>
@@ -160,10 +152,10 @@ const OverviewPage = {
     <div>
       <h2 class="page-title">Overview</h2>
       <div class="cards">
-        <div class="card card-accent-blue" style="animation-delay:0.05s"><h3>Events</h3><div class="num">{{ counts.events }}</div></div>
-        <div class="card card-accent-green" style="animation-delay:0.10s"><h3>Active Jobs</h3><div class="num">{{ counts.jobs }}</div></div>
-        <div class="card card-accent-purple" style="animation-delay:0.15s"><h3>Agents</h3><div class="num">{{ counts.agents }}</div></div>
-        <div class="card card-accent-orange" style="animation-delay:0.20s"><h3>Skills</h3><div class="num">{{ counts.skills }}</div></div>
+        <div class="card card-accent-blue"><h3>📊 Events</h3><div class="num">{{ counts.events }}</div></div>
+        <div class="card card-accent-green"><h3>⏰ Active Jobs</h3><div class="num">{{ counts.jobs }}</div></div>
+        <div class="card card-accent-purple"><h3>🧑‍🚀 Agents</h3><div class="num">{{ counts.agents }}</div></div>
+        <div class="card card-accent-orange"><h3>📚 Skills</h3><div class="num">{{ counts.skills }}</div></div>
       </div>
     </div>
   `,
@@ -177,7 +169,8 @@ const OverviewPage = {
           api("/skills"),
           api("/scheduler"),
         ]);
-        counts.events = ev.events?.length ?? 0;
+        counts.events = ev.events?.length ?? 0; // approximate; real count not exposed, use first page
+        // Better: count via length if small, else keep 0. Let's try to get total by fetching with large limit
       } catch {}
       try {
         const evAll = await api("/events?limit=9999");
@@ -206,10 +199,10 @@ const AgentsPage = {
     <div>
       <h2 class="page-title">Agents</h2>
       <div class="card-grid">
-        <div class="card-item persona-card animate-fade-in" v-for="(a, idx) in agents" :key="a.name" :style="{ borderColor: agentColor(a.name), animationDelay: (idx * 0.05) + 's' }">
+        <div class="card-item persona-card" v-for="a in agents" :key="a.name" :style="{ borderColor: agentColor(a.name) }">
           <div class="persona-header">
-            <div class="persona-avatar" :style="{ background: agentColor(a.name) }">
-              <span>{{ agentInitials(a.name) }}</span>
+            <div class="persona-avatar" :style="{ borderColor: agentColor(a.name), background: agentColor(a.name) + '18' }">
+              <span class="persona-emoji">{{ agentEmoji(a.name) }}</span>
             </div>
             <div class="persona-info">
               <h4>{{ a.name }}</h4>
@@ -338,7 +331,7 @@ const AgentsPage = {
       await loadAgents();
     });
 
-    return { agents, allSkills, manageModal, openManageModal, closeManageModal, unlinkSkill, linkSkill, availableSkills, agentInitials, agentColor, agentTitle };
+    return { agents, allSkills, manageModal, openManageModal, closeManageModal, unlinkSkill, linkSkill, availableSkills, agentEmoji, agentColor, agentTitle };
   }
 };
 
@@ -351,10 +344,10 @@ const SkillsPage = {
         <button @click="openModal()">新建 Skill</button>
       </div>
       <div class="card-grid">
-        <div class="card-item book-card animate-fade-in" v-for="(s, idx) in skills" :key="s.name" :style="{ borderLeftColor: skillColor(s.name), animationDelay: (idx * 0.05) + 's' }">
+        <div class="card-item book-card" v-for="s in skills" :key="s.name" :style="{ borderLeftColor: skillColor(s.name) }">
           <div class="book-spine" :style="{ background: skillColor(s.name) }"></div>
           <div class="book-content">
-            <h4>{{ s.name }}</h4>
+            <h4>📖 {{ s.name }}</h4>
             <p class="book-desc">{{ s.description || "无描述" }}</p>
             <div class="book-triggers">
               <span v-for="t in (s.triggers || [])" :key="t" class="bookmark-tag">{{ t }}</span>
@@ -464,12 +457,12 @@ const EventsPage = {
       <!-- 说明卡片 -->
       <div class="info-cards">
         <div class="info-card">
-          <h4>分级响应标准</h4>
+          <h4>🚨 分级响应标准</h4>
           <p><span class="badge badge-critical">critical</span> <span class="badge badge-high">high</span> → 依照 Alert Policy 设定，自动触发对应 Kiro Agent + Skill 分析，结果主动推送</p>
           <p><span class="badge badge-medium">medium</span> <span class="badge badge-low">low</span> → 仅入库，不触发自动分析</p>
         </div>
         <div class="info-card">
-          <h4>Event Type 判断</h4>
+          <h4>🏷️ Event Type 判断</h4>
           <p><b>Webhook 推送</b>：由外部系统（Prometheus / Jenkins / CloudWatch 等）在 payload 中 <code>event_type</code> 字段指定</p>
           <p><b>手动录入</b>：<code>/event 类型=xxx</code> 指定；未指定时默认为「手动记录」</p>
         </div>
@@ -808,7 +801,7 @@ const ResourcesPage = {
       <h2 class="page-title">Resources</h2>
       <div class="cost-score-help" @click="showHelp = !showHelp">
         <div class="cost-score-help-title">
-          <span>成本评分说明</span>
+          <span>📊 成本评分说明</span>
           <span>{{ showHelp ? '▲' : '▼' }}</span>
         </div>
         <div v-if="showHelp" class="cost-score-help-body">
@@ -819,13 +812,13 @@ const ResourcesPage = {
             <span>其中 k=1.0（cpu≤80%，线性扣分）；k=1.5（cpu&gt;80%，过载额外惩罚）</span>
           </div>
           <div class="cost-grades">
-            <span class="cost-grade-help" style="background:#346538">A</span> 90~100 优秀
-            <span class="cost-grade-help" style="background:#1F6C9F">B</span> 70~89 良好
-            <span class="cost-grade-help" style="background:#956400">C</span> 50~69 一般
-            <span class="cost-grade-help" style="background:#b45309">D</span> 30~49 较差
-            <span class="cost-grade-help" style="background:#9F2F2D">F</span> 0~29 极差
+            <span class="cost-grade-help" style="background:#22c55e">A</span> 90~100 优秀
+            <span class="cost-grade-help" style="background:#14b8a6">B</span> 70~89 良好
+            <span class="cost-grade-help" style="background:#eab308">C</span> 50~69 一般
+            <span class="cost-grade-help" style="background:#f97316">D</span> 30~49 较差
+            <span class="cost-grade-help" style="background:#ef4444">F</span> 0~29 极差
           </div>
-          <p class="cost-hint">分数越低代表资源浪费越严重，建议降配；分数过高（&gt;90 且 CPU&gt;90%）则存在过载风险，建议升配。</p>
+          <p class="cost-hint">💡 分数越低代表资源浪费越严重，建议降配；分数过高（&gt;90 且 CPU&gt;90%）则存在过载风险，建议升配。</p>
         </div>
       </div>
       <div class="provider-tabs" v-if="Object.keys(enabledProviders).length > 1">
@@ -860,7 +853,7 @@ const ResourcesPage = {
         <table>
           <thead>
             <tr>
-              <th style="width:40px"></th>
+              <th style="width:40px">⭐</th>
               <th>Name</th>
               <th style="width:110px">成本评分</th>
               <th>Type</th>
@@ -915,7 +908,7 @@ const ResourcesPage = {
                         <div style="font-size:12px;color:#64748b">7天平均CPU {{ r.stats_7d && r.stats_7d.avg != null ? r.stats_7d.avg + '%' : '-' }} → 目标 80%</div>
                       </div>
                     </div>
-                    <div style="font-size:13px;color:#374151;margin-bottom:8px">{{ r.cost_advice }}</div>
+                    <div style="font-size:13px;color:#374151;margin-bottom:8px">💡 {{ r.cost_advice }}</div>
                     <div v-if="r.cost_breakdown" style="display:flex;gap:16px;font-size:12px;color:#64748b">
                       <span>月成本: <b style="color:#374151">\${{ r.cost_breakdown.monthly }}</b></span>
                       <span>有效成本: <b style="color:#22c55e">\${{ r.cost_breakdown.effective }}</b></span>
@@ -929,7 +922,7 @@ const ResourcesPage = {
                       :class="{ active: historyRange === rng }"
                       @click="historyRange = rng; loadHistory(r.id, rng)"
                       style="padding:4px 12px;border:1px solid #cbd5e1;border-radius:4px;background:#fff;cursor:pointer"
-                      :style="historyRange === rng ? 'background:#111111;color:#fff;border-color:#111111' : ''"
+                      :style="historyRange === rng ? 'background:#3b82f6;color:#fff;border-color:#3b82f6' : ''"
                     >{{ rng }}</button>
                   </div>
                   <div v-if="historyLoading" style="color:#64748b">加载中...</div>
@@ -947,8 +940,8 @@ const ResourcesPage = {
                     </div>
                   </div>
                 </div>
-                </td>
-              </tr>
+              </td>
+            </tr>
             </template>
             <tr v-if="filteredResources.length === 0"><td colspan="13" class="empty">暂无数据</td></tr>
           </tbody>
@@ -1036,7 +1029,7 @@ const ResourcesPage = {
       });
     }
     function sparklineColor(type) {
-      return { ec2: "#0ea5e9", rds: "#8b5cf6", eks: "#f59e0b", cvm: "#0ea5e9", lighthouse: "#8b5cf6" }[type] || "#94a3b8";
+      return { ec2: "#3b82f6", rds: "#8b5cf6", eks: "#f59e0b", cvm: "#3b82f6", lighthouse: "#8b5cf6" }[type] || "#94a3b8";
     }
     function sparklineSvg(points, color) {
       if (!points || points.length < 2) return '<span style="color:#cbd5e1">-</span>';
@@ -1175,9 +1168,9 @@ const ConfigPage = {
         <div class="toolbar">
           <button @click="addMapping">添加规则</button>
           <button class="secondary" @click="saveMappings">保存规则</button>
-          <button class="secondary" @click="reloadConfig">Reload Agent</button>
+          <button class="secondary" @click="reloadConfig">🔄 Reload Agent</button>
         </div>
-        <div v-for="(m, i) in mappings" :key="i" class="info-card mapping-card animate-fade-in" :class="{ disabled: !m.enabled }" :style="{ animationDelay: (i * 0.04) + 's' }">
+        <div v-for="(m, i) in mappings" :key="i" class="info-card mapping-card" :class="{ disabled: !m.enabled }">
           <div class="mapping-header">
             <span class="mapping-index">{{ i + 1 }}</span>
             <input v-model="m.name" placeholder="规则名称" class="mapping-name" />
@@ -1187,7 +1180,7 @@ const ConfigPage = {
               @click="m.enabled = !m.enabled"
               style="cursor:pointer"
             >
-              {{ m.enabled ? '启用' : '停用' }}
+              {{ m.enabled ? '● 启用' : '○ 停用' }}
             </span>
             <button @click="moveMapping(i, -1)" :disabled="i === 0">↑</button>
             <button @click="moveMapping(i, 1)" :disabled="i === mappings.length - 1">↓</button>
@@ -1303,6 +1296,7 @@ const ConfigPage = {
       try {
         const a = await api("/agents");
         agents.value = a.agents || [];
+        // Load each agent's skills in parallel
         const skillPromises = agents.value.map(async agent => {
           try {
             const sk = await api("/agents/" + encodeURIComponent(agent.name) + "/skills");
@@ -1320,6 +1314,7 @@ const ConfigPage = {
     }
     function normalizeMappings(raw) {
       return (raw || []).map((m, idx) => {
+        // Backward compat: old flat format {source, service, severity, agent, skill}
         if (m.match === undefined && m.action === undefined) {
           const labels = {};
           if (m.service) labels.service = m.service;
@@ -1439,353 +1434,6 @@ const ConfigPage = {
   }
 };
 
-/* ---------- Resource Tree Page ---------- */
-const ResourceTreePage = {
-  template: `
-    <div class="page resource-tree-page">
-      <h2 class="page-title">Resource Tree</h2>
-      <div class="toolbar">
-        <div class="tag-group-setting">
-          <label>分組 Key:</label>
-          <input v-model="tagInput" @keyup.enter="saveConfig" placeholder="Project,Environment" />
-          <button @click="saveConfig">套用</button>
-        </div>
-        <div class="layout-setting">
-          <label>布局:</label>
-          <select v-model="layoutName" @change="applyLayout">
-            <option value="cose">cose</option>
-            <option value="circle">circle</option>
-            <option value="grid">grid</option>
-            <option value="breadthfirst">breadthfirst</option>
-          </select>
-        </div>
-        <div class="tag-filter-setting">
-          <label>Tag 過濾:</label>
-          <input v-model="filterTagKey" @keyup.enter="applyFilter" placeholder="Key" style="width:70px" />
-          <input v-model="filterTagValue" @keyup.enter="applyFilter" placeholder="Value (可選)" style="width:100px" />
-          <button @click="applyFilter">過濾</button>
-          <button v-if="filterTagKey" @click="clearFilter" style="background:var(--text-tertiary)">清除</button>
-        </div>
-        <button @click="triggerScan" :disabled="scanning">
-          {{ scanning ? '掃描中...' : '重新掃描' }}
-        </button>
-        <span style="font-size:12px;color:var(--text-tertiary);margin-left:auto">
-          Shift+拖拽節點創建關聯 | 右鍵邊線刪除
-        </span>
-      </div>
-      <div ref="cyContainer" class="cy-container"></div>
-      <div v-if="scanStatus" class="scan-status">掃描狀態: {{ scanStatus }}</div>
-    </div>
-  `,
-  setup() {
-    const cyContainer = ref(null);
-    const tagInput = ref("Project,Environment");
-    const layoutName = ref("cose");
-    const filterTagKey = ref("");
-    const filterTagValue = ref("");
-    const scanning = ref(false);
-    const scanStatus = ref("");
-    let cy = null;
-    let pollInterval = null;
-    let isPolling = false;
-
-    const fetchConfig = async () => {
-      try {
-        const data = await api("/resource-tree/config");
-        if (data.ok && data.config) {
-          tagInput.value = (data.config.group_by_tags || []).join(",");
-          layoutName.value = data.config.layout_algorithm || "cose";
-        }
-      } catch (e) {
-        scanStatus.value = "配置載入失敗";
-      }
-    };
-
-    const saveConfig = async () => {
-      const tags = tagInput.value.split(",").map(s => s.trim()).filter(Boolean);
-      try {
-        await api("/resource-tree/config", {
-          method: "POST",
-          body: { group_by_tags: tags, layout_algorithm: layoutName.value },
-        });
-        await loadGraph();
-      } catch (e) {
-        scanStatus.value = "配置保存失敗";
-      }
-    };
-
-    const loadGraph = async () => {
-      try {
-        let url = "/resource-tree/graph?provider=aws";
-        if (filterTagKey.value) {
-          url += "&tag_key=" + encodeURIComponent(filterTagKey.value);
-          if (filterTagValue.value) {
-            url += "&tag_value=" + encodeURIComponent(filterTagValue.value);
-          }
-        }
-        const data = await api(url);
-        if (!data.ok) {
-          scanStatus.value = "圖表載入失敗";
-          return;
-        }
-        const elements = [];
-        for (const n of data.nodes) {
-          elements.push({
-            data: {
-              id: n.id,
-              label: n.label,
-              type: n.type,
-              isGroup: n.is_group || false,
-            },
-            ...(n.position ? { position: n.position } : {}),
-          });
-        }
-        for (const e of data.edges) {
-          elements.push({
-            data: {
-              id: e.id || (e.source + "->" + e.target),
-              source: e.source,
-              target: e.target,
-              relationType: e.relation_type,
-              sourceOrigin: e.source_origin,
-            },
-          });
-        }
-        if (cy) cy.destroy();
-        cy = cytoscape({
-          container: cyContainer.value,
-          elements,
-          style: [
-            {
-              selector: "node",
-              style: {
-                label: "data(label)",
-                width: 60,
-                height: 60,
-                "background-color": "#4285F4",
-                "text-valign": "center",
-                "text-halign": "center",
-                "font-size": "10px",
-                color: "#fff",
-              },
-            },
-            {
-              selector: "node[isGroup]",
-              style: {
-                "background-opacity": 0.2,
-                "border-width": 2,
-                "border-style": "dashed",
-                "border-color": "#666",
-                "text-valign": "top",
-                color: "#333",
-              },
-            },
-            {
-              selector: 'node[type="eks"]',
-              style: { "background-color": "#FF9900" },
-            },
-            {
-              selector: 'node[type="ec2"]',
-              style: { "background-color": "#232F3E" },
-            },
-            {
-              selector: 'node[type="elb"]',
-              style: { "background-color": "#1E8900" },
-            },
-            {
-              selector: 'node[type="rds"]',
-              style: { "background-color": "#527FFF" },
-            },
-            {
-              selector: 'node[type="vpc"]',
-              style: { "background-color": "#9AA0A6" },
-            },
-            {
-              selector: 'node[type="subnet"]',
-              style: { "background-color": "#9AA0A6", shape: "diamond" },
-            },
-            {
-              selector: "edge",
-              style: {
-                width: 2,
-                "line-color": "#999",
-                "target-arrow-shape": "triangle",
-                "target-arrow-color": "#999",
-                "curve-style": "bezier",
-              },
-            },
-            {
-              selector: 'edge[sourceOrigin="manual"]',
-              style: { "line-color": "#4285F4", "target-arrow-color": "#4285F4" },
-            },
-            {
-              selector: 'edge[sourceOrigin="tag_group"]',
-              style: { "line-color": "#34A853", "line-style": "dashed", "target-arrow-color": "#34A853" },
-            },
-          ],
-          layout: { name: "preset", fit: true, padding: 20 },
-        });
-        const hasPositions = data.nodes.some(n => n.position);
-        if (hasPositions) {
-          cy.layout({ name: "preset", fit: true, padding: 20 }).run();
-        } else {
-          cy.layout({ name: layoutName.value, fit: true, padding: 20 }).run();
-        }
-        cy.on("free", "node", () => {
-          const positions = {};
-          cy.nodes().forEach(n => {
-            positions[n.id()] = { x: n.position().x, y: n.position().y };
-          });
-          api("/resource-tree/positions", { method: "PUT", body: { positions } }).catch(() => { scanStatus.value = "位置保存失敗"; });
-        });
-        let shiftSource = null;
-        cy.on("tapstart", "node", (evt) => {
-          if (evt.originalEvent && evt.originalEvent.shiftKey) {
-            shiftSource = evt.target;
-          }
-        });
-        cy.on("tapend", "node", (evt) => {
-          if (shiftSource && shiftSource.id() !== evt.target.id()) {
-            const target = evt.target;
-            const relType = prompt("選擇關聯類型:\n1. contains\n2. attached_to\n3. depends_on", "depends_on");
-            if (!relType) {
-              shiftSource = null;
-              return;
-            }
-            const trimmed = relType.trim();
-            const map = { "1": "contains", "2": "attached_to", "3": "depends_on" };
-            const finalType = map[trimmed] || trimmed;
-            api("/resource-tree/relations", {
-              method: "POST",
-              body: {
-                source_id: shiftSource.id(),
-                target_id: target.id(),
-                relation_type: finalType,
-              },
-            }).then(() => loadGraph()).catch(() => { scanStatus.value = "關聯創建失敗"; });
-          }
-          shiftSource = null;
-        });
-        cy.on("cxttap", "edge", (evt) => {
-          const edge = evt.target;
-          const origin = edge.data("sourceOrigin");
-          if (origin === "auto_scan" || origin === "tag_group") {
-            alert("自動掃描或標籤分組產生的關聯不可刪除。");
-            return;
-          }
-          if (confirm("確定刪除此關聯？")) {
-            api(`/resource-tree/relations/${edge.id()}`, { method: "DELETE" })
-              .then(() => loadGraph())
-              .catch(() => { scanStatus.value = "關聯刪除失敗"; });
-          }
-        });
-      } catch (e) {
-        scanStatus.value = "圖表載入失敗";
-      }
-    };
-
-    const applyFilter = async () => {
-      await loadGraph();
-    };
-
-    const clearFilter = async () => {
-      filterTagKey.value = "";
-      filterTagValue.value = "";
-      await loadGraph();
-    };
-
-    const applyLayout = () => {
-      if (!cy) return;
-      cy.layout({ name: layoutName.value, fit: true, padding: 20 }).run();
-      setTimeout(() => {
-        const positions = {};
-        cy.nodes().forEach(n => {
-          positions[n.id()] = { x: n.position().x, y: n.position().y };
-        });
-        api("/resource-tree/positions", { method: "PUT", body: { positions } }).catch(() => {});
-      }, 500);
-    };
-
-    const triggerScan = async () => {
-      if (!confirm("重新掃描將清除所有自動發現的關聯並重新查詢 AWS API，手動創建的關聯不會受影響。確定繼續？")) {
-        return;
-      }
-      scanning.value = true;
-      scanStatus.value = "啟動掃描...";
-      try {
-        const data = await api("/resource-tree/scan", { method: "POST", body: { provider: "aws" } });
-        if (!data.ok) {
-          scanning.value = false;
-          scanStatus.value = "掃描失敗";
-          return;
-        }
-        if (!data.job_id) {
-          scanning.value = false;
-          scanStatus.value = "掃描啟動失敗";
-          return;
-        }
-        const jobId = data.job_id;
-        pollInterval = setInterval(async () => {
-          if (isPolling) return;
-          isPolling = true;
-          try {
-            const status = await api(`/resource-tree/scan/${jobId}`);
-            if (status.status === "done") {
-              clearInterval(pollInterval);
-              pollInterval = null;
-              isPolling = false;
-              scanning.value = false;
-              scanStatus.value = `完成，發現 ${status.count} 條關聯`;
-              await loadGraph();
-            } else if (status.status === "failed") {
-              clearInterval(pollInterval);
-              pollInterval = null;
-              isPolling = false;
-              scanning.value = false;
-              scanStatus.value = "掃描失敗: " + (status.error || "");
-            }
-          } catch (e) {
-            clearInterval(pollInterval);
-            pollInterval = null;
-            isPolling = false;
-            scanning.value = false;
-            scanStatus.value = "輪詢失敗";
-          }
-        }, 2000);
-      } catch (e) {
-        scanning.value = false;
-        scanStatus.value = "掃描失敗";
-      }
-    };
-
-    onMounted(() => {
-      fetchConfig();
-      loadGraph();
-    });
-
-    onUnmounted(() => {
-      if (cy) cy.destroy();
-      if (pollInterval) clearInterval(pollInterval);
-      isPolling = false;
-    });
-
-    return {
-      cyContainer,
-      tagInput,
-      layoutName,
-      filterTagKey,
-      filterTagValue,
-      scanning,
-      scanStatus,
-      saveConfig,
-      applyLayout,
-      applyFilter,
-      clearFilter,
-      triggerScan,
-    };
-  },
-};
-
 /* ---------- Router ---------- */
 const routes = [
   { path: "/login", component: LoginPage },
@@ -1797,7 +1445,6 @@ const routes = [
   { path: "/resources", redirect: "/resources/aws" },
   { path: "/resources/:provider(aws|tencent)", component: ResourcesPage, props: true },
   { path: "/config", component: ConfigPage },
-  { path: "/resource-tree", component: ResourceTreePage },
 ];
 
 const router = createRouter({

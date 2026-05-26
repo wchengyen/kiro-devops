@@ -4,7 +4,9 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$SCRIPT_DIR"
 
 if [ -f .env ]; then
-    export $(grep -v '^#' .env | grep -v '^\s*$' | xargs)
+    set -a
+    source .env
+    set +a
 fi
 
 # 飞书可选，微信可扫码

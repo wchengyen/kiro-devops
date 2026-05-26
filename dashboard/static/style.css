@@ -1186,6 +1186,12 @@ tr.pinned:hover td { background: rgba(0,0,0,0.025); }
   cursor: not-allowed;
 }
 
+.resource-tree-page .tag-filter-setting {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
 .resource-tree-page .cy-container {
   flex: 1;
   background: var(--bg-base);

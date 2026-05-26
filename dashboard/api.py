@@ -567,6 +567,8 @@ def post_resource_tree_config():
 @require_auth
 def get_resource_tree_graph():
     provider_name = request.args.get("provider", "aws")
+    tag_key = request.args.get("tag_key", "")
+    tag_value = request.args.get("tag_value", "")
     config = _load_dashboard_config()
     tree_config = config.get("resource_tree", {})
     group_by_tags = tree_config.get("group_by_tags", [])
@@ -593,7 +595,11 @@ def get_resource_tree_graph():
     positions = store.get_positions()
 
     builder = ResourceTreeBuilder()
-    graph = builder.build_graph(resources, relations, group_by_tags, positions)
+    graph = builder.build_graph(
+        resources, relations, group_by_tags, positions,
+        tag_key=tag_key or None,
+        tag_value=tag_value or None,
+    )
     return jsonify({"ok": True, **graph})
 
 

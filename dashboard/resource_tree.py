@@ -14,7 +14,15 @@ class ResourceTreeBuilder:
         relations: list[dict],
         group_by_tags: list[str],
         positions: dict[str, dict],
+        tag_key: str | None = None,
+        tag_value: str | None = None,
     ) -> dict:
+        # Apply tag filter
+        if tag_key:
+            resources = [r for r in resources if tag_key in r.tags]
+            if tag_value:
+                resources = [r for r in resources if r.tags.get(tag_key) == tag_value]
+
         nodes: list[dict] = []
         edges: list[dict] = []
         node_ids: set[str] = set()
