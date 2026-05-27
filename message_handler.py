@@ -437,8 +437,9 @@ class MessageHandler:
         if not adapter:
             log.error(f"找不到平台适配器: {incoming.platform}")
             return
-        # 媒体发送已禁用，保持文字沟通
-        payload = OutgoingPayload(text=text.strip())
+        # 解析文本中的本地图片与文件路径，随文字一并发送
+        images, files = extract_file_paths(text)
+        payload = OutgoingPayload(text=text.strip(), images=images, files=files)
         adapter.reply(incoming, payload)
 
     def _handle_memory_command(self, user_id: str, args: str) -> str:
