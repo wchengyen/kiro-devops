@@ -1,7 +1,7 @@
 import calendar
 import os
 import sqlite3
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 
 DEFAULT_BASE_DIR = os.path.join(os.path.dirname(__file__), "..", "memory_db")
@@ -126,7 +126,7 @@ class MetricsStore:
         """Write a single raw metric point."""
         if timestamp is None or resource_id is None or metric is None or value is None:
             raise ValueError("timestamp, resource_id, metric, and value are required")
-        dt = timestamp if isinstance(timestamp, datetime) else datetime.utcfromtimestamp(timestamp)
+        dt = timestamp if isinstance(timestamp, datetime) else datetime.fromtimestamp(timestamp, timezone.utc).replace(tzinfo=None)
         parts = resource_id.split(":")
         region = parts[2] if len(parts) >= 3 else None
         conn = self._raw_conn(dt.year, dt.month)
@@ -154,7 +154,7 @@ class MetricsStore:
         grouped: dict[tuple[int, int], list[tuple]] = {}
         for r in records:
             ts = r[2]
-            dt = datetime.utcfromtimestamp(ts)
+            dt = datetime.fromtimestamp(ts, timezone.utc).replace(tzinfo=None)
             key = (dt.year, dt.month)
             provider = _extract_provider(r[0])
             grouped.setdefault(key, []).append((*r, provider))
@@ -178,8 +178,8 @@ class MetricsStore:
         """Query hourly data across one or two monthly DBs."""
         if provider is None:
             provider = _extract_provider(resource_id)
-        start_dt = datetime.utcfromtimestamp(start_ts)
-        end_dt = datetime.utcfromtimestamp(end_ts)
+        start_dt = datetime.fromtimestamp(start_ts, timezone.utc).replace(tzinfo=None)
+        end_dt = datetime.fromtimestamp(end_ts, timezone.utc).replace(tzinfo=None)
         months = []
         y, m = start_dt.year, start_dt.month
         while (y, m) <= (end_dt.year, end_dt.month):
@@ -281,7 +281,7 @@ class MetricsStore:
 
     def cleanup_old_daily(self, keep_days: int = 180) -> int:
         """Delete daily aggregated records older than keep_days."""
-        cutoff = (datetime.utcnow() - timedelta(days=keep_days)).strftime("%Y-%m-%d")
+        cutoff = (datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=keep_days)).strftime("%Y-%m-%d")
         conn = self._agg_conn()
         cursor = conn.execute(
             "DELETE FROM daily_aggregated WHERE date < ?",
@@ -293,7 +293,7 @@ class MetricsStore:
     def query_history(self, resource_id: str, metric_name: str, range_label: str) -> dict:
         """Unified history query. range_label: 24h, 7d, 30d, 180d."""
         provider = _extract_provider(resource_id)
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
         if range_label == "24h":
             start = now - timedelta(hours=24)
             granularity = "hourly"

@@ -172,7 +172,7 @@ class AWSProvider(BaseResourceProvider):
             return []
         kwargs = {"region_name": region} if region else {}
         client = boto3.client("cloudwatch", **kwargs)
-        end = datetime.datetime.utcnow()
+        end = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
         start = end - datetime.timedelta(days=days)
         resp = client.get_metric_statistics(
             Namespace=namespace,

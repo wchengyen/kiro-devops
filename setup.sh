@@ -41,6 +41,11 @@ command_exists() {
     command -v "$1" >/dev/null 2>&1
 }
 
+# 使用虚拟环境 Python 执行
+pyrun() {
+    "$PYTHON_CMD" "$@"
+}
+
 # 更新或追加 .env 变量
 update_env_var() {
     local key="$1"
@@ -81,6 +86,41 @@ get_env_var() {
 }
 
 # -----------------------------------------------------------------------------
+# 虚拟环境处理（PEP 668 兼容）
+# -----------------------------------------------------------------------------
+VENV_DIR="$SCRIPT_DIR/venv"
+
+# 检测是否在虚拟环境中
+_in_venv() {
+    python3 -c "import sys; sys.exit(0 if sys.prefix != sys.base_prefix else 1)" 2>/dev/null
+}
+
+# 若未在 venv 中，自动创建并重新以 venv 执行
+if ! _in_venv; then
+    if [ ! -d "$VENV_DIR" ]; then
+        echo "创建虚拟环境: $VENV_DIR"
+        python3 -m venv "$VENV_DIR" || {
+            echo "无法创建虚拟环境，请确认已安装 python3-venv: sudo apt install python3-venv"
+            exit 1
+        }
+    fi
+    echo "激活虚拟环境并重新执行..."
+    # 尝试用 venv 的 python 重新执行本脚本
+    exec "$VENV_DIR/bin/python" "$0" "$@" 2>/dev/null || {
+        # fallback: source activate 后再执行
+        . "$VENV_DIR/bin/activate"
+        bash "$0" "$@"
+        exit $?
+    }
+fi
+
+# 优先使用虚拟环境内的 Python / pip
+PYTHON_CMD="${VIRTUAL_ENV:-$VENV_DIR}/bin/python3"
+PIP_CMD="${VIRTUAL_ENV:-$VENV_DIR}/bin/pip"
+[ -x "$PYTHON_CMD" ] || PYTHON_CMD="python3"
+[ -x "$PIP_CMD" ] || PIP_CMD="pip3"
+
+# -----------------------------------------------------------------------------
 # 依赖检查
 # -----------------------------------------------------------------------------
 check_deps() {
@@ -92,17 +132,17 @@ check_deps() {
         missing+=("python3")
     fi
 
-    if ! python3 -c "import qrcode" 2>/dev/null; then
+    if ! pyrun -c "import qrcode" 2>/dev/null; then
         warn "qrcode 库未安装，正在安装..."
-        pip3 install qrcode -q 2>/dev/null || pip install qrcode -q 2>/dev/null || {
-            error "无法安装 qrcode，请手动运行: pip3 install qrcode"
+        "$PIP_CMD" install qrcode -q 2>/dev/null || {
+            error "无法安装 qrcode，请手动运行: $PIP_CMD install qrcode"
             missing+=("python3-qrcode")
         }
     fi
 
-    if ! command_exists lark_oapi 2>/dev/null && ! python3 -c "import lark_oapi" 2>/dev/null; then
+    if ! pyrun -c "import lark_oapi" 2>/dev/null; then
         warn "lark-oapi 未安装，正在安装..."
-        pip3 install lark-oapi -q 2>/dev/null || pip install lark-oapi -q 2>/dev/null || {
+        "$PIP_CMD" install lark-oapi -q 2>/dev/null || {
             error "无法安装 lark-oapi"
             missing+=("lark-oapi")
         }
@@ -147,7 +187,7 @@ print('no')
 # -----------------------------------------------------------------------------
 check_aws() {
     # 检查 boto3 是否安装（可选依赖）
-    if ! python3 -c "import boto3" 2>/dev/null; then
+    if ! pyrun -c "import boto3" 2>/dev/null; then
         return 0
     fi
 
@@ -588,7 +628,7 @@ setup_metrics_sync_cron() {
     # 检查 boto3 是否安装（必须依赖）
     if ! python3 -c "import boto3" 2>/dev/null; then
         warn "boto3 未安装，跳过指标同步 Cron 配置"
-        warn "如需使用，请先安装: pip3 install boto3"
+        warn "如需使用，请先安装: $PIP_CMD install boto3"
         return 0
     fi
 
@@ -637,7 +677,7 @@ setup_metrics_sync_cron() {
         cron_schedule=${schedule_input:-$cron_schedule}
 
         local log_file="/var/log/kiro-metrics-sync.log"
-        local cron_cmd="cd ${SCRIPT_DIR} && PYTHONPATH=${SCRIPT_DIR} /usr/bin/python3 ${SCRIPT_DIR}/scripts/sync_resource_metrics.py --incremental >> ${log_file} 2>&1"
+        local cron_cmd="cd ${SCRIPT_DIR} && PYTHONPATH=${SCRIPT_DIR} ${PYTHON_CMD} ${SCRIPT_DIR}/scripts/sync_resource_metrics.py --incremental >> ${log_file} 2>&1"
         local cron_entry="${cron_schedule} ${cron_cmd}"
 
         # 添加到 crontab
@@ -696,7 +736,9 @@ install_systemd() {
 
     # 检测 Python 路径
     local python_path
-    if [ -f "$SCRIPT_DIR/venv/bin/python3" ]; then
+    if [ -x "$PYTHON_CMD" ]; then
+        python_path="$PYTHON_CMD"
+    elif [ -f "$SCRIPT_DIR/venv/bin/python3" ]; then
         python_path="$SCRIPT_DIR/venv/bin/python3"
     else
         python_path="$(which python3)"
@@ -773,11 +815,11 @@ start_test() {
             info "前台启动 gateway..."
             echo "  按 Ctrl+C 停止"
             echo ""
-            source "$SCRIPT_DIR/.env" && python3 "$SCRIPT_DIR/gateway.py"
+            source "$SCRIPT_DIR/.env" && "$PYTHON_CMD" "$SCRIPT_DIR/gateway.py"
             ;;
         2)
             info "后台启动 gateway..."
-            source "$SCRIPT_DIR/.env" && nohup python3 "$SCRIPT_DIR/gateway.py" > /tmp/gateway.log 2>&1 &
+            source "$SCRIPT_DIR/.env" && nohup "$PYTHON_CMD" "$SCRIPT_DIR/gateway.py" > /tmp/gateway.log 2>&1 &
             sleep 2
             success "gateway 已在后台运行"
             echo "  查看日志: tail -f /tmp/gateway.log"
@@ -902,42 +944,3 @@ main() {
 }
 
 main "$@"
-
-# ---------------------------------------------------------------------------
-# Tencent Cloud dashboard enable/disable prompt
-# ---------------------------------------------------------------------------
-read -p "Enable Tencent Cloud dashboard? [y/N] " enable_tencent
-enable_tencent=${enable_tencent:-N}
-if [[ "$enable_tencent" =~ ^[Yy]$ ]]; then
-    read -p "Tencent regions to monitor [ap-tokyo]: " tencent_regions
-    tencent_regions=${tencent_regions:-ap-tokyo}
-    # Convert space-separated to JSON array
-    tencent_regions_json=$(echo "$tencent_regions" | tr ' ' '\n' | jq -R . | jq -s .)
-    python3 -c "
-import json, sys
-with open('dashboard_config.json', 'r+') as f:
-    cfg = json.load(f)
-    cfg.setdefault('providers', {})
-    cfg['providers']['tencent'] = {'enabled': True, 'regions': $tencent_regions_json}
-    f.seek(0); json.dump(cfg, f, indent=2); f.truncate()
-"
-    if ! command -v tccli &> /dev/null; then
-        echo "WARNING: tccli not found in PATH. Please install and configure it."
-    fi
-    if [ "$(_has_provider_data "tencent")" = "yes" ]; then
-        echo "检测到已有 Tencent 监控数据，跳过首次回溯填充"
-    else
-        echo "Running initial backfill for Tencent Cloud metrics (30 days)..."
-        PYTHONPATH=/home/ubuntu/kiro-devops python3 scripts/sync_resource_metrics.py --backfill || echo "WARNING: Tencent backfill failed. You can retry later with: PYTHONPATH=/home/ubuntu/kiro-devops python3 scripts/sync_resource_metrics.py --backfill"
-    fi
-    echo "Tencent setup complete."
-else
-    python3 -c "
-import json
-with open('dashboard_config.json', 'r+') as f:
-    cfg = json.load(f)
-    cfg.setdefault('providers', {})
-    cfg['providers']['tencent'] = {'enabled': False, 'regions': []}
-    f.seek(0); json.dump(cfg, f, indent=2); f.truncate()
-"
-fi

@@ -64,7 +64,7 @@ def test_backfill_flow(mock_client, mock_discover):
 @patch("scripts.sync_resource_metrics.datetime")
 @patch("boto3.client")
 def test_run_incremental(mock_client, mock_datetime, mock_discover):
-    mock_datetime.datetime.utcnow.return_value = datetime(2026, 4, 26, 0, 0, 0, tzinfo=timezone.utc)
+    mock_datetime.datetime.now.return_value = datetime(2026, 4, 26, 0, 0, 0, tzinfo=timezone.utc)
     mock_datetime.timedelta = timedelta
     mock_datetime.timezone = timezone
 

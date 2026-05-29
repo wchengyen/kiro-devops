@@ -51,7 +51,7 @@ def fetch_cloudwatch_hourly(resource, metric_name="CPUUtilization", hours=24, en
     client = boto3.client("cloudwatch", **kwargs)
 
     if end is None:
-        end = datetime.datetime.utcnow()
+        end = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
     start = end - datetime.timedelta(hours=hours)
 
     if resource.type == "ec2":
@@ -120,7 +120,7 @@ def run_incremental(base_dir=None) -> int:
             logger.warning(f"Sync failed for {resource.id}: {e}")
 
     # Downsample previous month if it has just completed
-    now = datetime.datetime.utcnow()
+    now = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
     prev_month = now.month - 1 or 12
     prev_year = now.year if now.month > 1 else now.year - 1
     try:
@@ -182,7 +182,7 @@ def main() -> None:
                 provider.sync_metrics_to_store(store, backfill_days=backfill_days)
 
             # Downsample previous month if it has just completed
-            now = datetime.datetime.utcnow()
+            now = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
             prev_month = now.month - 1 or 12
             prev_year = now.year if now.month > 1 else now.year - 1
             try:

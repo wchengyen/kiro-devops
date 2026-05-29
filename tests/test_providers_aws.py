@@ -26,7 +26,7 @@ def test_regions(provider):
 
 
 def test_resource_types(provider):
-    assert set(provider.resource_types()) == {"ec2", "rds"}
+    assert set(provider.resource_types()) == {"ec2", "rds", "elb"}
 
 
 @patch("dashboard.providers.aws.boto3.client")

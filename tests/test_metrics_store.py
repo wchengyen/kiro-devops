@@ -77,8 +77,8 @@ def test_query_history_routes_to_hourly(store):
         ("ec2:cn-north-1:i-123", "CPUUtilization", base, 10.0, "cn-north-1"),
     ])
     with patch("dashboard.metrics_store.datetime") as mock_dt:
-        mock_dt.utcnow.return_value = datetime(2026, 4, 25, 12, 0, 0)
-        mock_dt.utcfromtimestamp = datetime.utcfromtimestamp
+        mock_dt.now.return_value = datetime(2026, 4, 25, 12, 0, 0)
+        mock_dt.fromtimestamp = datetime.fromtimestamp
         mock_dt.strptime = datetime.strptime
         mock_dt.timedelta = __import__("datetime").timedelta
         result = store.query_history("ec2:cn-north-1:i-123", "CPUUtilization", "24h")
@@ -95,8 +95,8 @@ def test_query_history_routes_to_daily(store):
     store.downsample_month(2026, 4)
 
     with patch("dashboard.metrics_store.datetime") as mock_dt:
-        mock_dt.utcnow.return_value = datetime(2026, 4, 25, 12, 0, 0)
-        mock_dt.utcfromtimestamp = datetime.utcfromtimestamp
+        mock_dt.now.return_value = datetime(2026, 4, 25, 12, 0, 0)
+        mock_dt.fromtimestamp = datetime.fromtimestamp
         mock_dt.strptime = datetime.strptime
         mock_dt.timedelta = __import__("datetime").timedelta
         result = store.query_history("ec2:cn-north-1:i-123", "CPUUtilization", "180d")
@@ -141,9 +141,9 @@ def test_cleanup_old_daily(store):
     ])
     store.downsample_month(2026, 4)
 
-    # Patch datetime.utcnow to simulate being 200 days later
+    # Patch datetime.now to simulate being 200 days later
     with patch("dashboard.metrics_store.datetime") as mock_dt:
-        mock_dt.utcnow.return_value = datetime(2026, 11, 12, 0, 0, 0)
+        mock_dt.now.return_value = datetime(2026, 11, 12, 0, 0, 0)
         mock_dt.timedelta = __import__("datetime").timedelta
         deleted = store.cleanup_old_daily(keep_days=180)
 
@@ -169,8 +169,8 @@ def test_query_history_7d_routes_to_hourly(store):
         ("ec2:cn-north-1:i-123", "CPUUtilization", base, 10.0, "cn-north-1"),
     ])
     with patch("dashboard.metrics_store.datetime") as mock_dt:
-        mock_dt.utcnow.return_value = datetime(2026, 4, 25, 12, 0, 0)
-        mock_dt.utcfromtimestamp = datetime.utcfromtimestamp
+        mock_dt.now.return_value = datetime(2026, 4, 25, 12, 0, 0)
+        mock_dt.fromtimestamp = datetime.fromtimestamp
         mock_dt.strptime = datetime.strptime
         mock_dt.timedelta = __import__("datetime").timedelta
         result = store.query_history("ec2:cn-north-1:i-123", "CPUUtilization", "7d")
@@ -183,8 +183,8 @@ def test_query_history_30d_routes_to_hourly(store):
         ("ec2:cn-north-1:i-123", "CPUUtilization", base, 10.0, "cn-north-1"),
     ])
     with patch("dashboard.metrics_store.datetime") as mock_dt:
-        mock_dt.utcnow.return_value = datetime(2026, 4, 25, 12, 0, 0)
-        mock_dt.utcfromtimestamp = datetime.utcfromtimestamp
+        mock_dt.now.return_value = datetime(2026, 4, 25, 12, 0, 0)
+        mock_dt.fromtimestamp = datetime.fromtimestamp
         mock_dt.strptime = datetime.strptime
         mock_dt.timedelta = __import__("datetime").timedelta
         result = store.query_history("ec2:cn-north-1:i-123", "CPUUtilization", "30d")
@@ -204,8 +204,8 @@ def test_write_hourly_empty_records_is_noop(store):
 
 def test_query_history_stats_all_none_when_no_data(store):
     with patch("dashboard.metrics_store.datetime") as mock_dt:
-        mock_dt.utcnow.return_value = datetime(2026, 4, 25, 12, 0, 0)
-        mock_dt.utcfromtimestamp = datetime.utcfromtimestamp
+        mock_dt.now.return_value = datetime(2026, 4, 25, 12, 0, 0)
+        mock_dt.fromtimestamp = datetime.fromtimestamp
         mock_dt.timedelta = __import__("datetime").timedelta
         result = store.query_history("ec2:cn-north-1:i-123", "CPUUtilization", "24h")
     assert result["stats"] == {"min": None, "avg": None, "p95": None, "max": None}

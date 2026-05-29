@@ -102,7 +102,7 @@ class TencentProvider(BaseResourceProvider):
         return resources
 
     def get_metrics(self, resource: Resource, range_days: int = 7) -> ResourceMetrics:
-        end = datetime.utcnow()
+        end = datetime.now(timezone.utc).replace(tzinfo=None)
         start = end - timedelta(days=range_days)
         namespace = "QCE/CVM" if resource.resource_type == "cvm" else "QCE/LIGHTHOUSE"
         payload = {
@@ -117,7 +117,7 @@ class TencentProvider(BaseResourceProvider):
         points = []
         for dp in data.get("DataPoints", []):
             for ts, val in zip(dp.get("Timestamps", []), dp.get("Values", [])):
-                points.append(MetricPoint(timestamp=datetime.utcfromtimestamp(ts), value=val))
+                points.append(MetricPoint(timestamp=datetime.fromtimestamp(ts, timezone.utc).replace(tzinfo=None), value=val))
         points.sort(key=lambda p: p.timestamp)
         return ResourceMetrics(
             resource_id=resource.unique_id,

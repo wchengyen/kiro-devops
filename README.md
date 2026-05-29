@@ -343,6 +343,15 @@ curl -s 'http://prometheus:9090/api/v1/query?query=...'
 
 ```bash
 cd /home/ubuntu/kiro-devops
+
+# 建立虚拟环境（现代 Ubuntu/Debian 因 PEP 668 必需）
+python3 -m venv venv
+source venv/bin/activate
+
+# 安装依赖
+pip install -r requirements.txt
+
+# 启动交互式配置向导
 bash setup.sh
 ```
 
@@ -513,10 +522,14 @@ AWS EC2 / RDS 資源自動發現 + CloudWatch 指標：
 | 依賴 | 說明 | 安裝方式 |
 |------|------|----------|
 | **kiro-cli** | Kiro 核心 CLI | [kiro.dev](https://kiro.dev) |
-| **lark-oapi** | 飛書 SDK | `pip3 install lark-oapi` |
-| **flask** | Webhook HTTP + Dashboard | `pip3 install flask` |
-| **qrcode** | 微信掃碼二維碼 | `pip3 install qrcode[pil]` |
-| **schedule** | 定時任務調度 | `pip3 install schedule` |
+| **lark-oapi** | 飛書 SDK | `pip install lark-oapi` |
+| **flask** | Webhook HTTP + Dashboard | `pip install flask` |
+| **qrcode** | 微信掃碼二維碼 | `pip install qrcode[pil]` |
+| **schedule** | 定時任務調度 | `pip install schedule` |
+| **python-dotenv** | 环境变量加载 | `pip install python-dotenv` |
+| **pyyaml** | YAML 解析 | `pip install pyyaml` |
+| **pytz** | 时区支持 | `pip install pytz` |
+| **boto3** | AWS 资源发现（实际必需） | `pip install boto3` |
 
 ### 可選
 

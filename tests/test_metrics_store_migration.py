@@ -32,9 +32,11 @@ def test_provider_column_added(tmp_path):
 
 
 def test_write_and_query_with_provider(tmp_path):
-    db_path = tmp_path / "raw_metrics_2026_04.db"
+    db_path = tmp_path / "raw_metrics_2026_05.db"
     store = MetricsStore(str(db_path))
-    ts = datetime(2026, 4, 27, 12, 0, 0)
+    # 使用当前时间附近的时间戳，确保落在 24h 查询范围内
+    from datetime import datetime, timezone
+    ts = datetime.now(timezone.utc).replace(minute=0, second=0, microsecond=0)
     store.write_raw(
         provider="tencent",
         timestamp=ts,

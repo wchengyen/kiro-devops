@@ -69,8 +69,8 @@ class TestMetricsStoreEndToEnd:
 
             # 24h -> hourly
             with patch("dashboard.metrics_store.datetime") as mock_dt:
-                mock_dt.utcnow.return_value = datetime(2026, 4, 22, 12, 0, 0)
-                mock_dt.utcfromtimestamp = datetime.utcfromtimestamp
+                mock_dt.now.return_value = datetime(2026, 4, 22, 12, 0, 0)
+                mock_dt.fromtimestamp = datetime.fromtimestamp
                 mock_dt.strptime = datetime.strptime
                 mock_dt.timedelta = __import__("datetime").timedelta
                 result = store.query_history("ec2:cn-north-1:i-test", "CPUUtilization", "24h")
@@ -81,8 +81,8 @@ class TestMetricsStoreEndToEnd:
 
             # 180d -> daily
             with patch("dashboard.metrics_store.datetime") as mock_dt:
-                mock_dt.utcnow.return_value = datetime(2026, 4, 22, 12, 0, 0)
-                mock_dt.utcfromtimestamp = datetime.utcfromtimestamp
+                mock_dt.now.return_value = datetime(2026, 4, 22, 12, 0, 0)
+                mock_dt.fromtimestamp = datetime.fromtimestamp
                 mock_dt.strptime = datetime.strptime
                 mock_dt.timedelta = __import__("datetime").timedelta
                 result = store.query_history("ec2:cn-north-1:i-test", "CPUUtilization", "180d")
