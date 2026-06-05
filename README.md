@@ -26,19 +26,25 @@ kiro-devops 同时支持 **飞书** 和 **微信** 两个沟通渠道。
 
 | 平台 | 连接方式 | 状态 |
 |------|----------|------|
-| 飞书 | WebSocket 长连接 | ✅ 完整支持（文本/图片/文件）|
+| 飞书 | WebSocket 长连接 + 群历史消息轮询 | ✅ 完整支持（文本/图片/文件）|
 | 微信 | iLink Bot API 长轮询 | ✅ 文本消息 / ⚠️ 媒体待支持 |
 
 ### 1.1 飞书接入
 
 1. 打开 https://open.feishu.cn/app 登录
 2. 创建企业自建应用，记录 **App ID** 和 **App Secret**
-3. 添加「机器人」能力
+3. 添加「机器人」能力，并将 Bot 加入目标群聊
 4. 事件订阅 → 选择 **「使用长连接接收事件」** → 添加 `im.message.receive_v1`
-5. 权限管理 → 开通 `im:message`、`im:message:send_as_bot`、`im:resource`
+5. 权限管理 → 开通：
+   - `im:message`（收发消息）
+   - `im:message:send_as_bot`（以 Bot 身份发送）
+   - `im:resource`（上传图片/文件）
+   - **`im:message:group:readonly`**（读取群消息，群轮询必需）
 6. 版本管理与发布 → 提交审核 → 发布
 
 > 完整权限列表见 `feishu-auth.json`，最小权限为 `im:message` + `im:message:send_as_bot`。
+>
+> 💡 **群历史消息轮询**：若需收取群内其他 Bot（如 Prometheus、Zabbix）的告警消息，请在 `.env` 中配置 `FEISHU_POLL_CHAT_IDS`（见 7.3 节）。
 
 ### 1.2 微信接入
 
@@ -79,10 +85,10 @@ kiro-devops 同时支持 **飞书** 和 **微信** 两个沟通渠道。
                               ↑
          ┌────────────────────┼────────────────────┐
          │                    │                    │
-   ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-   │FeishuAdapter│     │WeixinAdapter│     │  (未来扩展)  │
-   │lark-oapi WS │     │iLink HTTP   │     │ 钉钉/Slack  │
-   └─────────────┘     └─────────────┘     └─────────────┘
+   ┌─────────────────────┐     ┌─────────────┐     ┌─────────────┐
+   │    FeishuAdapter    │     │WeixinAdapter│     │  (未来扩展)  │
+   │ lark-oapi WS + Poll │     │iLink HTTP   │     │ 钉钉/Slack  │
+   └─────────────────────┘     └─────────────┘     └─────────────┘
 ```
 
 | 设计点 | 说明 |
@@ -306,8 +312,18 @@ receivers:
 
 除 Webhook 推送外，Bot 支持**直接在飛書群內監聽結構化告警消息**，無需 `@` 機器人即可觸發自動分析，結果直接回復到原群。
 
+**消息來源：**
+- 用戶在群內發送的告警文本
+- **其他 Bot（如 Prometheus、Zabbix Bot）通過 Webhook 推送到群內的告警**
+
+**技術實現：**
+- WebSocket 事件僅推送實時消息（私聊 / @Bot）
+- 群內其他 Bot 的消息通過 **List Message API 輪詢** 補收（見 `FEISHU_POLL_CHAT_IDS` 配置）
+
 ```
 群消息（無需 @）
+    ↓
+FeishuAdapter 輪詢拉取（或 WS 實時推送）
     ↓
 MessageHandler._parse_structured_alert()
     ↓
@@ -391,6 +407,8 @@ cp .env.example .env
 | 變量 | 說明 | 默認值 |
 |------|------|--------|
 | `FEISHU_APP_ID` / `FEISHU_APP_SECRET` | 飛書應用憑證 | 空 |
+| `FEISHU_POLL_CHAT_IDS` | 輪詢群 chat_id（逗號分隔），用於收取其他 Bot 消息 | 空 |
+| `FEISHU_POLL_INTERVAL_SEC` | 群消息輪詢間隔（秒） | `10` |
 | `WEIXIN_BOT_TOKEN` | 微信 iLink Bot Token | 空 |
 | `KIRO_TIMEOUT` | Kiro CLI 同步超時（秒） | `120` |
 | `KIRO_AGENT` | 指定 Kiro agent | 空 |
