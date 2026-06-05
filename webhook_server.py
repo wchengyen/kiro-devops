@@ -3,15 +3,13 @@
 import json
 import logging
 import os
-import shutil
-import subprocess
 import threading
 import time
 
 from flask import Flask, request, jsonify
 
 from dashboard import dashboard_bp
-from alert_analysis import run_alert_analysis, config_reloader, strip_ansi
+from alert_analysis import run_alert_analysis, config_reloader
 
 log = logging.getLogger("webhook-server")
 webhook_app = Flask("kiro-ec2-webhook")
@@ -45,7 +43,7 @@ def _is_duplicate_alert(record: dict) -> bool:
     alert_key = (record.get("source", "prometheus"), instance, record.get("event_type", ""))
     now = time.time()
     last = _alert_window_cache.get(alert_key, 0)
-    if now - last < _ALERT_DEDUP_WINDOW_SEC:
+    if now - last <= _ALERT_DEDUP_WINDOW_SEC:
         log.info(f"告警去重(5min窗口): {alert_key}")
         return True
     _alert_window_cache[alert_key] = now
@@ -146,64 +144,21 @@ def create_routes(handler):
 
 def _trigger_analysis(handler, record: dict):
     """触发 Kiro skill 分析并推送到所有配置目标."""
-    kiro_bin = shutil.which("kiro-cli") or "/home/ubuntu/.local/bin/kiro-cli"
     targets = _resolve_alert_targets()
 
-    matcher = config_reloader.get_matcher()
-    action = matcher.match(record)
-
-    agent = action.get("agent", "ec2-alert-analyzer")
-    tools = action.get("tools", ["execute_bash"])
-    timeout = action.get("timeout", 90)
-    instruction = action.get("instruction")
-    if not instruction:
-        instruction = "请分析此告警的根因，查询相关指标数据，给出结构化的诊断报告。"
-
-    alert_payload = json.dumps({
-        "alert": {
-            "source": record["source"],
-            "event_type": record["event_type"],
-            "title": record["title"],
-            "description": record.get("description", ""),
-            "entities": record.get("entities", []),
-            "severity": record["severity"],
-            "timestamp": record.get("timestamp"),
-        },
-        "instruction": instruction,
-    }, ensure_ascii=False, indent=2)
-
-    log.info(f"触发 Kiro {agent}: {record['title'][:50]}...")
-    cmd = [kiro_bin, "chat", "--no-interactive", "-a", "--wrap", "never"]
-    for tool in tools:
-        cmd.append(f"--trust-tools={tool}")
-    cmd += ["--agent", agent]
-    bg_model = os.environ.get("BACKGROUND_MODEL", "").strip()
-    if bg_model:
-        cmd += ["--model", bg_model]
-    cmd.append(alert_payload)
-
+    log.info(f"触发 Kiro 告警分析: {record['title'][:50]}...")
     try:
-        result = subprocess.run(
-            cmd, capture_output=True, text=True,
-            timeout=timeout,
-            cwd=os.path.expanduser("~"), env={**os.environ, "NO_COLOR": "1"},
-        )
-        analysis = strip_ansi(result.stdout.strip() or result.stderr.strip() or "Kiro 未返回分析结果")
-    except subprocess.TimeoutExpired:
-        analysis = f"⏰ Kiro {agent} 分析超时"
+        message, agent = run_alert_analysis(record)
+        log.info(f"告警分析完成 (agent={agent})，推送到 {len(targets)} 个目标")
     except Exception as e:
-        analysis = f"❌ Kiro 调用失败: {e}"
         log.exception("Kiro 分析失败")
-
-    header = f"🚨 自动告警分析\n\n【告警】{record['title']}\n【级别】{record['severity'].upper()}\n【来源】{record['source']}\n"
-    message = header + "\n" + analysis
+        message = f"❌ 告警分析失败: {e}"
 
     for target in targets:
         try:
             handler.dispatcher.send(target, message)
         except Exception as e:
             log.error(f"告警推送到 {target} 失败: {e}")
-    log.info(f"告警分析结果已推送到 {len(targets)} 个目标")
 
 
 def start_webhook_server(handler, host: str = "127.0.0.1", port: int = 8080):

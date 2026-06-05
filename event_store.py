@@ -27,6 +27,20 @@ def _now_iso() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S")
 
 
+def _escape_fts5(query: str) -> str:
+    """将查询字符串转义为 SQLite FTS5 安全的 MATCH 表达式。
+
+    FTS5 中双引号用于包裹词组，内部的双引号需重复一次。
+    我们对每个空格分隔的词单独包裹，保留词的 AND 语义。
+    """
+    terms = query.strip().split()
+    escaped = []
+    for term in terms:
+        term = term.replace('"', '""')
+        escaped.append(f'"{term}"')
+    return " ".join(escaped)
+
+
 def _parse_ts(ts: str | datetime | None) -> str:
     if ts is None:
         return _now_iso()
@@ -254,7 +268,7 @@ class EventStore:
                 ORDER BY fts_rank DESC, e.ts DESC
                 LIMIT ?
             """
-            params.insert(0, query.strip())
+            params.insert(0, _escape_fts5(query.strip()))
             params.append(top_k)
         else:
             sql = f"""

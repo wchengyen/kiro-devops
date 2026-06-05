@@ -116,7 +116,12 @@ class MessageHandler:
     def _parse_structured_alert(self, text: str) -> dict | None:
         """从群消息文本中解析结构化告警（Prometheus / 中文键值对 / JSON）。
 
-        只有当提取到 title 和 severity 时才认为是告警。
+        支持格式：
+        - JSON 对象
+        - 键: 值 / 键：值（同行）
+        - 键\n值（换行分隔，如飞书卡片文本）
+
+        只有当提取到 title 时才认为是告警。
         """
         text = text.strip()
         if not text:
@@ -140,12 +145,64 @@ class MessageHandler:
         except (json.JSONDecodeError, ValueError):
             pass
 
-        # 正则提取键值对
         result: dict[str, str] = {}
-        for pattern, key in _ALERT_KEY_PATTERNS:
-            match = re.search(pattern, text, re.IGNORECASE)
-            if match:
-                result[key] = match.group(1).strip()
+
+        # ---- 尝试换行/冒号混合解析（适配飞书卡片等换行格式） ----
+        # 键名 -> 标准字段 映射
+        _KEY_FIELD_MAP = {
+            "alertname": ["告警名称", "alertname"],
+            "severity":  ["告警级别", "severity", "级别"],
+            "namespace": ["命名空间", "namespace"],
+            "pod":       ["pod"],
+            "instance":  ["实例", "instance"],
+            "source":    ["来源", "source"],
+            "description": ["描述", "description"],
+            "title":     ["标题", "title"],
+        }
+        # 构建反向映射：小写键名 -> 标准字段
+        _name_to_field: dict[str, str] = {}
+        for field, names in _KEY_FIELD_MAP.items():
+            for name in names:
+                _name_to_field[name.lower()] = field
+
+        lines = [line.strip() for line in text.splitlines()]
+        i = 0
+        while i < len(lines):
+            line = lines[i]
+            matched_field: str | None = None
+            # 检查当前行是否为已知键（整行匹配 或 键+冒号开头）
+            for name_lc, field in _name_to_field.items():
+                if line.lower() == name_lc:
+                    matched_field = field
+                    break
+                m = re.match(re.escape(name_lc) + r"[：:\s]+", line, re.IGNORECASE)
+                if m:
+                    matched_field = field
+                    # 同行冒号后的值
+                    parts = re.split(r"[：:]\s*", line, maxsplit=1)
+                    if len(parts) > 1 and parts[1].strip():
+                        result[field] = parts[1].strip()
+                        matched_field = None  # 已提取，不需要取下一行
+                    break
+
+            if matched_field and i + 1 < len(lines):
+                nxt = lines[i + 1]
+                # 如果下一行也是键，则当前键无值，跳过
+                is_next_key = any(
+                    nxt.lower() == nl or re.match(re.escape(nl) + r"[：:\s]+", nxt, re.IGNORECASE)
+                    for nl in _name_to_field
+                )
+                if not is_next_key:
+                    result[matched_field] = nxt
+                    i += 1  # 跳过值行
+            i += 1
+
+        # ---- fallback：正则提取（兼容旧格式） ----
+        if not result:
+            for pattern, key in _ALERT_KEY_PATTERNS:
+                match = re.search(pattern, text, re.IGNORECASE)
+                if match:
+                    result[key] = match.group(1).strip()
 
         if not result:
             return None
@@ -160,6 +217,8 @@ class MessageHandler:
 
         # severity 标准化
         severity = result.get("severity", "medium").lower()
+        # 先清理 emoji / 标点（如 🔴）
+        severity = re.sub(r"[^a-zA-Z\u4e00-\u9fff]+", "", severity).strip() or "medium"
         valid_severities = {"critical", "high", "warning", "warn", "medium", "low", "info"}
         if severity not in valid_severities:
             cn_map = {"紧急": "critical", "严重": "high", "警告": "warning", "一般": "medium", "低": "low", "信息": "info"}
@@ -374,19 +433,23 @@ class MessageHandler:
         self._reply(incoming, "🤖 正在处理，请稍候...")
 
         mem_enabled = ENABLE_MEMORY and memory and memory.is_enabled(user_id)
+        semantic_memories: list[str] = []
+        episodic_memories: list[dict] = []
         if mem_enabled:
-            memory.add(user_id, f"用户说：{text}")
-        semantic_memories = memory.search(user_id, text) if mem_enabled else []
-        episodic_memories = []
-        if mem_enabled and event_store and has_episodic_hint and has_episodic_hint(text):
-            raw_ents = re.findall(r"[a-zA-Z0-9][a-zA-Z0-9_-]*", text)
-            raw_ents += re.findall(r"[\u4e00-\u9fff]{2,}", text)
-            entities = [e for e in raw_ents if len(e) >= 2]
-            episodic_memories = event_store.search_events(
-                user_id, query=text, entities=entities or None, days=14, top_k=5
-            )
-            if episodic_memories:
-                log.info(f"为用户 {user_id} 检索到 {len(episodic_memories)} 条相关事件")
+            try:
+                memory.add(user_id, f"用户说：{text}")
+                semantic_memories = memory.search(user_id, text)
+                if event_store and has_episodic_hint and has_episodic_hint(text):
+                    raw_ents = re.findall(r"[a-zA-Z0-9][a-zA-Z0-9_-]*", text)
+                    raw_ents += re.findall(r"[一-鿿]{2,}", text)
+                    entities = [e for e in raw_ents if len(e) >= 2]
+                    episodic_memories = event_store.search_events(
+                        user_id, query=text, entities=entities or None, days=14, top_k=5
+                    )
+                    if episodic_memories:
+                        log.info(f"为用户 {user_id} 检索到 {len(episodic_memories)} 条相关事件")
+            except Exception:
+                log.exception(f"记忆检索失败 user={user_id}，继续执行 Kiro 对话")
 
         prompt = build_prompt(text, semantic_memories, episodic_memories) if build_prompt else text
         session_id = self.session_router.resolve(user_id, text)
