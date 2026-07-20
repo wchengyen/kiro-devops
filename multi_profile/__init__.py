@@ -33,3 +33,44 @@ __all__ += ["RouteNotFound", "TenantRouter"]
 from .feature_flags import config_path, is_enabled
 
 __all__ += ["config_path", "is_enabled"]
+
+from .output import clean_output
+from .process_utils import terminate_process_tree
+from .runtime_env import build_child_env, build_kiro_command
+
+__all__ += [
+    "build_child_env",
+    "build_kiro_command",
+    "clean_output",
+    "terminate_process_tree",
+]
+
+from .task_registry import CancellationHandle, TaskAlreadyRunning, TaskRegistry
+
+__all__ += ["CancellationHandle", "TaskAlreadyRunning", "TaskRegistry"]
+
+from .session_store import SessionRecord, SessionStore
+
+__all__ += ["SessionRecord", "SessionStore"]
+
+from .session_capture import (
+    CapturedSession,
+    SessionCaptureCoordinator,
+    SessionCaptureError,
+    parse_session_ids,
+)
+
+__all__ += [
+    "CapturedSession",
+    "SessionCaptureCoordinator",
+    "SessionCaptureError",
+    "parse_session_ids",
+]
+
+from .runtime import ContextRuntime, RuntimeFailure
+
+__all__ += ["ContextRuntime", "RuntimeFailure"]
+
+from .scoped_state import event_owner, scoped_event_id, semantic_owner
+
+__all__ += ["event_owner", "scoped_event_id", "semantic_owner"]
