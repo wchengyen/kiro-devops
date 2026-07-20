@@ -12,3 +12,7 @@ events.db
 .worktrees/
 weixin_qrcode.png
 *.log
+
+# Multi-profile runtime state and local active config
+runtime/
+multi_profile_config.yaml

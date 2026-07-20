@@ -1,0 +1,29 @@
+version: 1
+
+apps:
+  ops-bot:
+    enabled: true
+    app_id_env: FEISHU_OPS_APP_ID
+    app_secret_env: FEISHU_OPS_APP_SECRET
+    default_profile: prod-cn
+
+profiles:
+  prod-cn:
+    enabled: true
+    aws_profile: production
+    aws_region: cn-northwest-1
+    expected_account_id: "123456789012"
+    kiro_agent: my-dev-bot
+    model: claude-sonnet
+    alert_agent: ec2-alert-analyzer
+    alert_model: claude-sonnet
+    working_dir: /home/ubuntu/kiro-devops
+    sync_timeout: 120
+    async_timeout: 1800
+    alert_timeout: 300
+
+routes:
+  - app: ops-bot
+    chat_id: oc_xxxxxxxxxx
+    profile: prod-cn
+    poll_alerts: true
