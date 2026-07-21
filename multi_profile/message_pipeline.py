@@ -14,6 +14,7 @@ from .router import RouteNotFound, TenantRouter
 from .runtime import ContextRuntime
 from .scoped_state import semantic_owner
 from .session_store import SessionStore
+from .health import ProfileUnavailable
 
 log = logging.getLogger("multi-profile-pipeline")
 
@@ -26,6 +27,14 @@ _UNMAPPED_GROUP_ALERT_REPLY = (
 )
 _PROFILE_UNAVAILABLE_REPLY = "⚠️ 本群綁定的執行環境目前不可用，請聯繫管理員。"
 _PRIVATE_ROUTE_FAILED_REPLY = "⚠️ 此 App 的預設執行環境不可用，請聯繫管理員。"
+_PROFILE_BLOCKED_REPLY = (
+    "⚠️ 此對話綁定的 profile `{profile_id}` 目前不可用（{reason}），"
+    "已拒絕新任務。請聯絡管理員檢查 AWS 設定。"
+)
+_PROFILE_BLOCKED_ALERT_REPLY = (
+    "⚠️ 檢測到告警 [{title}]，但本群綁定的 profile `{profile_id}` "
+    "目前不可用（{reason}），已跳過分析。"
+)
 
 
 class MultiProfilePipeline:
@@ -47,6 +56,7 @@ class MultiProfilePipeline:
         build_prompt_fn: Callable | None = None,
         auto_analyze_severities: tuple[str, ...] | None = None,
         thread_factory: Callable[..., threading.Thread] = threading.Thread,
+        health_monitor=None,
     ):
         self._registry = registry
         self._dispatcher = dispatcher
@@ -55,6 +65,7 @@ class MultiProfilePipeline:
         self._alert_runner = alert_runner
         self._parse_alert = parse_alert
         self._memory = memory
+        self._health_monitor = health_monitor
         self._build_prompt = build_prompt_fn or (lambda text, sem, epi: text)
         if auto_analyze_severities is None:
             auto_analyze_severities = tuple(
@@ -94,6 +105,11 @@ class MultiProfilePipeline:
             self._handle_route_not_found(incoming, alert_record, exc)
             return
 
+        # 規格 §14：blocked/disabled profile 的新任務（普通聊天與群告警）
+        # 一律在原 App、原群拒絕；不啟動子程序，不建議替代 profile
+        if not self._ensure_profile_usable(context, incoming, alert_record):
+            return
+
         if alert_record is not None:
             self._handle_group_alert(context, incoming, alert_record)
             return
@@ -130,6 +146,43 @@ class MultiProfilePipeline:
         else:
             self._reply(incoming, _PRIVATE_ROUTE_FAILED_REPLY)
         # 任何情況都不啟動 Kiro／AWS 子程序，不使用 fallback profile
+
+    # ---- 健康閘門（計畫 4：ProfileHealthMonitor.ensure_usable） ----
+
+    def _ensure_profile_usable(
+        self,
+        context: ExecutionContext,
+        incoming: IncomingMessage,
+        alert_record: dict | None,
+    ) -> bool:
+        if self._health_monitor is None:
+            return True
+        try:
+            self._health_monitor.ensure_usable(context.profile_id)
+            return True
+        except ProfileUnavailable as exc:
+            log.warning(
+                f"profile 不可用，拒絕新任務 app={incoming.app_key} "
+                f"chat={incoming.group_id} profile={context.profile_id}: {exc}"
+            )
+            if alert_record is not None:
+                self._reply(
+                    incoming,
+                    _PROFILE_BLOCKED_ALERT_REPLY.format(
+                        title=alert_record["title"],
+                        profile_id=context.profile_id,
+                        reason=exc,
+                    ),
+                )
+            elif incoming.chat_type != "group" or incoming.is_at_me:
+                # 未 @ 的群普通訊息維持靜默（與既有行為一致）
+                self._reply(
+                    incoming,
+                    _PROFILE_BLOCKED_REPLY.format(
+                        profile_id=context.profile_id, reason=exc,
+                    ),
+                )
+            return False
 
     # ---- 群告警 ----
 

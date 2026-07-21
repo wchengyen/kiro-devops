@@ -110,3 +110,4 @@ def dashboard_index():
 
 # Register API routes
 import dashboard.api  # noqa: F401
+import dashboard.multi_profile_api  # noqa: F401

@@ -96,3 +96,17 @@ def test_should_cancel_detects_cancelled_or_removed_reservation():
 
     registry.finish("principal-a", token)
     assert registry.should_cancel("principal-a", token) is True
+
+
+def test_counts_by_profile_and_total_running():
+    registry = TaskRegistry(clock=lambda: 100.0)
+    registry.reserve("principal-a", "prod-cn")
+    registry.reserve("principal-b", "prod-cn")
+    token_c = registry.reserve("principal-c", "eu")
+
+    assert registry.counts_by_profile() == {"prod-cn": 2, "eu": 1}
+    assert registry.total_running() == 3
+
+    registry.finish("principal-c", token_c)
+    assert registry.counts_by_profile() == {"prod-cn": 2}
+    assert registry.total_running() == 2

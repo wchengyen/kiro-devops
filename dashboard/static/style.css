@@ -1219,3 +1219,24 @@ tr.pinned:hover td { background: rgba(0,0,0,0.025); }
   .main { padding: 16px; }
   .cards { grid-template-columns: 1fr; }
 }
+
+/* ---------- Multi Profile Config ---------- */
+.mp-yaml-editor {
+  width: 100%;
+  font-family: var(--font-mono, monospace);
+  font-size: 13px;
+  background: var(--bg-muted, #f8f9fa);
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: 8px;
+  padding: 12px;
+}
+.mp-stage { padding: 4px 8px; font-size: 13px; }
+.mp-stage.ok { color: var(--pale-green-text, #15803d); }
+.mp-stage.fail { color: var(--pale-red-text, #b91c1c); }
+.mp-diff {
+  font-family: var(--font-mono, monospace);
+  font-size: 12px;
+  white-space: pre-wrap;
+  max-height: 480px;
+  overflow: auto;
+}

@@ -120,6 +120,11 @@ class AppManager:
         with self._lock:
             return {key: app.status() for key, app in self._apps.items()}
 
+    def app_statuses(self) -> dict[str, str]:
+        """每 App 的連線狀態字串（規格 §17 可觀測性用；additive）。"""
+        with self._lock:
+            return {key: app.state.value for key, app in self._apps.items()}
+
     # ---- 熱載入（計畫 4 的 Dashboard 會呼叫；本計畫只標記 pending-restart） ----
 
     def on_snapshot_changed(self, new_snapshot: ConfigSnapshot) -> None:

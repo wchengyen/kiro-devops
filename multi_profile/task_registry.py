@@ -91,3 +91,14 @@ class TaskRegistry:
                 return None
             task.cancel_requested = True
             return CancellationHandle(task.token, task.process)
+
+    def counts_by_profile(self) -> dict[str, int]:
+        with self._lock:
+            counts: dict[str, int] = {}
+            for task in self._tasks.values():
+                counts[task.profile_id] = counts.get(task.profile_id, 0) + 1
+            return counts
+
+    def total_running(self) -> int:
+        with self._lock:
+            return len(self._tasks)

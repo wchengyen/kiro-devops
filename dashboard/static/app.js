@@ -85,6 +85,7 @@ const AppLayout = {
           <router-link v-if="providers.tencent?.enabled" to="/resources/tencent" style="padding-left:28px;font-size:13px">Tencent</router-link>
           <router-link to="/resource-tree">Resource Tree</router-link>
           <router-link to="/config">Config</router-link>
+          <router-link to="/multi-profile">Multi Profile</router-link>
         </nav>
         <div class="logout" @click="logout">退出登录</div>
       </div>
@@ -1786,6 +1787,195 @@ const ResourceTreePage = {
   },
 };
 
+/* ---------- MultiProfilePage ---------- */
+const MultiProfilePage = {
+  template: `
+    <div>
+      <div class="toolbar">
+        <h2>Multi Profile Config</h2>
+        <span class="badge">{{ status.mode || 'legacy' }}</span>
+        <span class="badge" v-if="status.generation">gen {{ status.generation }}</span>
+        <button class="btn-outline" @click="loadAll" :disabled="loading">重新整理</button>
+      </div>
+
+      <div v-if="pendingRestart.length" class="card" style="border-left:4px solid var(--pale-yellow)">
+        <strong>pending-restart：</strong>以下變更已保存，需重啟服務才生效
+        <ul><li v-for="item in pendingRestart" :key="item">{{ item }}</li></ul>
+      </div>
+
+      <div class="card">
+        <h3>Apps</h3>
+        <div class="table-wrap"><table>
+          <thead><tr><th>別名</th><th>app_id_env</th><th>app_secret_env</th><th>預設 profile</th><th>連線狀態</th></tr></thead>
+          <tbody><tr v-for="(app, key) in apps" :key="key">
+            <td>{{ key }}</td><td><code>{{ app.app_id_env }}</code></td>
+            <td><code>{{ app.app_secret_env }}</code></td>
+            <td>{{ app.default_profile }}</td>
+            <td><span class="badge">{{ appStatus(key) }}</span></td>
+          </tr></tbody>
+        </table></div>
+      </div>
+
+      <div class="card">
+        <h3>Profiles</h3>
+        <div class="table-wrap"><table>
+          <thead><tr><th>profile</th><th>AWS profile</th><th>Region</th><th>Account</th><th>Agent / Model</th><th>working_dir</th><th>健康</th><th>最近 STS</th></tr></thead>
+          <tbody><tr v-for="(p, key) in profiles" :key="key">
+            <td>{{ key }}</td><td>{{ p.aws_profile }}</td>
+            <td>{{ p.aws_region || 'profile default' }}</td>
+            <td><code>{{ p.expected_account_id }}</code></td>
+            <td>{{ p.kiro_agent || 'default' }} / {{ p.model || 'default' }}</td>
+            <td><code>{{ p.working_dir }}</code></td>
+            <td><span class="badge">{{ healthState(key) }}</span></td>
+            <td>{{ healthTime(key) }}</td>
+          </tr></tbody>
+        </table></div>
+      </div>
+
+      <div class="card">
+        <h3>Group Routes</h3>
+        <div class="table-wrap"><table>
+          <thead><tr><th>App</th><th>chat_id</th><th>profile</th><th>poll_alerts</th></tr></thead>
+          <tbody><tr v-for="(r, i) in routes" :key="i">
+            <td>{{ r.app_key }}</td><td><code>{{ r.chat_id }}</code></td>
+            <td>{{ r.profile_id }}</td><td>{{ r.poll_alerts }}</td>
+          </tr></tbody>
+        </table></div>
+      </div>
+
+      <div class="card">
+        <h3>Draft 編輯（只含 env 變數名稱，不含 Secret 值）</h3>
+        <textarea v-model="draft" class="mp-yaml-editor" rows="18" spellcheck="false"></textarea>
+        <div class="toolbar">
+          <button class="btn-outline" @click="validateDraft" :disabled="busy">驗證 Draft</button>
+          <button class="btn-outline" @click="publishDraft" :disabled="busy || !validationOk">發布</button>
+        </div>
+        <div v-if="stages.length" class="mp-stages">
+          <div v-for="s in stages" :key="s.stage" class="mp-stage" :class="s.ok ? 'ok' : 'fail'">
+            {{ s.ok ? '✓' : '✗' }} {{ s.stage }} — {{ s.detail }}
+          </div>
+        </div>
+        <div v-if="publishResult" class="card">
+          已發布 generation {{ publishResult.generation }}（revision {{ publishResult.revision_id }}）
+          <div v-if="publishResult.change_summary.pending_restart.length">
+            pending-restart：{{ publishResult.change_summary.pending_restart.join('；') }}
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Revisions（保留最近 {{ revisions.length }} 筆）</h3>
+        <div class="table-wrap"><table>
+          <thead><tr><th>時間</th><th>generation</th><th>checksum</th><th>來源</th><th>驗證</th><th>操作</th></tr></thead>
+          <tbody><tr v-for="r in revisions" :key="r.revision_id">
+            <td>{{ r.created_at }}</td><td>{{ r.generation }}</td>
+            <td><code>{{ r.checksum.slice(0, 8) }}</code>
+              <span v-if="r.is_current" class="badge">current</span></td>
+            <td>{{ r.source }}</td><td>{{ r.validation_summary }}</td>
+            <td>
+              <button class="btn-sm btn-outline" @click="showDiff(r)">diff</button>
+              <button class="btn-sm btn-outline" @click="rollback(r)" :disabled="busy">回滾</button>
+            </td>
+          </tr></tbody>
+        </table></div>
+      </div>
+
+      <div class="modal-overlay" v-if="diffText !== null" @click.self="diffText = null">
+        <div class="modal" style="max-width:860px">
+          <div class="modal-header"><h3>Revision diff</h3></div>
+          <div class="modal-body"><pre class="mp-diff">{{ diffText }}</pre></div>
+          <div class="modal-footer">
+            <button class="btn-outline" @click="diffText = null">關閉</button>
+          </div>
+        </div>
+      </div>
+
+      <div v-if="error" class="card" style="color:var(--pale-red-text)">{{ error }}</div>
+    </div>
+  `,
+  setup() {
+    const { ref, computed, onMounted } = Vue;
+    const loading = ref(false), busy = ref(false), error = ref("");
+    const snapshot = ref(null), status = ref({}), draft = ref("");
+    const stages = ref([]), publishResult = ref(null);
+    const revisions = ref([]), diffText = ref(null);
+
+    const apps = computed(() => snapshot.value?.apps || {});
+    const profiles = computed(() => snapshot.value?.profiles || {});
+    const routes = computed(() => snapshot.value?.routes || []);
+    const pendingRestart = computed(() => status.value.pending_restart || []);
+    const validationOk = computed(
+      () => stages.value.length > 0 && stages.value.every((s) => s.ok),
+    );
+
+    const appStatus = (key) => status.value.apps?.[key] || "unknown";
+    const healthState = (key) => status.value.profiles?.[key]?.state || "unknown";
+    const healthTime = (key) => {
+      const ts = status.value.profiles?.[key]?.last_sts_at;
+      return ts ? new Date(ts * 1000).toLocaleString() : "—";
+    };
+
+    async function loadAll() {
+      loading.value = true; error.value = "";
+      try {
+        const cfg = await api("/multi-profile/config");
+        snapshot.value = cfg.snapshot;
+        draft.value = cfg.config_text || "";
+        status.value = await api("/multi-profile/status");
+        const revs = await api("/multi-profile/revisions");
+        revisions.value = revs.revisions;
+      } catch (e) { error.value = String(e); }
+      finally { loading.value = false; }
+    }
+    async function validateDraft() {
+      busy.value = true; error.value = ""; publishResult.value = null;
+      try {
+        const resp = await api("/multi-profile/validate", {
+          method: "POST", body: { yaml: draft.value },
+        });
+        stages.value = resp.stages;
+      } catch (e) { error.value = String(e); }
+      finally { busy.value = false; }
+    }
+    async function publishDraft() {
+      if (!confirm("確定發布？伺服器端會重新執行完整驗證（含 STS）。")) return;
+      busy.value = true; error.value = "";
+      try {
+        publishResult.value = await api("/multi-profile/publish", {
+          method: "POST", body: { yaml: draft.value },
+        });
+        await loadAll();
+      } catch (e) { error.value = String(e); }
+      finally { busy.value = false; }
+    }
+    async function showDiff(r) {
+      const resp = await api(
+        `/multi-profile/revisions/${encodeURIComponent(r.revision_id)}/diff?against=current`,
+      );
+      diffText.value = resp.diff || "(無差異)";
+    }
+    async function rollback(r) {
+      if (!confirm(`回滾至 ${r.revision_id}？歷史內容會重新驗證（含 STS）後發布為新 revision。`)) return;
+      busy.value = true; error.value = "";
+      try {
+        await api("/multi-profile/rollback", {
+          method: "POST", body: { revision_id: r.revision_id },
+        });
+        await loadAll();
+      } catch (e) { error.value = String(e); }
+      finally { busy.value = false; }
+    }
+    onMounted(loadAll);
+
+    return {
+      loading, busy, error, snapshot, status, draft, stages, publishResult,
+      revisions, diffText, apps, profiles, routes, pendingRestart, validationOk,
+      appStatus, healthState, healthTime,
+      loadAll, validateDraft, publishDraft, showDiff, rollback,
+    };
+  },
+};
+
 /* ---------- Router ---------- */
 const routes = [
   { path: "/login", component: LoginPage },
@@ -1797,6 +1987,7 @@ const routes = [
   { path: "/resources", redirect: "/resources/aws" },
   { path: "/resources/:provider(aws|tencent)", component: ResourcesPage, props: true },
   { path: "/config", component: ConfigPage },
+  { path: "/multi-profile", component: MultiProfilePage },
   { path: "/resource-tree", component: ResourceTreePage },
 ];
 
