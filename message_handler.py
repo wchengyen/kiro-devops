@@ -72,8 +72,9 @@ _ALERT_KEY_PATTERNS = [
 
 
 class MessageHandler:
-    def __init__(self, dispatcher: PlatformDispatcher):
+    def __init__(self, dispatcher: PlatformDispatcher, mp_pipeline=None):
         self.dispatcher = dispatcher
+        self._mp_pipeline = mp_pipeline
         self.session_router = SessionRouter(kiro_bin=kiro_bin, kiro_agent=KIRO_AGENT)
         self.kiro_executor = KiroExecutor(agent=KIRO_AGENT)
         self.scheduler = Scheduler(
@@ -307,6 +308,11 @@ class MessageHandler:
 
     def handle(self, incoming: IncomingMessage) -> None:
         """所有平台消息的统一入口."""
+        # 多 profile 模式：飛書訊息全部交由 MultiProfilePipeline（含告警與命令）
+        if self._mp_pipeline is not None and incoming.platform == "feishu":
+            self._mp_pipeline.handle(incoming)
+            return
+        # ====== 以下為 legacy 路徑，行為不變 ======
         user_id = incoming.unified_user_id
         text = incoming.text
 

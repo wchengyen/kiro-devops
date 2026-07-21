@@ -74,3 +74,19 @@ __all__ += ["ContextRuntime", "RuntimeFailure"]
 from .scoped_state import event_owner, scoped_event_id, semantic_owner
 
 __all__ += ["event_owner", "scoped_event_id", "semantic_owner"]
+
+from .poll_sets import poll_chat_ids_for_app
+
+__all__ += ["poll_chat_ids_for_app"]
+
+from .app_manager import AppConnState, AppManager
+
+__all__ += ["AppConnState", "AppManager"]
+
+from .message_pipeline import MultiProfilePipeline
+
+__all__ += ["MultiProfilePipeline"]
+
+from .group_alerts import AlertResolution, GroupAlertRunner, resolve_alert_action
+
+__all__ += ["AlertResolution", "GroupAlertRunner", "resolve_alert_action"]

@@ -18,8 +18,7 @@ log = logging.getLogger("adapter-feishu")
 IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp"}
 FILE_EXTS = {".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".csv", ".txt", ".zip", ".mp4", ".opus"}
 
-# 消息去重缓存（WS 与轮询共用）
-_processed_message_ids: set[str] = set()
+# 消息去重缓存上限（per-instance，见 FeishuAdapter._processed_message_ids）
 _MAX_MSG_ID_CACHE = 1000
 
 
@@ -57,10 +56,23 @@ class FeishuAdapter(PlatformAdapter):
     def platform(self) -> str:
         return "feishu"
 
-    def __init__(self, app_id: str, app_secret: str, on_message: Callable[[IncomingMessage], None]):
+    def __init__(
+        self,
+        app_id: str,
+        app_secret: str,
+        on_message: Callable[[IncomingMessage], None],
+        *,
+        app_key: str = "default",
+        poll_chat_ids: list[str] | Callable[[], list[str]] | None = None,
+        poll_interval: int | None = None,
+        group_alert_listen: bool | None = None,
+        on_disconnected: Callable[[BaseException | None], None] | None = None,
+    ):
         self.app_id = app_id
         self.app_secret = app_secret
         self.on_message = on_message
+        self.app_key = app_key
+        self._on_disconnected = on_disconnected
         self.client = lark.Client.builder() \
             .app_id(app_id) \
             .app_secret(app_secret) \
@@ -68,17 +80,56 @@ class FeishuAdapter(PlatformAdapter):
             .build()
 
         # === 轮询配置 ===
-        self._poll_chat_ids = [
-            c.strip()
-            for c in os.environ.get("FEISHU_POLL_CHAT_IDS", "").split(",")
-            if c.strip()
-        ]
-        self._poll_interval = int(os.environ.get("FEISHU_POLL_INTERVAL_SEC", "10"))
-        # 每个群的最后处理 create_time（毫秒），避免重复
+        # None：legacy 模式读取 FEISHU_POLL_CHAT_IDS；
+        # list：静态集合；callable：每次轮询循环重新求值（多 profile 动态集合）
+        if poll_chat_ids is None:
+            poll_chat_ids = [
+                c.strip()
+                for c in os.environ.get("FEISHU_POLL_CHAT_IDS", "").split(",")
+                if c.strip()
+            ]
+        self._poll_chat_ids_source = poll_chat_ids
+        self._poll_interval = (
+            poll_interval
+            if poll_interval is not None
+            else int(os.environ.get("FEISHU_POLL_INTERVAL_SEC", "10"))
+        )
+        if group_alert_listen is None:
+            group_alert_listen = os.environ.get(
+                "GROUP_ALERT_LISTEN_ENABLED", "false"
+            ).lower() in ("true", "1", "yes")
+        self._group_alert_listen = group_alert_listen
+        # 每个群的最后处理 create_time（秒），避免重复
         self._last_poll_time: dict[str, int] = {}
+        # 单群轮询错误隔离：chat_id -> 最近错误摘要（成功后清除）
+        self.poll_errors: dict[str, str] = {}
+        # 消息去重缓存（per-instance；多 App 同群时 message_id 相同也必须各自投递）
+        self._processed_message_ids: set[str] = set()
         self._running = False
         self._shutdown_event = threading.Event()
         self._bot_open_id: str | None = None
+
+    def _current_poll_chat_ids(self) -> list[str]:
+        source = self._poll_chat_ids_source
+        if callable(source):
+            return list(source())
+        return list(source)
+
+    def _remember_message_id(self, message_id: str) -> bool:
+        """记录 message_id；已处理过返回 False。WS 与轮询共用以避免重推。"""
+        if message_id in self._processed_message_ids:
+            return False
+        self._processed_message_ids.add(message_id)
+        if len(self._processed_message_ids) > _MAX_MSG_ID_CACHE:
+            half = list(self._processed_message_ids)[_MAX_MSG_ID_CACHE // 2:]
+            self._processed_message_ids.clear()
+            self._processed_message_ids.update(half)
+        return True
+
+    def stop(self) -> None:
+        """停止轮询并解除 start() 阻塞（供 AppManager 关闭）。"""
+        self._running = False
+        self._shutdown_event.set()
 
     def _fetch_bot_open_id(self) -> str | None:
         """获取机器人自身的 open_id，用于过滤轮询时的自身消息.
@@ -116,7 +167,7 @@ class FeishuAdapter(PlatformAdapter):
         self._running = True
 
         # 获取 Bot 自身 open_id（用于过滤自身消息）
-        if self._poll_chat_ids:
+        if self._current_poll_chat_ids():
             self._bot_open_id = self._fetch_bot_open_id()
             if self._bot_open_id:
                 log.info(f"Bot open_id: {self._bot_open_id}")
@@ -126,10 +177,11 @@ class FeishuAdapter(PlatformAdapter):
         ws_thread.start()
 
         # 2) 群轮询线程
-        if self._poll_chat_ids:
+        poll_chat_ids = self._current_poll_chat_ids()
+        if poll_chat_ids:
             poll_thread = threading.Thread(target=self._poll_loop, name="feishu-poll", daemon=True)
             poll_thread.start()
-            log.info(f"🚀 飞书适配器启动（WS + 轮询 {len(self._poll_chat_ids)} 个群，间隔 {self._poll_interval}s）")
+            log.info(f"🚀 飞书适配器启动（WS + 轮询 {len(poll_chat_ids)} 个群，间隔 {self._poll_interval}s）")
         else:
             log.info("🚀 飞书适配器启动（仅 WebSocket）")
 
@@ -141,29 +193,44 @@ class FeishuAdapter(PlatformAdapter):
             .register_p2_im_message_receive_v1(self._on_lark_message) \
             .build()
         cli = lark.ws.Client(self.app_id, self.app_secret, event_handler=handler, log_level=lark.LogLevel.INFO)
+        exc: BaseException | None = None
         try:
             cli.start()
-        except Exception:
-            log.exception("飞书 WS 异常退出")
+        except Exception as e:
+            exc = e
+            log.exception(f"飞书 WS 异常退出 (app={self.app_key})")
         finally:
             self._shutdown_event.set()
+            if self._on_disconnected is not None:
+                try:
+                    self._on_disconnected(exc)
+                except Exception:
+                    log.exception(f"on_disconnected 回呼失敗 (app={self.app_key})")
 
     def _poll_loop(self) -> None:
-        """定期拉取指定群的历史消息."""
+        """定期拉取指定群的历史消息；群集合可動態變更，單群錯誤不影響其他群."""
         # 首次启动时，设定只拉取「启动前 30 秒」之后的消息，避免一次性淹没
         # API 的 start_time 单位为秒
         boot_time_sec = int(time.time()) - 30
-        for cid in self._poll_chat_ids:
-            self._last_poll_time[cid] = boot_time_sec
 
         while self._running:
-            for chat_id in self._poll_chat_ids:
+            chat_ids = self._current_poll_chat_ids()
+            for cid in chat_ids:
+                self._last_poll_time.setdefault(cid, boot_time_sec)
+            # 移除已不在集合中的群水位线
+            for stale in set(self._last_poll_time) - set(chat_ids):
+                del self._last_poll_time[stale]
+                self.poll_errors.pop(stale, None)
+
+            for chat_id in chat_ids:
                 if not self._running:
                     break
                 try:
                     self._poll_single_chat(chat_id)
-                except Exception:
-                    log.exception(f"轮询群消息失败: {chat_id}")
+                    self.poll_errors.pop(chat_id, None)
+                except Exception as e:
+                    log.exception(f"轮询群消息失败: {chat_id} (app={self.app_key})")
+                    self.poll_errors[chat_id] = f"{type(e).__name__}: {e}"
             # 小步睡眠，以便快速响应 shutdown
             for _ in range(self._poll_interval):
                 if not self._running:
@@ -208,14 +275,9 @@ class FeishuAdapter(PlatformAdapter):
             if self._bot_open_id and msg.sender and msg.sender.id == self._bot_open_id:
                 continue
 
-            # 全局去重（WS 与轮询共用）
-            if msg.message_id in _processed_message_ids:
+            # 实例级去重（WS 与轮询共用）
+            if not self._remember_message_id(msg.message_id):
                 continue
-            _processed_message_ids.add(msg.message_id)
-            if len(_processed_message_ids) > _MAX_MSG_ID_CACHE:
-                half = list(_processed_message_ids)[_MAX_MSG_ID_CACHE // 2:]
-                _processed_message_ids.clear()
-                _processed_message_ids.update(half)
 
             # 只处理文本消息
             if msg.msg_type != "text":
@@ -265,6 +327,7 @@ class FeishuAdapter(PlatformAdapter):
             group_id=msg.chat_id,
             group_name=msg.chat_id,
             sender_name=sender_id,
+            app_key=self.app_key,
         )
         self.on_message(incoming)
 
@@ -277,16 +340,10 @@ class FeishuAdapter(PlatformAdapter):
         chat_type = getattr(message, "chat_type", "unknown")
         log.info(f"[DEBUG] 收到飞书消息 msg_id={message_id} type={msg_type} chat={chat_type}")
 
-        # 消息去重：飞书 WS 重连时可能重推历史事件
-        if message_id in _processed_message_ids:
+        # 消息去重：飞书 WS 重连时可能重推历史事件（per-instance）
+        if not self._remember_message_id(message_id):
             log.info(f"忽略重复消息: {message_id}")
             return
-        _processed_message_ids.add(message_id)
-        if len(_processed_message_ids) > _MAX_MSG_ID_CACHE:
-            # 防止内存无限增长，保留最近一半
-            half = list(_processed_message_ids)[_MAX_MSG_ID_CACHE // 2:]
-            _processed_message_ids.clear()
-            _processed_message_ids.update(half)
 
         msg_type = message.message_type
 
@@ -294,7 +351,7 @@ class FeishuAdapter(PlatformAdapter):
             self.reply(
                 IncomingMessage(
                     platform="feishu", raw_user_id="", unified_user_id="",
-                    message_id=message_id, text="", raw={}
+                    message_id=message_id, text="", raw={}, app_key=self.app_key,
                 ),
                 OutgoingPayload(text="目前只支持文本消息哦 📝")
             )
@@ -321,8 +378,7 @@ class FeishuAdapter(PlatformAdapter):
         # 群聊中未 @ 机器人则忽略
         # 例外：当开启群告警监听时，消息会传给 MessageHandler 做结构化检测，
         #       由 MessageHandler 根据 is_at_me 决定是否进入普通对话
-        _GROUP_ALERT_LISTEN_ENABLED = os.environ.get("GROUP_ALERT_LISTEN_ENABLED", "false").lower() in ("true", "1", "yes")
-        if is_group and not is_at and not _GROUP_ALERT_LISTEN_ENABLED:
+        if is_group and not is_at and not self._group_alert_listen:
             return
 
         group_id = getattr(message, "chat_id", None) or ""
@@ -340,6 +396,7 @@ class FeishuAdapter(PlatformAdapter):
             group_id=group_id or None,
             group_name=group_id or None,
             sender_name=sender_name or None,
+            app_key=self.app_key,
         )
         self.on_message(incoming)
 

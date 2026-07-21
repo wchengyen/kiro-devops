@@ -52,11 +52,12 @@ def strip_ansi(text: str) -> str:
     return text
 
 
-def run_alert_analysis(record: dict) -> tuple[str, str]:
+def run_alert_analysis(record: dict, context=None) -> tuple[str, str]:
     """触发 Kiro skill 分析并返回结果文本和使用的 agent.
 
     Args:
         record: 标准化告警记录，至少包含 title、severity、source 等字段。
+        context: 多 profile 模式的 ExecutionContext；None 時維持 legacy 全域行為。
 
     Returns:
         (analysis_message, agent_name)
@@ -64,9 +65,33 @@ def run_alert_analysis(record: dict) -> tuple[str, str]:
     matcher = config_reloader.get_matcher()
     action = matcher.match(record)
 
-    agent = action.get("agent", DEFAULT_AGENT)
-    tools = action.get("tools", DEFAULT_TOOLS)
-    timeout = action.get("timeout", DEFAULT_TIMEOUT)
+    if context is not None:
+        # 多 profile：Agent／模型／逾時依規格 §12 優先順序；
+        # AWS 只來自 ExecutionContext（Alert Mapping 不得覆蓋）
+        from multi_profile.group_alerts import resolve_alert_action
+        from multi_profile.runtime_env import build_child_env
+
+        resolved = resolve_alert_action(
+            action,
+            context.profile,
+            default_agent=DEFAULT_AGENT,
+            default_tools=DEFAULT_TOOLS,
+            default_timeout=DEFAULT_TIMEOUT,
+            background_model=os.environ.get("BACKGROUND_MODEL", "").strip(),
+        )
+        agent, tools, timeout = resolved.agent, list(resolved.tools), resolved.timeout
+        model = resolved.model
+        env = build_child_env(context)
+        cwd = context.profile.working_dir
+    else:
+        # legacy：全域行為不變
+        agent = action.get("agent", DEFAULT_AGENT)
+        tools = action.get("tools", DEFAULT_TOOLS)
+        timeout = action.get("timeout", DEFAULT_TIMEOUT)
+        model = os.environ.get("BACKGROUND_MODEL", "").strip() or None
+        env = {**os.environ, "NO_COLOR": "1"}
+        cwd = os.path.expanduser("~")
+
     instruction = action.get("instruction")
     if not instruction:
         instruction = "请分析此告警的根因，查询相关指标数据，给出结构化的诊断报告。"
@@ -89,9 +114,8 @@ def run_alert_analysis(record: dict) -> tuple[str, str]:
     for tool in tools:
         cmd.append(f"--trust-tools={tool}")
     cmd += ["--agent", agent]
-    bg_model = os.environ.get("BACKGROUND_MODEL", "").strip()
-    if bg_model:
-        cmd += ["--model", bg_model]
+    if model:
+        cmd += ["--model", model]
     cmd.append(alert_payload)
 
     try:
@@ -99,7 +123,7 @@ def run_alert_analysis(record: dict) -> tuple[str, str]:
         # timeout 時可用 os.killpg() 殺掉整個進程樹（包括 kiro-cli-chat 和子 shell）
         proc = subprocess.Popen(
             cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
-            cwd=os.path.expanduser("~"), env={**os.environ, "NO_COLOR": "1"},
+            cwd=cwd, env=env,
             start_new_session=True,
         )
         stdout, stderr = proc.communicate(timeout=timeout)

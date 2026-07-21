@@ -20,6 +20,7 @@ class IncomingMessage:
     group_id: str | None = None
     group_name: str | None = None
     sender_name: str | None = None
+    app_key: str = "default"
 
 
 @dataclass
