@@ -40,7 +40,11 @@ def _default_model_lister() -> list[str]:
             return []
         data = json.loads(result.stdout)
         models = data.get("models", data if isinstance(data, list) else [])
-        return [m.get("id") or m.get("name") for m in models if isinstance(m, dict)]
+        # kiro-cli JSON 使用 model_id／model_name；相容 id／name
+        return [
+            m.get("id") or m.get("model_id") or m.get("name") or m.get("model_name")
+            for m in models if isinstance(m, dict)
+        ]
     except Exception:
         return []
 

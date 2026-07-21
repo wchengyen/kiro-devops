@@ -150,3 +150,25 @@ def test_account_mismatch_fails_final_stage(tmp_path):
     # detail 只含遮罩帳號，絕不含 Secret
     assert "********9999" in stage.detail
     assert "999999999999" not in stage.detail
+
+
+def test_default_model_lister_parses_real_kiro_cli_json(monkeypatch):
+    """真實 kiro-cli --list-models JSON 使用 model_id／model_name 鍵。"""
+    import subprocess
+
+    from multi_profile import external_validation
+
+    payload = {
+        "models": [
+            {"model_name": "GLM-5 model", "model_id": "glm-5"},
+            {"model_name": "DeepSeek", "model_id": "deepseek-3.2"},
+        ]
+    }
+
+    class FakeResult:
+        returncode = 0
+        stdout = json.dumps(payload)
+
+    monkeypatch.setattr(subprocess, "run", lambda *a, **kw: FakeResult())
+
+    assert external_validation._default_model_lister() == ["glm-5", "deepseek-3.2"]

@@ -43,9 +43,9 @@ CODE=$(curl -s -o /tmp/legacy_smoke_event.json -w '%{http_code}' --max-time 10 -
     "http://${HOST}:${PORT}/event" \
     -H "Authorization: Bearer ${WEBHOOK_TOKEN}" \
     -H 'Content-Type: application/json' \
-    -d '{"source":"legacy-smoke","title":"smoke test event","severity":"info","message":"smoke"}')
+    -d "{\"id\":\"smoke-$(date +%s)\",\"event_type\":\"手动记录\",\"source\":\"legacy-smoke\",\"title\":\"smoke test event\",\"severity\":\"low\",\"message\":\"smoke\"}")
 [ "$CODE" = "200" ] && grep -q '"ok": *true' /tmp/legacy_smoke_event.json
-check "POST /event 帶 token severity=info -> 200 ok" $?
+check "POST /event 帶 token severity=low -> 200 ok" $?
 
 # 5. 最近啟動日誌無 traceback / 啟動失敗
 if journalctl -u kiro-devops --since "10 minutes ago" --no-pager 2>/dev/null | \
