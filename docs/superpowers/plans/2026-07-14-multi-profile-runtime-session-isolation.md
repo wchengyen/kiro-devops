@@ -1,5 +1,7 @@
 # Runtime、Session 與記憶隔離實作計畫
 
+> **勘誤（2026-07）：** 本計畫原先設計在 chat 程序運行中輪詢捕捉新 Session UUID。實測 kiro-cli 2.4.1 發現 conversation row 只在程序**退出時**才寫入 sqlite（`conversations_v2`），運行中永遠捕捉不到。已改為 capture-at-exit：`SessionCaptureCoordinator.begin()` 啟動前拍 baseline、`capture()` 退出後比對並以 per-working-dir claimed 集合去重；捕捉失敗不影響結果交付。詳見規格 §10.2。
+
 > **面向 AI 代理的工作者：** 必需子技能：使用 superpowers:subagent-driven-development（推薦）或 superpowers:executing-plans 逐任務實現此計畫。步驟使用復選框（`- [ ]`）語法追蹤進度。
 
 **目標：** 基於計畫 1 的 `ExecutionContext`，建立不污染全域環境的 Kiro Runtime、精確 `--resume-id`、per-principal 任務隔離、並行安全 Session UUID 捕捉、SQLite SessionStore，並證明既有 Semantic／Event Store 使用 context key 後不會跨群洩漏。

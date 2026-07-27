@@ -54,14 +54,14 @@ from .session_store import SessionRecord, SessionStore
 __all__ += ["SessionRecord", "SessionStore"]
 
 from .session_capture import (
-    CapturedSession,
+    SessionBaseline,
     SessionCaptureCoordinator,
     SessionCaptureError,
     parse_session_ids,
 )
 
 __all__ += [
-    "CapturedSession",
+    "SessionBaseline",
     "SessionCaptureCoordinator",
     "SessionCaptureError",
     "parse_session_ids",

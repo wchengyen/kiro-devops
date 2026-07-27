@@ -1,12 +1,11 @@
 import subprocess
-import threading
 from unittest.mock import Mock
 
 import pytest
 
 from multi_profile.models import ExecutionContext, ProfileConfig, build_profile_fingerprint
 from multi_profile.runtime import ContextRuntime, RuntimeFailure
-from multi_profile.session_capture import CapturedSession, SessionCaptureError
+from multi_profile.session_capture import SessionCaptureError
 from multi_profile.session_store import SessionStore
 from multi_profile.task_registry import TaskRegistry
 
@@ -84,7 +83,7 @@ def test_new_session_is_captured_registered_and_returned_sync(tmp_path):
     context = make_context(tmp_path)
     process = FakeProcess(("answer", ""))
     capture = Mock()
-    capture.start_and_capture.return_value = CapturedSession("session-new", process)
+    capture.capture.return_value = "session-new"
     runtime, store = make_runtime(tmp_path, process, capture=capture)
     cb = callbacks()
 
@@ -98,11 +97,68 @@ def test_new_session_is_captured_registered_and_returned_sync(tmp_path):
     assert runtime.is_busy(context) is False
 
 
+def test_new_session_captures_only_after_process_exit(tmp_path):
+    context = make_context(tmp_path)
+    events = []
+    process = FakeProcess(("answer", ""))
+    process.communicate = lambda timeout=None: (events.append("exit") or ("answer", ""))
+    capture = Mock()
+    capture.begin.side_effect = lambda working_dir, **kw: events.append("begin") or Mock()
+    capture.capture.side_effect = (
+        lambda working_dir, baseline, **kw: events.append("capture") or "session-new"
+    )
+    popen = Mock(side_effect=lambda *args, **kw: events.append("start") or process)
+    runtime, store = make_runtime(tmp_path, process, capture=capture, popen=popen)
+
+    runtime.execute(context, "hello", **callbacks())
+
+    assert events == ["begin", "start", "exit", "capture"]
+    assert store.resolve_active(context, now=100.0).kiro_session_id == "session-new"
+
+
+def test_capture_failure_after_success_still_delivers_result_unbound(tmp_path):
+    context = make_context(tmp_path)
+    process = FakeProcess(("answer", ""))
+    capture = Mock()
+    capture.capture.side_effect = SessionCaptureError(
+        "Kiro session not persisted after exit"
+    )
+    runtime, store = make_runtime(tmp_path, process, capture=capture)
+    cb = callbacks()
+
+    runtime.execute(context, "hello", **cb)
+
+    cb["on_sync_result"].assert_called_once_with("answer")
+    cb["on_error"].assert_not_called()
+    assert store.list_sessions(context, limit=10) == []
+    assert runtime.is_busy(context) is False
+
+
+def test_process_failure_attempts_best_effort_capture_and_reports_error(tmp_path):
+    context = make_context(tmp_path)
+    process = FakeProcess(("", "boom"), returncode=7)
+    capture = Mock()
+    capture.capture.side_effect = SessionCaptureError(
+        "Kiro session not persisted after exit"
+    )
+    runtime, store = make_runtime(tmp_path, process, capture=capture)
+    cb = callbacks()
+
+    runtime.execute(context, "hello", **cb)
+
+    failure = cb["on_error"].call_args.args[0]
+    assert failure == RuntimeFailure("process_failed", "boom", 7)
+    capture.capture.assert_called_once()
+    assert store.list_sessions(context, limit=10) == []
+    cb["on_sync_result"].assert_not_called()
+
+
 def test_existing_session_uses_resume_id_and_touches_record(tmp_path):
     context = make_context(tmp_path)
     process = FakeProcess(("continued", ""))
     popen = Mock(return_value=process)
-    runtime, store = make_runtime(tmp_path, process, popen=popen)
+    capture = Mock()
+    runtime, store = make_runtime(tmp_path, process, capture=capture, popen=popen)
     store.register_new(context, "session-existing", "topic", now=50.0)
     cb = callbacks()
 
@@ -112,6 +168,9 @@ def test_existing_session_uses_resume_id_and_touches_record(tmp_path):
     assert command[command.index("--resume-id") + 1] == "session-existing"
     assert store.resolve_active(context, now=100.0).message_count == 2
     cb["on_sync_result"].assert_called_once_with("continued")
+    # 恢復路徑（已知 session ID）不需要任何 capture
+    capture.begin.assert_not_called()
+    capture.capture.assert_not_called()
 
 
 def test_runtime_uses_context_working_directory_and_isolated_env(tmp_path):
@@ -157,21 +216,21 @@ def test_session_list_nonzero_exit_is_fail_closed(tmp_path, monkeypatch):
         runtime._list_session_ids(context, {})
 
 
-def test_session_registration_failure_terminates_process_and_releases_task(tmp_path):
+def test_session_registration_failure_still_delivers_result_unbound(tmp_path):
     context = make_context(tmp_path)
-    process = FakeProcess()
+    process = FakeProcess(("answer", ""))
     capture = Mock()
-    capture.start_and_capture.return_value = CapturedSession("session-new", process)
+    capture.capture.return_value = "session-new"
     runtime, store = make_runtime(tmp_path, process, capture=capture)
-    runtime._terminate_process = Mock()
     store.register_new = Mock(side_effect=OSError("db failed"))
     cb = callbacks()
 
     runtime.execute(context, "hello", **cb)
 
-    runtime._terminate_process.assert_called_once_with(process)
+    # capture 後註冊失敗不中斷結果交付；任務只是沒有綁定 session
+    cb["on_sync_result"].assert_called_once_with("answer")
+    cb["on_error"].assert_not_called()
     assert runtime.is_busy(context) is False
-    assert cb["on_error"].call_args.args[0].code == "startup_failed"
 
 
 def test_communicate_exception_terminates_process_and_reports_error(tmp_path):
@@ -302,7 +361,7 @@ def test_new_session_async_completion_keeps_message_count_one(tmp_path):
     context = make_context(tmp_path)
     process = FakeProcess(("done", ""), timeout_once=True)
     capture = Mock()
-    capture.start_and_capture.return_value = CapturedSession("session-new", process)
+    capture.capture.return_value = "session-new"
     runtime, store = make_runtime(tmp_path, process, capture=capture)
     runtime._thread_factory = InlineThread
 
@@ -311,33 +370,42 @@ def test_new_session_async_completion_keeps_message_count_one(tmp_path):
     assert store.resolve_active(context, now=100.0).message_count == 1
 
 
-def test_cancel_during_session_capture_registers_no_session(tmp_path):
+def test_new_session_async_capture_failure_still_delivers_result(tmp_path):
+    context = make_context(tmp_path)
+    process = FakeProcess(("done", ""), timeout_once=True)
+    capture = Mock()
+    capture.capture.side_effect = SessionCaptureError("ambiguous new Kiro sessions")
+    runtime, store = make_runtime(tmp_path, process, capture=capture)
+    runtime._thread_factory = InlineThread
+    cb = callbacks()
+
+    runtime.execute(context, "new async", **cb)
+
+    cb["on_async_result"].assert_called_once_with("done")
+    cb["on_error"].assert_not_called()
+    assert store.list_sessions(context, limit=10) == []
+
+
+def test_cancel_during_new_session_run_registers_no_session(tmp_path):
     context = make_context(tmp_path)
     process = FakeProcess()
-    started = threading.Event()
-    release = threading.Event()
-
-    class BlockingCapture:
-        def start_and_capture(self, working_dir, *, list_session_ids, start_process):
-            attached = start_process()
-            started.set()
-            release.wait(timeout=1)
-            return CapturedSession("session-new", attached)
-
-    runtime, store = make_runtime(tmp_path, process, capture=BlockingCapture())
+    capture = Mock()
+    capture.capture.return_value = "session-new"
+    runtime, store = make_runtime(tmp_path, process, capture=capture)
     runtime._terminate_process = Mock()
     cb = callbacks()
-    worker = threading.Thread(target=lambda: runtime.execute(context, "hello", **cb))
-    worker.start()
-    assert started.wait(timeout=1)
 
-    assert runtime.cancel(context) is True
-    release.set()
-    worker.join(timeout=1)
+    def communicate(timeout=None):
+        assert runtime.cancel(context) is True
+        return "late success", ""
+
+    process.communicate = communicate
+    runtime.execute(context, "hello", **cb)
 
     assert store.list_sessions(context, limit=10) == []
     cb["on_sync_result"].assert_not_called()
     cb["on_async_result"].assert_not_called()
+    capture.capture.assert_not_called()
     assert runtime._terminate_process.call_count >= 1
 
 

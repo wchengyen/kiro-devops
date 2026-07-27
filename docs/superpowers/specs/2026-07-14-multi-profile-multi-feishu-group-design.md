@@ -321,18 +321,16 @@ Session、忙碌狀態、取消操作及語義記憶使用 `principal_key`。群
 
 唯一性與查詢都以 `principal_key` 為邊界。
 
-### 10.2 新 Session ID 配置
+### 10.2 新 Session ID 配置（capture-at-exit）
 
-Kiro CLI 目前不直接以結構化結果回傳新 Session UUID，因此使用 `SessionCaptureCoordinator`：
+實測 kiro-cli 2.4.1：conversation row 只在 chat 程序**退出時**才寫入 sqlite（`~/.local/share/kiro-cli/data.sqlite3` 的 `conversations_v2` 表），且落盤可能再延遲數秒；運行中輪詢永遠看不到新 session。因此採用 `SessionCaptureCoordinator` 的 capture-at-exit 協定：
 
-1. 取得 canonical `working_dir`（`realpath` 後的絕對路徑）的短期配置鎖。Kiro `--list-sessions` 按工作目錄共享，鎖鍵不得包含 Agent，否則不同 Agent 可能互相誤認新 UUID。
-2. 記錄啟動前的 Session UUID 集合。
-3. 啟動新的 Kiro 子程序。
-4. 輪詢 `kiro-cli chat --list-sessions`，取得新出現的 UUID。
-5. 若恰好出現一個 UUID，立即綁定 principal 並釋放配置鎖；Kiro 任務繼續運行。
-6. 若出現多個新 UUID、超時或無法解析，終止該任務並明確回覆 Session 建立失敗；不得猜測或綁定「最新」UUID。
-
-配置鎖只涵蓋 Session UUID 建立階段，不涵蓋整個 Kiro 任務，因此不同 principal 在 UUID 配置完成後可並行。
+1. 啟動前 `begin()`：在 canonical `working_dir`（`realpath` 後的絕對路徑）短期鎖內拍攝既有 Session UUID baseline。Kiro `--list-sessions` 按工作目錄共享，鎖鍵不得包含 Agent。
+2. 啟動新的 Kiro 子程序（鎖立即釋放，不涵蓋 chat 執行期間）。
+3. 程序退出後 `capture()`：短暫輪詢 `--list-sessions`（預設 30s、0.5s 間隔），取 `new = current − baseline − claimed[working_dir]`。
+4. 恰好 1 個新 UUID → claim 並綁定 principal。0 個（逾時）→ 視為未落盤；>1 個 → 歧義。兩者皆 fail closed，絕不猜測或綁定「最新」UUID。
+5. per-working-dir 的 claimed 集合讓同目錄並行的新 chat 各自綁定正確 session（A、B 同時啟動，A 退出先 claim A，B 退出比對時排除已認領的 A）；殘餘競態（同一輪詢窗口同時落盤且皆未 claim）落入歧義分支，同樣正確。
+6. 捕捉失敗不影響任務結果交付：本次只是不綁定 session（下則訊息開新 session），記 warning 含 trace context。聊天失敗路徑仍 best-effort 嘗試捕捉。
 
 ### 10.3 恢復與 profile 變更
 

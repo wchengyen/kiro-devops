@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import subprocess
 import threading
 import time
@@ -11,9 +12,16 @@ from .models import ExecutionContext
 from .output import clean_output
 from .process_utils import terminate_process_tree
 from .runtime_env import build_child_env, build_kiro_command
-from .session_capture import SessionCaptureCoordinator, SessionCaptureError, parse_session_ids
+from .session_capture import (
+    SessionBaseline,
+    SessionCaptureCoordinator,
+    SessionCaptureError,
+    parse_session_ids,
+)
 from .session_store import SessionStore
 from .task_registry import TaskRegistry
+
+log = logging.getLogger("multi-profile-runtime")
 
 
 @dataclass(frozen=True)
@@ -21,6 +29,15 @@ class RuntimeFailure:
     code: str
     message: str
     returncode: int | None = None
+
+
+@dataclass(frozen=True)
+class _PendingSessionCapture:
+    """新 session 的延後捕捉狀態：baseline 於啟動前拍攝，程序退出後才 capture。"""
+
+    baseline: SessionBaseline
+    env: dict[str, str]
+    topic: str
 
 
 class RuntimeCancelled(RuntimeError):
@@ -75,8 +92,8 @@ class ContextRuntime:
         context: ExecutionContext,
         token: str,
         process,
-        session_id: str,
-        is_new_session: bool,
+        session_id: str | None,
+        pending: _PendingSessionCapture | None,
         *,
         on_async_result: Callable[[str], None],
         on_error: Callable[[RuntimeFailure], None],
@@ -101,7 +118,7 @@ class ContextRuntime:
                     token,
                     process,
                     session_id,
-                    is_new_session,
+                    pending,
                     stdout,
                     stderr,
                     on_result=on_async_result,
@@ -111,6 +128,8 @@ class ContextRuntime:
 
             self._terminate_process(process)
             if self.task_registry.claim_completion(context.principal_key, token):
+                if pending is not None:
+                    self._capture_and_register(context, pending)
                 on_error(
                     RuntimeFailure(
                         "async_timeout",
@@ -120,6 +139,8 @@ class ContextRuntime:
         except Exception as exc:
             self._terminate_process(process)
             if self.task_registry.claim_completion(context.principal_key, token):
+                if pending is not None:
+                    self._capture_and_register(context, pending)
                 on_error(RuntimeFailure("async_failed", str(exc)))
         finally:
             self.task_registry.finish(context.principal_key, token)
@@ -196,29 +217,51 @@ class ContextRuntime:
                 existing.kiro_session_id,
             )
             process = self._start_process(command, context, env, token)
-            return process, existing.kiro_session_id, False
+            return process, existing.kiro_session_id, None
 
-        command = build_kiro_command(self.kiro_bin, context, prompt, None)
-        captured = self.session_capture.start_and_capture(
+        # kiro-cli 只在 chat 程序退出時才把新 session 寫入 sqlite（2.4.1 實測），
+        # 因此啟動前只拍 baseline，待程序退出後才 capture。
+        baseline = self.session_capture.begin(
             context.profile.working_dir,
             list_session_ids=lambda: self._list_session_ids(context, env),
-            start_process=lambda: self._start_process(command, context, env, token),
         )
-        if self.task_registry.should_cancel(context.principal_key, token):
-            self._terminate_process(captured.process)
-            self.task_registry.finish(context.principal_key, token)
-            raise RuntimeCancelled("task cancelled during session capture")
+        command = build_kiro_command(self.kiro_bin, context, prompt, None)
+        process = self._start_process(command, context, env, token)
+        return process, None, _PendingSessionCapture(baseline, env, prompt[:30])
+
+    def _capture_and_register(
+        self,
+        context: ExecutionContext,
+        pending: _PendingSessionCapture,
+    ) -> None:
+        """程序退出後捕捉新 session 並註冊。
+
+        失敗（未落盤／歧義／註冊錯誤）不影響任務結果交付：本次只是不綁定
+        session，下則訊息會開新 session。一律記 warning（含 trace context），
+        絕不猜測 session ID。
+        """
         try:
+            session_id = self.session_capture.capture(
+                context.profile.working_dir,
+                pending.baseline,
+                list_session_ids=lambda: self._list_session_ids(context, pending.env),
+            )
             self.session_store.register_new(
                 context,
-                captured.session_id,
-                prompt[:30],
+                session_id,
+                pending.topic,
                 now=self._clock(),
             )
-        except Exception:
-            self._terminate_process(captured.process)
-            raise
-        return captured.process, captured.session_id, True
+        except Exception as exc:
+            log.warning(
+                "Kiro session capture failed after process exit; "
+                "result delivered without binding session "
+                "principal=%s profile=%s working_dir=%s: %s",
+                context.principal_key,
+                context.profile_id,
+                context.profile.working_dir,
+                exc,
+            )
 
     @staticmethod
     def _output(stdout: str, stderr: str) -> str:
@@ -229,8 +272,8 @@ class ContextRuntime:
         context: ExecutionContext,
         token: str,
         process,
-        session_id: str,
-        is_new_session: bool,
+        session_id: str | None,
+        pending: _PendingSessionCapture | None,
         stdout: str,
         stderr: str,
         *,
@@ -241,9 +284,14 @@ class ContextRuntime:
             return
         output = self._output(stdout, stderr)
         if process.returncode not in (None, 0):
+            if pending is not None:
+                # best-effort：失敗的 chat 若仍有落盤 row 就綁定，否則略過
+                self._capture_and_register(context, pending)
             on_error(RuntimeFailure("process_failed", output, process.returncode))
             return
-        if not is_new_session:
+        if pending is not None:
+            self._capture_and_register(context, pending)
+        else:
             self.session_store.touch(context, session_id, now=self._clock())
         on_result(output)
 
@@ -260,9 +308,10 @@ class ContextRuntime:
     ) -> None:
         token = self.task_registry.reserve(context.principal_key, context.profile_id)
         process = None
+        pending = None
         try:
             env = build_child_env(context)
-            process, session_id, is_new_session = self._start_or_resume(
+            process, session_id, pending = self._start_or_resume(
                 context,
                 prompt,
                 env,
@@ -279,7 +328,7 @@ class ContextRuntime:
                             token,
                             process,
                             session_id,
-                            is_new_session,
+                            pending,
                             on_async_result=on_async_result,
                             on_error=on_error,
                             on_progress=on_progress,
@@ -301,6 +350,8 @@ class ContextRuntime:
         except Exception as exc:
             if process is not None:
                 self._terminate_process(process)
+                if pending is not None:
+                    self._capture_and_register(context, pending)
             self.task_registry.finish(context.principal_key, token)
             code = "execution_failed" if process is not None else "startup_failed"
             on_error(RuntimeFailure(code, str(exc)))
@@ -311,7 +362,7 @@ class ContextRuntime:
             token,
             process,
             session_id,
-            is_new_session,
+            pending,
             stdout,
             stderr,
             on_result=on_sync_result,

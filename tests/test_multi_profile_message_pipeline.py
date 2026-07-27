@@ -1,6 +1,7 @@
 import pytest
 
 from adapters.base import IncomingMessage, OutgoingPayload
+from multi_profile.health import ProfileHealth
 from multi_profile.message_pipeline import MultiProfilePipeline
 from multi_profile.models import AppConfig, ProfileConfig, RouteConfig, create_snapshot
 
@@ -108,7 +109,7 @@ def make_snapshot(routes=(), app_enabled=True, profile_enabled=True):
     return create_snapshot(7, apps, profiles, tuple(routes))
 
 
-def make_pipeline(snapshot):
+def make_pipeline(snapshot, health_monitor=None):
     dispatcher = FakeDispatcher()
     adapter_a, adapter_b = FakeAdapter("app-a"), FakeAdapter("app-b")
     dispatcher.register(adapter_a)
@@ -123,6 +124,7 @@ def make_pipeline(snapshot):
         session_store=store,
         alert_runner=alerts,
         parse_alert=parse_alert,
+        health_monitor=health_monitor,
     )
     return pipeline, adapter_a, adapter_b, runtime, store, alerts
 
@@ -292,3 +294,73 @@ def test_cancel_command_scoped_to_principal():
     pipeline.handle(group_message(text="/cancel"))
 
     assert runtime.cancelled == ["feishu/app-a/group/oc_1/user/ou_1"]
+
+
+class FakeHealthMonitor:
+    def __init__(self, health):
+        self._health = health
+
+    def health(self, profile_id):
+        return self._health
+
+    def ensure_usable(self, profile_id):
+        return None
+
+
+def make_health(state="active", last_sts_at=1_700_000_000.0):
+    return ProfileHealth(
+        profile_id="prod-cn",
+        state=state,
+        account_id_masked="********9012",
+        last_sts_at=last_sts_at,
+        last_error=None,
+        consecutive_failures=0,
+    )
+
+
+def test_profile_command_replies_without_executing_kiro():
+    snapshot = make_snapshot([RouteConfig("app-a", "oc_1", "prod-cn")])
+    monitor = FakeHealthMonitor(make_health())
+    pipeline, adapter_a, _, runtime, _, _ = make_pipeline(
+        snapshot, health_monitor=monitor
+    )
+
+    pipeline.handle(group_message(text="/profile"))
+
+    assert runtime.executed == []
+    assert len(adapter_a.replies) == 1
+    text = adapter_a.replies[0][1].text
+    assert "prod-cn" in text
+    assert "********9012" in text
+    assert "123456789012" not in text  # 完整 Account ID 不得外洩
+    assert "profile default" in text  # 未設定 region 時顯示 profile default
+    assert "active" in text
+    assert "2023" in text  # 最近 STS 驗證時間（last_sts_at=1_700_000_000）
+
+
+def test_profile_command_unmapped_group_fails_closed():
+    snapshot = make_snapshot([])
+    monitor = FakeHealthMonitor(make_health())
+    pipeline, adapter_a, _, runtime, _, _ = make_pipeline(
+        snapshot, health_monitor=monitor
+    )
+
+    pipeline.handle(group_message(text="/profile", chat_id="oc_unknown"))
+
+    assert runtime.executed == []
+    assert len(adapter_a.replies) == 1
+    assert "未配置" in adapter_a.replies[0][1].text
+    assert "prod-cn" not in adapter_a.replies[0][1].text
+
+
+def test_profile_command_without_health_monitor_shows_unknown():
+    snapshot = make_snapshot([RouteConfig("app-a", "oc_1", "prod-cn")])
+    pipeline, adapter_a, _, runtime, _, _ = make_pipeline(snapshot)
+
+    pipeline.handle(group_message(text="/profile"))
+
+    assert runtime.executed == []
+    assert len(adapter_a.replies) == 1
+    text = adapter_a.replies[0][1].text
+    assert "prod-cn" in text
+    assert "unknown" in text

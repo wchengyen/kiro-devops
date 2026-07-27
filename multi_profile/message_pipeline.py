@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import os
 import threading
+import time
 from collections.abc import Callable
 
 from adapters.base import IncomingMessage, OutgoingPayload
@@ -14,6 +15,7 @@ from .router import RouteNotFound, TenantRouter
 from .runtime import ContextRuntime
 from .scoped_state import semantic_owner
 from .session_store import SessionStore
+from .sts import mask_account_id
 from .health import ProfileUnavailable
 
 log = logging.getLogger("multi-profile-pipeline")
@@ -224,6 +226,9 @@ class MultiProfilePipeline:
                 "⏹ 已取消当前任务。" if self._runtime.cancel(context) else "没有正在运行的后台任务。",
             )
             return
+        if text == "/profile":
+            self._reply(incoming, self._format_profile(context))
+            return
         if text == "/sessions":
             self._reply(incoming, self._format_sessions(context))
             return
@@ -277,6 +282,38 @@ class MultiProfilePipeline:
         )
 
     # ---- Session 清單／恢復（計畫 2 的 SessionStore 介面） ----
+
+    def _format_profile(self, context: ExecutionContext) -> str:
+        """規格 §7.4：/profile 只回覆資訊，不執行 Kiro。
+
+        Account ID 一律以 expected_account_id 遮罩後顯示，絕不外洩完整值
+        或 env 內容；health_monitor 缺失／查詢失敗時狀態顯示 unknown。
+        """
+        profile = context.profile
+        health = None
+        if self._health_monitor is not None:
+            try:
+                health = self._health_monitor.health(context.profile_id)
+            except Exception:
+                log.exception(
+                    f"健康狀態查詢失敗 profile={context.profile_id}，顯示 unknown"
+                )
+        state = health.state if health is not None else "unknown"
+        if health is not None and health.last_sts_at is not None:
+            last_sts = time.strftime(
+                "%Y-%m-%d %H:%M:%S", time.localtime(health.last_sts_at)
+            )
+        else:
+            last_sts = "尚未驗證"
+        return "\n".join([
+            f"👤 Profile `{profile.profile_id}`",
+            f"AWS 帳號：{mask_account_id(profile.expected_account_id)}",
+            f"Region：{profile.aws_region or 'profile default'}",
+            f"Agent：{profile.kiro_agent or 'default'}",
+            f"模型：{profile.model or 'default'}",
+            f"健康狀態：{state}",
+            f"最近 STS 驗證：{last_sts}",
+        ])
 
     def _format_sessions(self, context: ExecutionContext) -> str:
         sessions = self._session_store.list_sessions(context)

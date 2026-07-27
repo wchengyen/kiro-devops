@@ -404,6 +404,74 @@ The bot supports automatic detection of file paths in Kiro output and uploads th
 
 ---
 
+## 👥 Multi-Profile: Multiple Feishu Apps, Groups & AWS Profiles
+
+> Off by default. Enable with `MULTI_PROFILE_ENABLED=true` in `.env`; when unset or `false`, behavior is identical to the single-app legacy mode.
+
+Multi-profile mode lets **multiple Feishu apps and groups** run in one service process, each bound to its own **AWS CLI profile** (AKSK lives only in named profiles under `~/.aws/credentials`, never in config files or logs):
+
+- A group is pinned to a profile via `(app_key, chat_id)`; private chats use the app's `default_profile`
+- Unmapped groups fail closed: @Bot messages and recognizable alerts get an explicit in-group refusal — never a fallback to another profile
+- Each kiro subprocess gets an isolated environment (injected `AWS_PROFILE`); sessions, memory, and busy state are isolated per app/group/user
+- Each profile has its own AWS region, Kiro agent, model, working directory, and timeouts
+- Main config: `multi_profile_config.yaml` (see `multi_profile_config.example.yaml`)
+
+### Switching a Group's Profile (hot-reload, no restart)
+
+1. For a new AWS account, create a named profile in `~/.aws/credentials` first
+2. Dashboard → **Multi Profile Config** → edit the Draft: add an entry under `profiles:`, then point the group's route `profile:` at the new profile id
+3. **Validate**: 8-stage check (schema → env refs → AWS profile exists → real STS → account ID match); any failure blocks publishing
+4. **Publish**: route changes hot-reload immediately
+5. Verify: `@Bot /profile` in the group shows the new alias and masked account; the next message starts a fresh session automatically (fingerprint changed — the old session is kept but never resumed)
+6. Undo: Dashboard → **Revisions** → roll back to a previous revision (fully re-validated before taking effect)
+
+### Binding a New Feishu Group to a Profile (same app)
+
+1. Invite the bot into the new group in Feishu
+2. `@Bot` anything in the new group — unmapped groups get an explicit "not configured" refusal, and the log records the chat_id:
+
+   ```bash
+   journalctl -u kiro-devops --since "5 minutes ago" | grep chat=
+   ```
+
+3. Add to `routes:` in the Draft:
+
+   ```yaml
+   - app: legacy-bot
+     chat_id: oc_new_group_id
+     profile: legacy-default   # or a new profile
+     poll_alerts: true          # only if this group needs alert polling
+   ```
+
+4. Validate → Publish (hot-reload)
+5. Verify: `@Bot /profile` in the new group shows the bound profile; after sending a message, check the isolation keys:
+
+   ```bash
+   python3 -c "
+   import sqlite3
+   con = sqlite3.connect('runtime/tenant_sessions.db')
+   for r in con.execute('SELECT principal_key, short_id, topic FROM tenant_sessions ORDER BY last_active DESC LIMIT 5'): print(r)"
+   ```
+
+   Isolation check: `/sessions` in each group must not show the other group's conversations; both groups can run in parallel even on the same profile.
+
+### Adding a Brand-New Feishu App (requires restart)
+
+1. Create the app in the Feishu Open Platform, note the app_id / app_secret
+2. Add `FEISHU_NEWBOT_APP_ID` / `FEISHU_NEWBOT_APP_SECRET` to `.env`
+3. Add `new-bot` under `apps:` in the Draft (referencing the new env names + `default_profile`) plus its group routes → after Publish the status shows `pending-restart`
+4. `sudo systemctl restart kiro-devops`
+5. Confirm the new app is `connected`, and use `/profile` in its groups to verify routing and that replies come from the correct app
+
+### Emergency Rollback
+
+- Config level: Dashboard → Revisions → rollback (last 20 revisions kept)
+- Service level: set `MULTI_PROFILE_ENABLED=false` in `.env` and `sudo systemctl restart kiro-devops` — instantly back to single-app legacy mode; existing sessions and memory are unaffected
+
+> Full design: `docs/superpowers/specs/2026-07-14-multi-profile-multi-feishu-group-design.md`; rollout runbook: `docs/superpowers/plans/2026-07-14-multi-profile-migration-acceptance.md`.
+
+---
+
 ## ⌨️ Command Reference
 
 | Command | Description |
@@ -413,6 +481,7 @@ The bot supports automatic detection of file paths in Kiro output and uploads th
 | `/sessions` | List historical sessions |
 | `/status` | Check background task status |
 | `/cancel` | Cancel background task |
+| `/profile` | Show the currently bound profile (multi-profile mode) |
 | `/schedule` | Scheduled task management |
 | `/memory` | Memory management |
 | `/event` | Manual event entry |

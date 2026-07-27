@@ -518,6 +518,74 @@ AWS EC2 / RDS 資源自動發現 + CloudWatch 指標：
 
 ---
 
+## 9. 多 Profile：多飛書 App、多群組與 AWS Profile 綁定
+
+> 預設關閉。啟用方式：`.env` 設 `MULTI_PROFILE_ENABLED=true`；未設定或 `false` 時行為與單 App legacy 模式完全相同。
+
+多 profile 模式讓**多個飛書 App、多個群組**在同一服務進程中各自綁定獨立的 **AWS CLI profile**（AKSK 只存放在 `~/.aws/credentials` 的 named profile，絕不寫入設定檔或日誌）：
+
+- 群組以 `(app_key, chat_id)` 固定映射到一個 profile；私聊使用該 App 的 `default_profile`
+- 未映射的群組一律 fail-closed：@Bot 或可辨識告警會在原群收到明確拒絕，絕不 fallback 到其他 profile
+- 每個 kiro 子進程取得獨立環境（注入 `AWS_PROFILE`），Session、記憶、忙碌狀態按 `app/群/使用者` 隔離
+- 每個 profile 可獨立設定 AWS region、Kiro agent、模型、工作目錄與逾時
+- 主設定檔：`multi_profile_config.yaml`（範例見 `multi_profile_config.example.yaml`）
+
+### 9.1 切換群組的 Profile（熱載入，不需重啟）
+
+1. 若是新 AWS 帳號，先在 `~/.aws/credentials` 建立 named profile
+2. Dashboard → **Multi Profile Config** → 編輯 Draft：在 `profiles:` 新增一組，把該群 route 的 `profile:` 改為新 profile id
+3. **Validate**：8 階段自動檢查（schema → env 引用 → AWS profile 存在 → 真實 STS → Account ID 核對），任一失敗即不可發布
+4. **Publish**：路由變更為熱載入，立即生效
+5. 驗證：群裡 `@Bot /profile` 應顯示新別名與新遮罩帳號；下一則訊息因 fingerprint 改變會自動建立新 Session（舊 Session 保留但不恢復）
+6. 後悔藥：Dashboard → **Revisions** → 選前一版 rollback（會重新完整驗證後才生效）
+
+### 9.2 新建飛書群組並綁定 Profile（同一個 App）
+
+1. 飛書裡把 Bot 拉進新群
+2. 在新群 `@Bot` 隨意發一句 —— 未映射群會收到「本群尚未配置執行環境」的明確拒絕，同時日誌記下 chat_id：
+
+   ```bash
+   journalctl -u kiro-devops --since "5 minutes ago" | grep chat=
+   ```
+
+3. Draft 的 `routes:` 新增：
+
+   ```yaml
+   - app: legacy-bot
+     chat_id: oc_新群ID
+     profile: legacy-default   # 或新建的 profile
+     poll_alerts: true          # 該群需要告警輪詢才開
+   ```
+
+4. Validate → Publish（熱載入）
+5. 驗證：新群 `@Bot /profile` 顯示綁定的 profile；發訊息後可查隔離鍵：
+
+   ```bash
+   python3 -c "
+   import sqlite3
+   con = sqlite3.connect('runtime/tenant_sessions.db')
+   for r in con.execute('SELECT principal_key, short_id, topic FROM tenant_sessions ORDER BY last_active DESC LIMIT 5'): print(r)"
+   ```
+
+   隔離驗證：兩群互相用 `/sessions` 看不到對方對話；兩群同時發訊息可並行（即使共用同一 profile）。
+
+### 9.3 加入全新飛書 App（需要重啟）
+
+1. 飛書開放平台建新 App，取得 app_id / app_secret
+2. `.env` 新增 `FEISHU_NEWBOT_APP_ID` / `FEISHU_NEWBOT_APP_SECRET`
+3. Draft 的 `apps:` 新增 `new-bot`（引用新 env 名稱與 `default_profile`）及其群路由 → Publish 後狀態顯示 `pending-restart`
+4. `sudo systemctl restart kiro-devops`
+5. 確認新 App `connected`，在其群組用 `/profile` 驗證路由正確、由原 App 回覆
+
+### 9.4 緊急回滾
+
+- 設定層：Dashboard → Revisions → rollback（保留最近 20 版）
+- 服務層：`.env` 設 `MULTI_PROFILE_ENABLED=false` 並 `sudo systemctl restart kiro-devops`，立即回到單 App legacy 模式，舊 Session 與記憶不受影響
+
+> 完整設計見 `docs/superpowers/specs/2026-07-14-multi-profile-multi-feishu-group-design.md`，上線 runbook 見 `docs/superpowers/plans/2026-07-14-multi-profile-migration-acceptance.md`。
+
+---
+
 ## 命令參考
 
 | 命令 | 說明 |
@@ -527,6 +595,7 @@ AWS EC2 / RDS 資源自動發現 + CloudWatch 指標：
 | `/sessions` | 列出歷史會話 |
 | `/status` | 查看後台任務狀態 |
 | `/cancel` | 取消後台任務 |
+| `/profile` | 查看目前綁定的 profile（多 profile 模式） |
 | `/schedule` | 定時任務管理 |
 | `/memory` | 記憶管理 |
 | `/event` | 手動錄入事件 |
